@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-milestone%201%20of%2010-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%202%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -87,19 +87,37 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestone 1 complete — configuration foundation.** Implemented and tested:
+✅ **Milestones 1–2 complete — configuration foundation and public reference data.**
 
-- **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict validation.
+*Milestone 1: configuration*
+- **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
+  validation, on config objects and on every table row.
 - **Validated configuration models** (Pydantic v2) for a fictional ED: staffing
   by shift, treatment spaces, hourly arrivals, inpatient capacity, and
-  intervention scenarios.
-- **Safe YAML loading** and `apply_scenario()` for what-if changes.
-- **One fictional example site**, "Riverside Commons Community ED", in
-  `config/sites/`. It's labeled fictional and doesn't represent any real hospital.
-- **132 unit tests**, 100% line coverage.
+  intervention scenarios. Safe YAML loading and `apply_scenario()`.
+- **One fictional example site**, "Riverside Commons Community ED". It's
+  labeled fictional and doesn't represent any real hospital.
 
-**Not built yet:** public data, synthetic patients, simulation, dashboard, and
-Claude integration. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+*Milestone 2: public reference data*
+- **Reproducible pipeline** from 5 official CMS and NYS DOH datasets to Bronx
+  ED reference tables in `data/public/processed/`, with SHA-256 fingerprints
+  and byte-identical rebuilds.
+- **Measures kept distinct:** OP-18 (median ED time for *discharged*
+  patients), OP-22 (left without being seen), ED volume, and NYS encounter
+  counts. Door-to-provider and boarding time are **not publicly available**,
+  and the code says so instead of substituting another measure.
+- **Five Bronx hospitals matched** across CMS and NYS records by address, with
+  a human-reviewed crosswalk: BronxCare, Montefiore, Lincoln, Jacobi, and
+  St. Barnabas (SBH).
+- **Missing and suppressed values preserved** with official explanations, never zeros.
+- See [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) for
+  what these measures mean, and why they **can't identify the cause of a
+  hospital's delays**.
+
+**262 unit tests**, 100% line coverage, all offline.
+
+**Not built yet:** synthetic patients, simulation, dashboard, and Claude
+integration. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -126,6 +144,16 @@ print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', 
 "
 ```
 
+Rebuild the public reference tables (offline, from downloaded files):
+
+```bash
+python -m beyond_the_wait.data.public_pipeline download   # fetch official files (internet)
+python -m beyond_the_wait.data.public_pipeline build      # validate + build (offline)
+```
+
+If `download` is refused by a publisher's server, it prints manual-download
+steps; see [data/public/SOURCES.md](data/public/SOURCES.md).
+
 An Anthropic API key is not needed until Milestone 8. When it is, you'll copy
 `.env.example` to `.env` and add the key there.
 
@@ -147,9 +175,9 @@ src/beyond_the_wait/
 tests/             Unit and integration tests
 ```
 
-Only `config/`, `src/beyond_the_wait/config/`, `src/beyond_the_wait/data/provenance.py`,
-and `tests/unit/` contain working code so far. The other folders are
-placeholders until their milestone is built.
+Working code so far is in `src/beyond_the_wait/config/`, `src/beyond_the_wait/data/`,
+`config/`, `data/public/`, and `tests/`. The other folders are placeholders
+until their milestone is built.
 
 ## Documentation
 
@@ -157,6 +185,8 @@ placeholders until their milestone is built.
 - [ARCHITECTURE.md](ARCHITECTURE.md) — components and data flow
 - [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) — milestones
 - [data/README.md](data/README.md) — data provenance rules
+- [data/public/SOURCES.md](data/public/SOURCES.md) — official public sources and manual-download steps
+- [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer
 

@@ -1,0 +1,54 @@
+{
+  "files": {
+    "cms_timely_effective_care": {
+      "key": "cms_timely_effective_care",
+      "dataset_id": "yv7e-xc69",
+      "download_url": "https://data.cms.gov/provider-data/sites/default/files/resources/0437b5494ac61507ad90f2af6b8085a7_1792599910/Timely_and_Effective_Care-Hospital.csv",
+      "raw_filename": "cms_timely_effective_care_hospital.csv",
+      "sha256": "79edc8c7a67047d94494bc33752bf26650e1b96bafd72d1a0560f6f807c96746",
+      "bytes": 11886,
+      "retrieved_on": "2026-11-15",
+      "source_last_modified": "2026-10-19"
+    },
+    "cms_footnote_crosswalk": {
+      "key": "cms_footnote_crosswalk",
+      "dataset_id": "y9us-9xdf",
+      "download_url": "https://data.cms.gov/provider-data/sites/default/files/resources/f29bb7c812e242f6edfef0a4b7d0eaca_1760630713/Footnote_Crosswalk.csv",
+      "raw_filename": "cms_footnote_crosswalk.csv",
+      "sha256": "3c1c822f5ce58b2de4dbf35c2b5de4f37b5798aa7e41d58718e885de7d1ccc49",
+      "bytes": 3423,
+      "retrieved_on": "2026-11-15",
+      "source_last_modified": "2025-09-18"
+    },
+    "cms_hospital_general_information": {
+      "key": "cms_hospital_general_information",
+      "dataset_id": "xubh-q36u",
+      "download_url": "https://data.cms.gov/provider-data/sites/default/files/resources/d3bf87c5505155f549d603688414f3c6_1793059553/Hospital_General_Information_2.csv",
+      "raw_filename": "cms_hospital_general_information.csv",
+      "sha256": "cd9f38ba92ee4706e74864e47f4d1f3457ffa719e879e456a08f590b74d9c6e5",
+      "bytes": 2844,
+      "retrieved_on": "2026-11-15",
+      "source_last_modified": "2026-10-26"
+    },
+    "nys_health_facility_general_information": {
+      "key": "nys_health_facility_general_information",
+      "dataset_id": "vn5v-hh5r",
+      "download_url": "https://health.data.ny.gov/api/views/vn5v-hh5r/rows.csv?accessType=DOWNLOAD",
+      "raw_filename": "nys_health_facility_general_information.csv",
+      "sha256": "22c44657571a4941523f97eeed1bfcc7345b771bf11a8df61db187822e0cece2",
+      "bytes": 7104,
+      "retrieved_on": "2026-11-15",
+      "source_last_modified": "2026-10-23"
+    },
+    "nys_sparcs_ed_encounters_by_facility": {
+      "key": "nys_sparcs_ed_encounters_by_facility",
+      "dataset_id": "5gzv-zv2z",
+      "download_url": "https://health.data.ny.gov/api/views/5gzv-zv2z/rows.csv?accessType=DOWNLOAD",
+      "raw_filename": "nys_ed_encounters_by_facility.csv",
+      "sha256": "80a610256f60ac7452fbc6fc3a68b72a23dcc9305507f6e9284b823d4553d83e",
+      "bytes": 20935,
+      "retrieved_on": "2026-11-15",
+      "source_last_modified": "2026-10-22"
+    }
+  }
+}

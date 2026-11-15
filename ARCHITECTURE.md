@@ -2,9 +2,9 @@
 
 **Status:** Draft v0.3 · **Last updated:** 2026-11-15
 
-> **Mostly planned design.** As of Milestone 1, only the **configuration
-> layer (§2.2)** and the **provenance labels (§2.1)** are implemented and
-> tested. Everything else below is planned. Module names marked "planned"
+> **Partly implemented.** As of Milestone 2, the **configuration layer
+> (§2.2)**, **provenance labels**, and the **public-data pipeline (§2.1)** are
+> implemented and tested. Everything else below is planned. Module names marked "planned"
 > may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
@@ -50,8 +50,12 @@
 
 | Module | Responsibility |
 |---|---|
-| `provenance.py` ✅ | **Implemented:** `Provenance` enum (`PUBLIC`, `SYNTHETIC`, `SIMULATED`), strict parsing that rejects unknown labels, and `ProvenanceRecord` (label + source, plus retrieval date for `PUBLIC`). **Planned (M2–3):** helper that attaches provenance to every DataFrame/metric. |
-| `public_reference.py` | Loads curated public aggregate metrics (e.g., CMS Care Compare ED timeliness measures, NYS DOH data) from `data/public/processed/`, with source, definition, and period. |
+| `provenance.py` ✅ | `Provenance` enum (`PUBLIC`, `SYNTHETIC`, `SIMULATED`), strict parsing, `ProvenanceRecord`, and table helpers `tag_dataframe()` / `require_provenance()`. Provenance is stored as **columns on every row**, so it survives filters, merges, and CSV export. |
+| `public_sources.py` ✅ | Registry of the 5 verified official datasets; manifest models (URL, SHA-256, dates). |
+| `ed_measures.py` ✅ | Measure catalog: definition, population, unit, and what each measure does *not* measure. Door-to-provider and boarding time raise `MeasureNotAvailableError`. |
+| `cms_loader.py` / `nys_loader.py` ✅ | Validated loaders: raw text first, explicit unit conversion, official missing-data reasons, duplicate and reporting-period checks. |
+| `facility_matching.py` ✅ | CMS↔NYS matching by normalized address + ZIP, validated against a human-reviewed crosswalk. |
+| `public_pipeline.py` ✅ | `download` / `register` / `build` → `data/public/processed/` with reproducible, fingerprinted outputs. See [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md). |
 | `synthetic_generator.py` | Creates synthetic patients: arrival time (time-varying Poisson process), acuity, diagnostic needs, admission flag. Driven by a site profile + random seed. |
 
 **Why it's designed this way:** In healthcare IT you'd never mix a test
@@ -225,9 +229,13 @@ beyond-the-wait/
 │   └── scenarios/             # Intervention scenarios (YAML)
 ├── data/
 │   ├── public/raw/            # Downloaded public files (git-ignored)
-│   ├── public/processed/      # Curated aggregate reference tables
+│   ├── public/reference/      # Human-reviewed facility crosswalk
+│   ├── public/processed/      # Bronx ED reference tables + build manifest
+│   ├── public/SOURCES.md      # Official sources and manual-download steps
 │   └── synthetic/             # Generated synthetic patients (git-ignored)
-├── docs/decisions/            # Architecture decision records
+├── docs/
+│   ├── PUBLIC_DATA_METHODOLOGY.md  # What public ED measures do and don't mean
+│   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases
 │   └── results/               # Eval run outputs (git-ignored)
@@ -240,6 +248,7 @@ beyond-the-wait/
 │   └── evaluation/            # Eval harness and scorers
 ├── tests/
 │   ├── conftest.py · paths.py # Shared fixtures and file locations
+│   ├── fixtures/public/       # Byte-for-byte excerpts of official files (offline tests)
 │   ├── unit/
 │   └── integration/
 ├── .env.example               # Template for the API key (real .env is git-ignored)

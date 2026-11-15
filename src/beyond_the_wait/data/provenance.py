@@ -23,6 +23,7 @@ from datetime import date
 from enum import StrEnum
 from typing import Annotated
 
+import pandas as pd
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 
@@ -94,3 +95,66 @@ class ProvenanceRecord(BaseModel):
         if self.label is Provenance.PUBLIC and self.retrieved_on is None:
             raise ValueError("PUBLIC data must include 'retrieved_on' (the download date).")
         return self
+
+
+# ---------------------------------------------------------------------------
+# Provenance on tables (pandas DataFrames)
+# ---------------------------------------------------------------------------
+#
+# Design choice: provenance is stored as ordinary COLUMNS on every row, not
+# in DataFrame metadata (`df.attrs`). Columns survive filtering, merging,
+# concatenation, and CSV export; `attrs` can be silently dropped by those
+# operations. A row that travels anywhere carries its label with it.
+
+PROVENANCE_COLUMNS: tuple[str, ...] = (
+    "provenance",
+    "source_dataset_id",
+    "source_url",
+    "retrieved_on",
+)
+
+
+def tag_dataframe(
+    df: pd.DataFrame,
+    *,
+    label: Provenance | str,
+    dataset_id: str,
+    source_url: str,
+    retrieved_on: date | None,
+) -> pd.DataFrame:
+    """Return a copy of `df` with provenance columns filled in on every row."""
+    parsed = parse_provenance(label)
+    for name, value in (("dataset_id", dataset_id), ("source_url", source_url)):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{name} must be a non-empty string")
+    if parsed is Provenance.PUBLIC and retrieved_on is None:
+        raise ValueError("PUBLIC data must include retrieved_on (the download date).")
+    out = df.copy()
+    out["provenance"] = parsed.value
+    out["source_dataset_id"] = dataset_id
+    out["source_url"] = source_url
+    out["retrieved_on"] = retrieved_on.isoformat() if retrieved_on else ""
+    return out
+
+
+def require_provenance(df: pd.DataFrame, expected: Provenance | str) -> None:
+    """Raise ValueError unless every row carries the expected provenance label.
+
+    For PUBLIC data, every row must also name its source dataset, URL, and
+    retrieval date.
+    """
+    expected_label = parse_provenance(expected)
+    missing = [col for col in PROVENANCE_COLUMNS if col not in df.columns]
+    if missing:
+        raise ValueError(f"table is missing provenance column(s): {missing}")
+    found = set(df["provenance"].astype(str).unique())
+    unexpected = sorted(found - {expected_label.value})
+    if unexpected:
+        raise ValueError(
+            f"expected every row to be {expected_label.value}; also found {unexpected}"
+        )
+    if expected_label is Provenance.PUBLIC:
+        for col in ("source_dataset_id", "source_url", "retrieved_on"):
+            blank = df[col].isna() | (df[col].astype(str).str.strip() == "")
+            if blank.any():
+                raise ValueError(f"PUBLIC rows must have a non-empty {col!r}")

@@ -1,0 +1,141 @@
+Year,Quarter,Facility ID,Facility Name,Facility Type Description,Facility County FIPS,Facility County,Facility Region,Operating Certificate Number,Operator Name,Total ED Encounters,Treat and Release ED Encounters,ED Encounters Requiring Ambulatory Surgery,ED Encounters Admitted as Inpatient
+2025,Q1,000001,Albany Medical Center Hospital,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,20858,14016,309,6533
+2025,Q2,000001,Albany Medical Center Hospital,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,21587,14743,316,6528
+2025,Q3,000001,Albany Medical Center Hospital,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,22042,14902,344,6796
+2025,Q4,000001,Albany Medical Center Hospital,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,22836,15635,358,6843
+2025,CY,000001,Albany Medical Center Hospital,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,87323,59296,1327,26700
+2025,Q1,000002,Albany Medical Center - South Clinical Campus,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,S,S,S,S
+2025,Q2,000002,Albany Medical Center - South Clinical Campus,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,S,S,S,S
+2025,Q3,000002,Albany Medical Center - South Clinical Campus,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,S,S,S,S
+2025,Q4,000002,Albany Medical Center - South Clinical Campus,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,S,S,S,S
+2025,CY,000002,Albany Medical Center - South Clinical Campus,Hospital,36001,Albany,Outside of New York City,0101000H,Albany Medical Center Hospital,17,1,16,0
+2025,Q1,000004,Samaritan Hospital - Albany Memorial Campus,Hospital,36001,Albany,Outside of New York City,4102002H,Samaritan Hospital of Troy NY Inc,S,S,S,S
+2025,Q2,000004,Samaritan Hospital - Albany Memorial Campus,Hospital,36001,Albany,Outside of New York City,4102002H,Samaritan Hospital of Troy NY Inc,S,S,S,S
+2025,Q3,000004,Samaritan Hospital - Albany Memorial Campus,Hospital,36001,Albany,Outside of New York City,4102002H,Samaritan Hospital of Troy NY Inc,S,S,S,S
+2025,Q4,000004,Samaritan Hospital - Albany Memorial Campus,Hospital,36001,Albany,Outside of New York City,4102002H,Samaritan Hospital of Troy NY Inc,S,S,S,S
+2025,CY,000004,Samaritan Hospital - Albany Memorial Campus,Hospital,36001,Albany,Outside of New York City,4102002H,Samaritan Hospital of Troy NY Inc,38192,38190,2,0
+2025,Q1,000005,St. Peter's Hospital,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,10252,6791,43,3418
+2025,Q2,000005,St. Peter's Hospital,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,10636,7047,50,3539
+2025,Q3,000005,St. Peter's Hospital,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,10750,7262,56,3432
+2025,Q4,000005,St. Peter's Hospital,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,11073,7467,53,3553
+2025,CY,000005,St. Peter's Hospital,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,42711,28567,202,13942
+2024,Q1,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,985,831,0,154
+2024,Q2,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1205,1004,0,201
+2024,Q3,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1157,824,0,333
+2024,Q4,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1182,842,0,340
+2024,CY,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,4529,3501,0,1028
+2025,Q1,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1215,837,0,378
+2025,Q2,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1444,1005,0,439
+2025,Q3,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1280,827,0,453
+2025,Q4,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,1179,813,0,366
+2025,CY,001164,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,5118,3482,0,1636
+2024,Q1,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,27458,23709,59,3690
+2024,Q2,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,27694,24049,79,3566
+2024,Q3,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,27165,23522,107,3536
+2024,Q4,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,27637,23886,70,3681
+2024,CY,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,109954,95166,315,14473
+2025,Q1,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,27136,23349,62,3725
+2025,Q2,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,26540,22693,82,3765
+2025,Q3,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,26453,22716,122,3615
+2025,Q4,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,27529,23929,107,3493
+2025,CY,001165,Jacobi Medical Center,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,107658,92687,373,14598
+2024,Q1,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,12359,S,S,S
+2024,Q2,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,12851,S,S,S
+2024,Q3,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,13241,S,S,S
+2024,Q4,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,13656,S,S,S
+2024,CY,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,52107,41349,36,10722
+2025,Q1,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,13560,S,S,S
+2025,Q2,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,14232,S,S,S
+2025,Q3,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,14358,S,S,S
+2025,Q4,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,13849,S,S,S
+2025,CY,001168,Montefiore Medical Center-Wakefield Hospital,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,55999,45586,13,10400
+2024,Q1,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,35771,28612,65,7094
+2024,Q2,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,34362,27443,51,6868
+2024,Q3,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,34016,26791,56,7169
+2024,Q4,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,37117,29473,52,7592
+2024,CY,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,141266,112319,224,28723
+2025,Q1,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,36659,29354,49,7256
+2025,Q2,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,33495,26447,37,7011
+2025,Q3,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,32346,25210,40,7096
+2025,Q4,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,35610,28396,40,7174
+2025,CY,001169,Montefiore Medical Center - Henry & Lucy Moses Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,138110,109407,166,28537
+2023,Q1,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,34013,30586,51,3376
+2023,Q2,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,33714,30179,56,3479
+2023,Q3,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,32900,29574,71,3255
+2023,Q4,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,33790,30314,65,3411
+2023,CY,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,134417,120653,243,13521
+2024,Q1,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,33443,29936,80,3427
+2024,Q2,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,34017,30480,88,3449
+2024,Q3,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,33269,29609,107,3553
+2024,Q4,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,34392,30701,65,3626
+2024,CY,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,135121,120726,340,14055
+2025,Q1,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,32905,29262,88,3555
+2025,Q2,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,33855,30058,121,3676
+2025,Q3,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,33402,29963,127,3312
+2025,Q4,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,34648,31002,135,3511
+2025,CY,001172,Lincoln Medical & Mental Health Center,Hospital,36005,Bronx,New York City,7000008H,New York City Health and Hospitals Corporation,134810,120285,471,14054
+2024,Q1,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17212,14183,17,3012
+2024,Q2,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17638,14403,20,3215
+2024,Q3,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17136,13913,21,3202
+2024,Q4,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17837,14702,11,3124
+2024,CY,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,69823,57201,69,12553
+2025,Q1,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17423,14356,11,3056
+2025,Q2,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17972,14652,17,3303
+2025,Q3,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,18135,14901,23,3211
+2025,Q4,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,17735,14644,10,3081
+2025,CY,001176,SBH Health System,Hospital,36005,Bronx,New York City,7000014H,St Barnabas Hospital Inc,71265,58553,61,12651
+2024,Q1,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28132,S,S,S
+2024,Q2,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28391,S,S,S
+2024,Q3,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,26270,S,S,S
+2024,Q4,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28511,S,S,S
+2024,CY,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,111304,93323,34,17947
+2025,Q1,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28559,S,S,S
+2025,Q2,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28221,S,S,S
+2025,Q3,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28365,S,S,S
+2025,Q4,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,28198,S,S,S
+2025,CY,001178,BronxCare Hospital Center,Hospital,36005,Bronx,New York City,7000001H,BronxCare Health System,113343,93742,45,19556
+2024,Q1,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,8876,8876,0,0
+2024,Q2,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,8840,8840,0,0
+2024,Q3,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,8451,8451,0,0
+2024,Q4,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,9098,9098,0,0
+2024,CY,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,35265,35265,0,0
+2025,Q1,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,Q2,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,Q3,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,Q4,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,CY,001185,Montefiore Medical Center - Montefiore Westchester Square,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,36976,36975,1,0
+2024,Q1,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,13087,11756,22,1309
+2024,Q2,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,12291,10980,28,1283
+2024,Q3,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,11906,10421,29,1456
+2024,Q4,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,12599,11211,18,1370
+2024,CY,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,49883,44368,97,5418
+2025,Q1,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,12535,11033,29,1473
+2025,Q2,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,11560,10094,24,1442
+2025,Q3,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,11286,9615,26,1645
+2025,Q4,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,12287,10838,24,1425
+2025,CY,001186,North Central Bronx Hospital,Hospital,36005,Bronx,New York City,7000002H,New York City Health and Hospitals Corporation,47668,41580,103,5985
+2024,Q1,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,16421,12206,68,4147
+2024,Q2,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,16823,12354,62,4407
+2024,Q3,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,17162,12746,56,4360
+2024,Q4,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,17618,13220,72,4326
+2024,CY,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,68024,50526,258,17240
+2025,Q1,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,17496,13006,62,4428
+2025,Q2,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,16468,11977,46,4445
+2025,Q3,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,17904,13012,50,4842
+2025,Q4,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,17260,12547,41,4672
+2025,CY,003058,Montefiore Med Center - Jack D Weiler Hosp of A Einstein College Div,Hospital,36005,Bronx,New York City,7000006H,Montefiore Medical Center,69128,50542,199,18387
+2025,Q1,009431,St. Peter's Addiction Recovery Center,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,S,S,S,S
+2025,Q2,009431,St. Peter's Addiction Recovery Center,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,S,S,S,S
+2025,Q3,009431,St. Peter's Addiction Recovery Center,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,S,S,S,S
+2025,Q4,009431,St. Peter's Addiction Recovery Center,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,S,S,S,S
+2025,CY,009431,St. Peter's Addiction Recovery Center,Hospital,36001,Albany,Outside of New York City,0101004H,St Peters Hospital Inc,10,0,0,10
+2024,Q1,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2024,Q2,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2024,Q3,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2024,Q4,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2024,CY,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,94,90,4,0
+2025,Q1,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,Q2,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,Q3,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,Q4,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,S,S,S,S
+2025,CY,009750,Montefiore Hutchinson Campus,Hospital Extension Clinic,36005,Bronx,New York City,7000006H,Montefiore Medical Center,69,66,3,0

@@ -1,0 +1,6 @@
+cms_ccn,cms_facility_name,nys_pfi,nys_facility_name,match_method,reviewed_on,review_note
+330009,BRONXCARE HOSPITAL CENTER,001164,BronxCare Hospital Center,exact_address,2026-11-15,"Address and ZIP match (1276 Fulton Ave, 10456). NYS lists another BronxCare hospital site whose main site is 001164; these files do not show which sites CMS results for 330009 include."
+330059,MONTEFIORE MEDICAL CENTER,001169,Montefiore Medical Center - Henry & Lucy Moses Div,exact_address,2026-11-15,"Address and ZIP match (111 E 210th St, 10467). Several NYS Montefiore sites list 001169 as main site; these files do not show which sites CMS results for 330059 include."
+330080,LINCOLN MEDICAL & MENTAL HEALTH CENTER,001172,Lincoln Medical & Mental Health Center,exact_address,2026-11-15,"Address and ZIP match (234 E 149th St, 10451)."
+330127,JACOBI MEDICAL CENTER,001165,Jacobi Medical Center,partial_address,2026-11-15,"Same street number, ZIP 10461, and facility name. CMS address adds 'SOUTH' (1400 Pelham Parkway South vs NYS 1400 Pelham Parkway). Reviewed and accepted. NYS lists North Central Bronx Hospital with main site 001165."
+330399,ST BARNABAS HOSPITAL,001176,SBH Health System,exact_address,2026-11-15,"Address and ZIP match (4422 Third Ave, 10457). NYS facility name is 'SBH Health System' and NYS operator is 'St Barnabas Hospital Inc'."

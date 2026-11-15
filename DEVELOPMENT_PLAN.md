@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.3 · **Last updated:** 2026-11-15 · **Current:** Milestone 1 complete; Milestone 2 not started
+**Status:** Draft v0.4 · **Last updated:** 2026-11-15 · **Current:** Milestone 2 complete; Milestone 3 not started
 
-Milestones 2–10 are **planned**. Items are checked off only when built and tested.
+Milestones 3–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -68,16 +68,36 @@ move to Milestone 3, where the synthetic generator needs them.
 
 **You'll learn:** packaging, virtual environments, type-validated config, writing your first tests.
 
-## Milestone 2 — Public reference data
+## Milestone 2 — Public reference data ✅
 **Goal:** Real, citable Bronx context — kept separate from everything else.
-- Identify and verify candidate public sources (e.g., CMS Care Compare ED
-  timeliness measures; NYS Department of Health hospital data). Confirm
-  measure definitions, current availability, and reporting periods before use.
-- Script to download raw files into `data/public/raw/` (git-ignored).
-- Curate a small processed table for Bronx hospitals → `data/public/processed/`.
-- `data/public/SOURCES.md` with URL, publisher, definition, period, retrieval date.
-- `public_reference.py` loader returning DataFrames tagged `PUBLIC`.
-- **Tests:** schema checks, no patient-level columns, provenance = `PUBLIC`.
+- [x] Verified 5 official sources against publisher catalog APIs (2026-11-15):
+  CMS Timely and Effective Care, CMS Footnote Crosswalk, CMS Hospital General
+  Information, NYS DOH Health Facility General Information, NYS DOH ED
+  Encounters by Facility (aggregate SPARCS counts).
+- [x] Measure catalog (`data/ed_measures.py`) separating OP-18 (ED time for
+  discharged patients), OP-22 (left without being seen), EDV (volume
+  category), and NYS encounter counts. **Door-to-provider and admitted-patient
+  boarding time are not available** from any reviewed source; asking for
+  them raises an explanatory error.
+- [x] Loaders (`cms_loader.py`, `nys_loader.py`) preserving IDs, URLs, measure
+  IDs, dates, units, raw scores, and official missing-data reasons. Missing or
+  suppressed values are never converted to 0.
+- [x] Facility matching (`facility_matching.py`) plus a human-reviewed
+  crosswalk (`data/public/reference/bronx_facility_crosswalk.csv`): 5 CMS Bronx
+  ED hospitals matched to NYS records. Exclusions and NYS-only sites documented.
+- [x] Reproducible pipeline (`public_pipeline.py`: `download` / `register` /
+  `build`) with SHA-256 manifests and byte-identical rebuilds.
+- [x] Processed outputs committed: `bronx_ed_measures.csv` (470 rows),
+  `bronx_facilities.csv` (15 rows), `build_manifest.json`.
+- [x] `data/public/SOURCES.md` and `docs/PUBLIC_DATA_METHODOLOGY.md`.
+- [x] **Tests:** 262 total (100% line coverage), offline, using byte-for-byte
+  excerpts of official files plus fictional edge cases.
+
+**Changes from plan:** `public_reference.py` was split into focused modules.
+DataFrame provenance helpers (`tag_dataframe`, `require_provenance`) were
+added here instead of Milestone 3. The CMS catalog refused Python's standard
+HTTP client (HTTP 403), so a documented manual `register` path was added and
+used.
 
 **You'll learn:** data provenance, reproducible data pipelines, pandas cleaning.
 
@@ -86,7 +106,7 @@ move to Milestone 3, where the synthetic generator needs them.
 - Time-varying arrivals (hour-of-day × day-of-week) via non-homogeneous Poisson process.
 - Patient attributes: acuity (1–5), needs lab / imaging, admission probability by acuity.
 - Extend the site profile with acuity mix and service-time assumptions (validated, with source notes).
-- Provenance helper for DataFrames (every generated table tagged `SYNTHETIC`).
+- Tag every generated table `SYNTHETIC` using `tag_dataframe()` (built in Milestone 2).
 - Seeded randomness → identical output for identical seed.
 - **Tests:** reproducibility; acuity mix within tolerance of config; arrival
   counts match expected rate over many days; all rows tagged `SYNTHETIC`.

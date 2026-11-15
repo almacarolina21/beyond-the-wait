@@ -1,0 +1,71 @@
+{
+  "builder": "beyond_the_wait.data.public_pipeline",
+  "crosswalk_sha256": "2a46d4cd74e0e27927ce65370aa53d5c92bd8d54515540a0617a60151a32a289",
+  "inputs": {
+    "cms_footnote_crosswalk": {
+      "dataset_id": "y9us-9xdf",
+      "download_url": "https://data.cms.gov/provider-data/sites/default/files/resources/f29bb7c812e242f6edfef0a4b7d0eaca_1760630713/Footnote_Crosswalk.csv",
+      "retrieved_on": "2026-11-15",
+      "sha256": "5214e1468fb04c5cdeac8920f2c446cccaa65e2f6f929424cd228042a52d963e",
+      "source_last_modified": "2025-09-18"
+    },
+    "cms_hospital_general_information": {
+      "dataset_id": "xubh-q36u",
+      "download_url": "https://data.cms.gov/provider-data/sites/default/files/resources/d3bf87c5505155f549d603688414f3c6_1793059553/Hospital_General_Information_2.csv",
+      "retrieved_on": "2026-11-15",
+      "sha256": "ff2a82a7149975fb86348e7f901aa3bcd9f3701e8b0ecd0ab34702df193ff559",
+      "source_last_modified": "2026-10-26"
+    },
+    "cms_timely_effective_care": {
+      "dataset_id": "yv7e-xc69",
+      "download_url": "https://data.cms.gov/provider-data/sites/default/files/resources/0437b5494ac61507ad90f2af6b8085a7_1792599910/Timely_and_Effective_Care-Hospital.csv",
+      "retrieved_on": "2026-11-15",
+      "sha256": "473241c09b40010baa4b734d0b8bed540d2c275491368da5d08be4f19a019b92",
+      "source_last_modified": "2026-10-19"
+    },
+    "nys_health_facility_general_information": {
+      "dataset_id": "vn5v-hh5r",
+      "download_url": "https://health.data.ny.gov/api/views/vn5v-hh5r/rows.csv?accessType=DOWNLOAD",
+      "retrieved_on": "2026-11-15",
+      "sha256": "25cc9c681b1c51ccc9bcdfaa06de910a83ebbcdb3e19dadf3ebd77e6cd65272a",
+      "source_last_modified": "2026-10-23"
+    },
+    "nys_sparcs_ed_encounters_by_facility": {
+      "dataset_id": "5gzv-zv2z",
+      "download_url": "https://health.data.ny.gov/api/views/5gzv-zv2z/rows.csv?accessType=DOWNLOAD",
+      "retrieved_on": "2026-11-15",
+      "sha256": "9ff256ef40d04d0e9ade63ee39640846b2441cf2c2187a1fc3f54876a9d1dc50",
+      "source_last_modified": "2026-10-22"
+    }
+  },
+  "outputs": {
+    "bronx_ed_measures.csv": {
+      "rows": 470,
+      "sha256": "c77fba0ac7d49c8aca5e061b87d9640ea85273c3216690fc7b349cf5c17e1723"
+    },
+    "bronx_facilities.csv": {
+      "rows": 15,
+      "sha256": "8ff9296958e056ed3c16e7a9c720a119e4a6e3d0d0111d35b7f53eee520ddf41"
+    }
+  },
+  "package_version": "0.1.0",
+  "parameters": {
+    "county": "Bronx",
+    "nys_years": [
+      2024,
+      2025
+    ]
+  },
+  "reports": {
+    "cms": {
+      "exact_duplicates_dropped": 0,
+      "rows_kept": 30,
+      "rows_read": 161313
+    },
+    "nys": {
+      "exact_duplicates_dropped": 0,
+      "rows_kept": 440,
+      "rows_read": 8395
+    }
+  }
+}
