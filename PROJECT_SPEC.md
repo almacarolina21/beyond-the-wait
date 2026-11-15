@@ -3,9 +3,10 @@
 **Status:** Draft v0.2 · **Owner:** Project author · **Last updated:** 2026-11-15
 
 > **Planning document.** This spec describes what we *intend* to build. As of
-> Milestone 2, the foundation exists: validated configuration models,
-> provenance labels, and a public-data pipeline producing Bronx ED reference
-> tables (the data behind F1). **None of features F1–F10 are implemented as
+> Milestone 3, the foundation exists: validated configuration models,
+> provenance labels, a public-data pipeline producing Bronx ED reference
+> tables (the data behind F1), and the synthetic patient generator (F2, as a
+> library and command-line tool). **None of features F1–F10 are implemented as
 > user-facing features yet.** See
 > [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for progress. Unfamiliar terms are defined in the [Glossary](#9-glossary).
 

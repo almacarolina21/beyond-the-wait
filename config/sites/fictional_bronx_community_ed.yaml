@@ -12,7 +12,7 @@
 #  in public reporting about Bronx emergency care.
 # =============================================================================
 
-schema_version: 1
+schema_version: 2
 
 site:
   site_id: riverside_commons_ed
@@ -79,7 +79,68 @@ arrivals:
     - 8.5   # 21:00
     - 7.5   # 22:00
     - 6.5   # 23:00
-  source_note: "Illustrative hourly pattern; magnitudes are assumptions, not observed counts."
+  # Scales every hour of that weekday. Must average 1.0 across the week.
+  # Shape (busier early week) is an illustrative assumption.
+  day_of_week_multipliers:
+    monday: 1.10
+    tuesday: 1.03
+    wednesday: 1.00
+    thursday: 0.98
+    friday: 0.98
+    saturday: 0.95
+    sunday: 0.96
+  source_note: "Illustrative hourly and weekday pattern; magnitudes are assumptions, not observed counts."
+
+# -----------------------------------------------------------------------------
+# PATIENT MIX -- all values are ILLUSTRATIVE ASSUMPTIONS, not measurements.
+# Per-acuity values are CONDITIONAL probabilities: e.g. lab 2: 0.85 means
+# "85% of ESI-2 patients need a lab test".
+# Implied overall shares: admission 19.79%, lab 55.4%, imaging 44.8%.
+# -----------------------------------------------------------------------------
+patient_mix:
+  acuity_distribution:            # share of arrivals at each ESI level; sums to 1
+    1: 0.01
+    2: 0.15
+    3: 0.45
+    4: 0.30
+    5: 0.09
+  lab_probability_by_acuity:
+    1: 0.95
+    2: 0.85
+    3: 0.75
+    4: 0.25
+    5: 0.05
+  imaging_probability_by_acuity:
+    1: 0.85
+    2: 0.65
+    3: 0.55
+    4: 0.30
+    5: 0.05
+  admission_probability_by_acuity:  # must imply inpatient.ed_admission_fraction (0.20)
+    1: 0.80
+    2: 0.45
+    3: 0.25
+    4: 0.03
+    5: 0.01
+  source_note: "Illustrative assumptions with the general shape of a busy urban ED; not derived from any hospital's data and not calibrated to CMS or NYS measures."
+
+# -----------------------------------------------------------------------------
+# SERVICE TIMES -- assumed durations of WORK (minutes), used by the Milestone 4
+# simulation. Not waits, not lengths of stay. median = typical; p90 = 9 in 10
+# finish within this time.
+# -----------------------------------------------------------------------------
+service_times:
+  triage: { median: 8, p90: 15 }
+  provider_evaluation_by_acuity:
+    1: { median: 60, p90: 120 }
+    2: { median: 45, p90: 90 }
+    3: { median: 35, p90: 70 }
+    4: { median: 20, p90: 40 }
+    5: { median: 15, p90: 30 }
+  lab_turnaround: { median: 60, p90: 120 }
+  imaging_turnaround: { median: 75, p90: 150 }
+  discharge_process: { median: 30, p90: 75 }
+  source_note: "Illustrative task-duration assumptions for simulation; not measured at any hospital."
 
 inpatient:
   staffed_beds: 300

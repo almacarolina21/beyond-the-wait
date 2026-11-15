@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.4 · **Last updated:** 2026-11-15 · **Current:** Milestone 2 complete; Milestone 3 not started
+**Status:** Draft v0.5 · **Last updated:** 2026-11-15 · **Current:** Milestone 3 complete; Milestone 4 not started
 
-Milestones 3–10 are **planned**. Items are checked off only when built and tested.
+Milestones 4–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -101,15 +101,32 @@ used.
 
 **You'll learn:** data provenance, reproducible data pipelines, pandas cleaning.
 
-## Milestone 3 — Synthetic patient generator
+## Milestone 3 — Synthetic patient generator ✅
 **Goal:** Realistic-but-fake patients driven by documented assumptions.
-- Time-varying arrivals (hour-of-day × day-of-week) via non-homogeneous Poisson process.
-- Patient attributes: acuity (1–5), needs lab / imaging, admission probability by acuity.
-- Extend the site profile with acuity mix and service-time assumptions (validated, with source notes).
-- Tag every generated table `SYNTHETIC` using `tag_dataframe()` (built in Milestone 2).
-- Seeded randomness → identical output for identical seed.
-- **Tests:** reproducibility; acuity mix within tolerance of config; arrival
-  counts match expected rate over many days; all rows tagged `SYNTHETIC`.
+- [x] Site profile **schema v2**: optional day-of-week multipliers (must
+  average 1.0), `patient_mix` (ESI 1–5 distribution; lab, imaging, and
+  admission probabilities *by acuity*), and `service_times` (lognormal
+  median/p90 per task, for Milestone 4). Overall admission implied by the mix
+  must agree with `inpatient.ed_admission_fraction`.
+- [x] `data/synthetic_generator.py`: time-varying Poisson arrivals (exact,
+  hour by hour; each hour uses its own date's multiplier), conditional
+  attributes, NumPy `default_rng` with separate arrival and attribute streams.
+- [x] Output: anonymous `SYN-…` IDs, arrival date/time, acuity, lab and
+  imaging needs, hypothetical admission flag, and `SYNTHETIC` provenance.
+  **No outcomes** (waits, length of stay) are generated.
+- [x] `validate_synthetic_patients()` and a CLI demonstration
+  (`python -m beyond_the_wait.data.synthetic_generator`).
+- [x] `docs/SYNTHETIC_DATA_ASSUMPTIONS.md` (assumption register, all
+  unverified illustrative values) and a verification log for the Milestone 2
+  CMS definitions (unchanged).
+- [x] **Tests:** 337 total, 100% line coverage. Covers reproducibility,
+  Poisson count distribution, hourly and weekday profiles, acuity and
+  conditional proportions, zero/low/high volume, midnight boundaries, and
+  validation. Mutation-checked: deliberately broken generators fail the tests.
+
+**Changes from plan:** service times are configured and validated here but
+sampled in Milestone 4; patient attributes and simulation outcomes stay
+separate.
 
 **You'll learn:** probability distributions, random seeds, statistical testing.
 

@@ -79,10 +79,11 @@ substituting another measure (`src/beyond_the_wait/data/ed_measures.py`).
   be the number of ED patients the percentage is based on, but the data
   dictionary doesn't define it per measure, so we keep it as published and
   don't call it "ED visits."
-- **Status note:** ACEP's comment letter on the CY 2024 OPPS proposed rule
-  addressed a proposal to remove OP-22. We didn't verify the final rule.
-  OP-22 is still published in the current file (2024 period). Confirm its
-  status before relying on future releases.
+- **Status note:** CMS proposed removing the LWBS measure in the CY 2024
+  OPPS proposed rule (ACEP commented against it). Secondary summaries report
+  that removal was **not finalized** (see §10; Federal Register text not
+  checked). OP-22 is still published in the current file (2024 period).
+  Confirm its status before relying on future releases.
 
 ### EDV: ED volume (category)
 
@@ -234,3 +235,18 @@ The original published text is always kept in `score_raw`.
   provides an official CCN↔PFI key.
 - On 2026-11-15, the CMS catalog API refused Python's standard HTTP client
   (HTTP 403), so files were registered through the manual path.
+
+## 10. Verification log (Milestone 3 review)
+
+Reviewed 2026-11-15. **No official measure definition was changed.**
+
+| Item | What we checked | Result | Status |
+|---|---|---|---|
+| OP-18 population and exclusions | Searched for the current Hospital OQR Specifications Manual | The current manual wasn't located. Secondary sources point to it, and CMS materials list OP-18a/c/d strata, consistent with the current CMS file. A Telligen deadline notice cites "specifications version 18.0c" (unconfirmed). | **Partly verified.** Definitions still rest on eCQM CMS32v7 plus the October 2026 data dictionary. |
+| OP-22 status | Searched for the CY 2024 OPPS final rule outcome | AAMC and America's Essential Hospitals report CMS **did not finalize** removal of the ED LWBS measure. Leapfrog's analysis describes a modified approach (suspension pending future rulemaking). The Federal Register text wasn't checked. The current CMS file still publishes OP-22 for 2024. | **Partly verified.** Measure kept as published; status to recheck on future CMS releases. |
+| Door-to-provider availability | Re-checked the current CMS file | Still no door-to-provider measure. | Unchanged |
+
+Sources consulted: [AAMC summary of the CY 2024 OPPS final rule](https://www.aamc.org/advocacy-policy/washington-highlights/cms-releases-cy-2024-opps-final-rule);
+[America's Essential Hospitals](https://essentialhospitals.org/cms-issues-cy-2024-opps-final-rule/);
+[Leapfrog OPPS 2024 final rule analysis](https://prod-next.leapfroggroup.org/sites/default/files/Files/OPPS%20FY%2024%20Final%20Rule%20Analysis_final.pdf);
+[Telligen MBQIP submission deadlines (May 2026)](https://www.telligen.com/wp-content/uploads/2026/05/MonthlyMBQIPDataSubmissionDeadlines_202605_508.pdf).

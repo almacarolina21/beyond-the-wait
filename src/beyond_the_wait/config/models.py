@@ -101,6 +101,44 @@ Slug = Annotated[str, Field(pattern=r"^[a-z0-9]+(?:_[a-z0-9]+)*$", min_length=3,
 # Required explanation of where a section's numbers came from.
 SourceNote = Annotated[str, Field(min_length=10)]
 
+# ESI-like triage levels: 1 = most urgent, 5 = least urgent.
+ESI_LEVELS: tuple[int, ...] = (1, 2, 3, 4, 5)
+
+Weekday = Literal["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+WEEKDAYS: tuple[str, ...] = (
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+)  # fmt: skip  -- index matches Python's date.weekday() (Monday = 0)
+
+# A day-of-week multiplier scales every hourly rate on that day (1.10 = 10% busier).
+DayMultiplier = Annotated[Number, Field(gt=0.0, le=3.0, allow_inf_nan=False)]
+
+# Probabilities must sum to 1 within this tolerance (allows for decimal rounding).
+PROBABILITY_SUM_TOLERANCE = 1e-6
+# Allowed gap between the per-acuity admission probabilities and the overall
+# ed_admission_fraction (see SiteProfile validation).
+ADMISSION_CONSISTENCY_TOLERANCE = 0.005
+# Ceiling for any single service-time assumption: 24 hours, in minutes.
+MAX_SERVICE_MINUTES = 24 * 60.0
+# z-score of the 90th percentile of a standard normal distribution.
+Z_90 = 1.2815515655446004
+
+
+def _check_esi_keys(mapping: dict[int, object], name: str) -> None:
+    """Every ESI level 1-5 must appear exactly once, and nothing else."""
+    missing = sorted(set(ESI_LEVELS) - set(mapping))
+    unknown = sorted(set(mapping) - set(ESI_LEVELS))
+    if missing or unknown:
+        raise ValueError(
+            f"{name} must have exactly ESI levels {list(ESI_LEVELS)}; "
+            f"missing: {missing}, unsupported: {unknown}"
+        )
+
 
 class StrictModel(BaseModel):
     """Base class: forbid unknown keys, freeze after validation, trim strings."""
@@ -216,23 +254,177 @@ class ArrivalAssumptions(StrictModel):
 
     `hourly_rates[0]` is the average for 00:00-00:59, `hourly_rates[13]` for
     13:00-13:59, and so on. These are *averages*; the synthetic generator
-    (Milestone 3) will add realistic random variation around them.
+    adds random (Poisson) variation around them.
+
+    Optional `day_of_week_multipliers` scale every hour of a given weekday
+    (e.g., monday: 1.10 = 10% busier than average). They must average exactly
+    1.0 across the week, so `hourly_rates` still describe an average day.
     """
 
     hourly_rates: Annotated[
         list[HourlyRate], Field(min_length=HOURS_PER_DAY, max_length=HOURS_PER_DAY)
     ]
+    day_of_week_multipliers: dict[Weekday, DayMultiplier] | None = None
     source_note: SourceNote
 
     @property
     def expected_daily_arrivals(self) -> float:
-        """Sum of the 24 hourly averages = expected arrivals per day."""
+        """Sum of the 24 hourly averages = expected arrivals on an average day."""
         return sum(self.hourly_rates)
 
+    def multiplier_for(self, weekday_index: int) -> float:
+        """Multiplier for a weekday (0 = Monday, as in date.weekday())."""
+        if self.day_of_week_multipliers is None:
+            return 1.0
+        return self.day_of_week_multipliers[WEEKDAYS[weekday_index]]  # type: ignore[index]
+
     @model_validator(mode="after")
-    def _some_arrivals(self) -> ArrivalAssumptions:
+    def _check_arrivals(self) -> ArrivalAssumptions:
         if self.expected_daily_arrivals <= 0:
             raise ValueError("hourly_rates are all zero; an ED must expect some arrivals")
+        multipliers = self.day_of_week_multipliers
+        if multipliers is not None:
+            missing = [d for d in WEEKDAYS if d not in multipliers]
+            if missing:
+                raise ValueError(f"day_of_week_multipliers is missing: {missing}")
+            mean = sum(multipliers.values()) / len(WEEKDAYS)
+            if abs(mean - 1.0) > 0.001:
+                raise ValueError(
+                    f"day_of_week_multipliers must average 1.0 across the week (got {mean:.4f}) "
+                    "so that hourly_rates keep meaning 'an average day'"
+                )
+            peak = max(self.hourly_rates) * max(multipliers.values())
+            if peak > MAX_PLAUSIBLE_HOURLY_ARRIVALS:
+                raise ValueError(
+                    f"busiest hour x busiest day gives {peak:.1f} arrivals/hour, above the "
+                    f"plausibility ceiling of {MAX_PLAUSIBLE_HOURLY_ARRIVALS}"
+                )
+        return self
+
+
+# ---------------------------------------------------------------------------
+# Patient mix: acuity and conditional probabilities
+# ---------------------------------------------------------------------------
+
+
+class PatientMix(StrictModel):
+    """Who arrives: acuity mix and, FOR EACH ACUITY LEVEL, the chance of needing
+    a lab test, imaging, or (hypothetically) admission.
+
+    These are *conditional* probabilities: lab_probability_by_acuity[2] = 0.85
+    means "of ESI-2 patients, 85% need a lab test" -- not "85% of all
+    patients". The overall share follows from the law of total probability:
+
+        P(lab) = sum over levels a of  P(acuity = a) x P(lab | acuity = a)
+
+    Simplification: given acuity, lab, imaging, and admission are drawn
+    independently. In reality they're correlated (e.g., imaging often
+    precedes admission). See docs/SYNTHETIC_DATA_ASSUMPTIONS.md.
+    """
+
+    acuity_distribution: dict[StrictInt, Fraction]
+    lab_probability_by_acuity: dict[StrictInt, Fraction]
+    imaging_probability_by_acuity: dict[StrictInt, Fraction]
+    admission_probability_by_acuity: dict[StrictInt, Fraction]
+    source_note: SourceNote
+
+    @model_validator(mode="after")
+    def _check_mix(self) -> PatientMix:
+        for name in (
+            "acuity_distribution",
+            "lab_probability_by_acuity",
+            "imaging_probability_by_acuity",
+            "admission_probability_by_acuity",
+        ):
+            _check_esi_keys(getattr(self, name), name)
+        total = sum(self.acuity_distribution.values())
+        if abs(total - 1.0) > PROBABILITY_SUM_TOLERANCE:
+            raise ValueError(f"acuity_distribution must sum to 1.0 (got {total:.6f})")
+        return self
+
+    def _overall(self, conditional: dict[int, float]) -> float:
+        return sum(self.acuity_distribution[a] * conditional[a] for a in ESI_LEVELS)
+
+    @property
+    def implied_admission_fraction(self) -> float:
+        """Overall admission share implied by the acuity mix (law of total probability)."""
+        return self._overall(self.admission_probability_by_acuity)
+
+    @property
+    def implied_lab_fraction(self) -> float:
+        return self._overall(self.lab_probability_by_acuity)
+
+    @property
+    def implied_imaging_fraction(self) -> float:
+        return self._overall(self.imaging_probability_by_acuity)
+
+
+# ---------------------------------------------------------------------------
+# Service-time assumptions (inputs for the Milestone 4 simulation)
+# ---------------------------------------------------------------------------
+
+ServiceMinutes = Annotated[Number, Field(gt=0.0, le=MAX_SERVICE_MINUTES, allow_inf_nan=False)]
+
+
+class LognormalMinutes(StrictModel):
+    """How long a task takes, described by its median and 90th percentile.
+
+    Why lognormal? Task durations are always positive and "right-skewed":
+    most are near the typical time, a few take much longer. A lognormal
+    distribution has exactly that shape. We describe it with two numbers an
+    administrator can reason about -- "typically 35 minutes; 9 in 10 finish
+    within 70" -- and convert them to the distribution's internal parameters.
+
+    These are durations of WORK (e.g., a lab result's turnaround), not waits
+    or outcomes. Waiting emerges later, in the simulation, when demand
+    exceeds capacity.
+    """
+
+    median: ServiceMinutes
+    p90: ServiceMinutes
+
+    @model_validator(mode="after")
+    def _p90_above_median(self) -> LognormalMinutes:
+        if self.p90 <= self.median:
+            raise ValueError(
+                f"p90 ({self.p90}) must be greater than median ({self.median}); "
+                "durations vary, so the 90th percentile is always above the median"
+            )
+        return self
+
+    @property
+    def mu(self) -> float:
+        """Mean of log(duration)."""
+        return math.log(self.median)
+
+    @property
+    def sigma(self) -> float:
+        """Standard deviation of log(duration), chosen so the 90th percentile = p90."""
+        return (math.log(self.p90) - math.log(self.median)) / Z_90
+
+    @property
+    def mean(self) -> float:
+        """Average duration in minutes (above the median because of the long tail)."""
+        return math.exp(self.mu + self.sigma**2 / 2)
+
+
+class ServiceTimeAssumptions(StrictModel):
+    """Assumed durations of ED tasks, in minutes. Used by the Milestone 4 simulation.
+
+    Not used by the synthetic patient generator, which produces patient
+    attributes only.
+    """
+
+    triage: LognormalMinutes
+    provider_evaluation_by_acuity: dict[StrictInt, LognormalMinutes]
+    lab_turnaround: LognormalMinutes
+    imaging_turnaround: LognormalMinutes
+    discharge_process: LognormalMinutes
+    source_note: SourceNote
+
+    @model_validator(mode="after")
+    def _check_levels(self) -> ServiceTimeAssumptions:
+        _check_esi_keys(self.provider_evaluation_by_acuity, "provider_evaluation_by_acuity")
         return self
 
 
@@ -293,14 +485,20 @@ class SiteInfo(StrictModel):
 
 
 class SiteProfile(StrictModel):
-    """Complete configuration for one fictional emergency department."""
+    """Complete configuration for one fictional emergency department.
 
-    schema_version: Literal[1]
+    schema_version 2 (Milestone 3) added `patient_mix`, `service_times`, and
+    optional day-of-week arrival multipliers.
+    """
+
+    schema_version: Literal[2]
     site: SiteInfo
     provenance: ProvenanceRecord
     staffing: StaffingPlan
     treatment_spaces: TreatmentSpaces
     arrivals: ArrivalAssumptions
+    patient_mix: PatientMix
+    service_times: ServiceTimeAssumptions
     inpatient: InpatientCapacity
 
     @model_validator(mode="after")
@@ -311,6 +509,20 @@ class SiteProfile(StrictModel):
         if self.provenance.label is not Provenance.SYNTHETIC:
             raise ValueError(
                 f"site profiles must have provenance label SYNTHETIC, got {self.provenance.label}"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _admission_assumptions_agree(self) -> SiteProfile:
+        # The same assumption is stated twice: once overall (inpatient section)
+        # and once per acuity level (patient_mix). They must agree, or the
+        # simulation would use two contradictory admission rates.
+        implied = self.patient_mix.implied_admission_fraction
+        stated = self.inpatient.ed_admission_fraction
+        if abs(implied - stated) > ADMISSION_CONSISTENCY_TOLERANCE:
+            raise ValueError(
+                f"admission assumptions disagree: patient_mix implies {implied:.4f} of patients "
+                f"are admitted, but inpatient.ed_admission_fraction is {stated:.4f}"
             )
         return self
 

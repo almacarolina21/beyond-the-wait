@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-milestone%202%20of%2010-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%203%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -87,7 +87,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestones 1–2 complete — configuration foundation and public reference data.**
+✅ **Milestones 1–3 complete: configuration foundation, public reference data, and synthetic patient generator.**
 
 *Milestone 1: configuration*
 - **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
@@ -114,10 +114,22 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
   what these measures mean, and why they **can't identify the cause of a
   hospital's delays**.
 
-**262 unit tests**, 100% line coverage, all offline.
+*Milestone 3: synthetic patient generator*
+- **Fictional patients** for the fictional Riverside Commons ED: time-varying
+  Poisson arrivals (hourly and weekday patterns), ESI-like acuity, and lab,
+  imaging, and hypothetical-admission flags drawn **conditional on acuity**.
+- **Reproducible:** an explicit seed gives identical patients every time.
+- **Attributes only:** no waits or lengths of stay. Those come from the
+  simulation (Milestone 4).
+- Every row is labeled `SYNTHETIC`. Assumptions are documented as unverified
+  and illustrative in
+  [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md).
+  They are **not calibrated to any real hospital**.
 
-**Not built yet:** synthetic patients, simulation, dashboard, and Claude
-integration. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+**337 unit tests**, 100% line coverage, all offline.
+
+**Not built yet:** simulation, dashboard, and Claude integration. See
+[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -142,6 +154,13 @@ print(site.site.display_name, '-', site.arrivals.expected_daily_arrivals, 'expec
 new = apply_scenario(site, load_scenario('config/scenarios/add_evening_physician.yaml'))
 print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', new.staffing.physicians_on_duty['evening'])
 "
+```
+
+Generate one day of fictional ED patients:
+
+```bash
+python -m beyond_the_wait.data.synthetic_generator --seed 42 --date 2026-11-16
+# options: --days N  --sample K  --out data/synthetic/day.csv
 ```
 
 Rebuild the public reference tables (offline, from downloaded files):
@@ -186,6 +205,7 @@ until their milestone is built.
 - [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) — milestones
 - [data/README.md](data/README.md) — data provenance rules
 - [data/public/SOURCES.md](data/public/SOURCES.md) — official public sources and manual-download steps
+- [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md) — every synthetic assumption, and how synthetic data differs from public data
 - [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer

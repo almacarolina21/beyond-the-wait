@@ -2,9 +2,9 @@
 
 **Status:** Draft v0.3 · **Last updated:** 2026-11-15
 
-> **Partly implemented.** As of Milestone 2, the **configuration layer
-> (§2.2)**, **provenance labels**, and the **public-data pipeline (§2.1)** are
-> implemented and tested. Everything else below is planned. Module names marked "planned"
+> **Partly implemented.** As of Milestone 3, the **configuration layer
+> (§2.2)**, **provenance labels**, the **public-data pipeline**, and the
+> **synthetic patient generator (§2.1)** are implemented and tested. Everything else below is planned. Module names marked "planned"
 > may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
@@ -56,7 +56,7 @@
 | `cms_loader.py` / `nys_loader.py` ✅ | Validated loaders: raw text first, explicit unit conversion, official missing-data reasons, duplicate and reporting-period checks. |
 | `facility_matching.py` ✅ | CMS↔NYS matching by normalized address + ZIP, validated against a human-reviewed crosswalk. |
 | `public_pipeline.py` ✅ | `download` / `register` / `build` → `data/public/processed/` with reproducible, fingerprinted outputs. See [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md). |
-| `synthetic_generator.py` | Creates synthetic patients: arrival time (time-varying Poisson process), acuity, diagnostic needs, admission flag. Driven by a site profile + random seed. |
+| `synthetic_generator.py` ✅ | Creates fictional patients from a site profile + seed: time-varying Poisson arrivals (hour by hour, each hour using its own date's weekday multiplier), ESI acuity, then lab, imaging, and hypothetical admission **conditional on acuity**. Separate random streams for arrivals and attributes. Produces **attributes only, no outcomes**. Every row is tagged `SYNTHETIC`. See [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md). |
 
 **Why it's designed this way:** In healthcare IT you'd never mix a test
 patient into production reporting. Same idea here — the provenance tag
@@ -68,8 +68,10 @@ travels with the data so the UI and Claude can't confuse them.
 
 - **Site profile** (`config/sites/*.yaml`): site identity (must be marked
   `fictional: true`), physician and nurse staffing by shift, treatment spaces,
-  24 hourly arrival rates, and inpatient capacity. Every section has a required
-  `source_note`. *(Acuity mix and service times are planned for Milestone 3.)*
+  24 hourly arrival rates with optional day-of-week multipliers, patient mix
+  (ESI distribution; lab, imaging, and admission probabilities by acuity),
+  service-time assumptions (lognormal median/p90), and inpatient capacity.
+  Every section has a required `source_note`. Schema version 2 (Milestone 3).
 - **Scenario** (`config/scenarios/*.yaml`): a named set of *relative* changes
   (e.g., "+1 evening physician", "×1.1 arrivals") applied on top of a site
   profile by `apply_scenario()`, which re-validates the result.
@@ -235,6 +237,7 @@ beyond-the-wait/
 │   └── synthetic/             # Generated synthetic patients (git-ignored)
 ├── docs/
 │   ├── PUBLIC_DATA_METHODOLOGY.md  # What public ED measures do and don't mean
+│   ├── SYNTHETIC_DATA_ASSUMPTIONS.md  # Every synthetic assumption (fictional, unverified)
 │   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases

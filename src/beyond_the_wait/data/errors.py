@@ -7,3 +7,7 @@ class PublicDataError(ValueError):
     The pipeline stops on these errors instead of guessing, because a quietly
     "fixed" public number is worse than no number.
     """
+
+
+class SyntheticDataError(ValueError):
+    """A synthetic-generation request or generated table is invalid."""
