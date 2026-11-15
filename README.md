@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-planning-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%201%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -25,8 +25,9 @@ grounded strictly in the validated results.
 
 ## What it will do (planned)
 
-> 🚧 These features are **planned and not yet implemented.** The repository
-> currently contains only planning documents and an empty project structure.
+> 🚧 These features are **planned and not yet implemented.** So far the
+> repository contains the planning documents and the configuration foundation
+> described under [Project status](#project-status).
 
 - 📊 **Public context** — official, aggregate Bronx hospital ED metrics, labeled `PUBLIC` with sources.
 - 🧪 **Synthetic patients** — realistic-but-fake arrivals generated from documented assumptions, labeled `SYNTHETIC`.
@@ -86,22 +87,47 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-🚧 **Milestone 0 complete — planning and structure only.** No simulation,
-dashboard, or Claude integration exists yet. See
-[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for the roadmap.
+✅ **Milestone 1 complete — configuration foundation.** Implemented and tested:
+
+- **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict validation.
+- **Validated configuration models** (Pydantic v2) for a fictional ED: staffing
+  by shift, treatment spaces, hourly arrivals, inpatient capacity, and
+  intervention scenarios.
+- **Safe YAML loading** and `apply_scenario()` for what-if changes.
+- **One fictional example site**, "Riverside Commons Community ED", in
+  `config/sites/`. It's labeled fictional and doesn't represent any real hospital.
+- **132 unit tests**, 100% line coverage.
+
+**Not built yet:** public data, synthetic patients, simulation, dashboard, and
+Claude integration. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
-> Installation instructions will be added in Milestone 1. There is nothing to
-> run yet; the steps below only set up an empty environment.
+Requires Python 3.12+.
 
 ```bash
 git clone <repo-url>   # repository URL will be added once published
 cd beyond-the-wait
-python3 -m venv .venv
-source .venv/bin/activate
-cp .env.example .env   # add your Anthropic API key (optional; app runs without it)
+python3 -m venv .venv                 # create an isolated environment
+source .venv/bin/activate             # activate it (Windows: .venv\Scripts\activate)
+pip install -e ".[dev]"               # install the project + dev tools
+pytest                                # run the test suite
 ```
+
+Try the configuration layer:
+
+```bash
+python -c "
+from beyond_the_wait.config import load_site_profile, load_scenario, apply_scenario
+site = load_site_profile('config/sites/fictional_bronx_community_ed.yaml')
+print(site.site.display_name, '-', site.arrivals.expected_daily_arrivals, 'expected arrivals/day')
+new = apply_scenario(site, load_scenario('config/scenarios/add_evening_physician.yaml'))
+print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', new.staffing.physicians_on_duty['evening'])
+"
+```
+
+An Anthropic API key is not needed until Milestone 8. When it is, you'll copy
+`.env.example` to `.env` and add the key there.
 
 ## Repository layout
 
@@ -121,7 +147,9 @@ src/beyond_the_wait/
 tests/             Unit and integration tests
 ```
 
-Folders are placeholders until their milestone is built.
+Only `config/`, `src/beyond_the_wait/config/`, `src/beyond_the_wait/data/provenance.py`,
+and `tests/unit/` contain working code so far. The other folders are
+placeholders until their milestone is built.
 
 ## Documentation
 

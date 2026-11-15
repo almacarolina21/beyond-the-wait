@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.2 · **Last updated:** 2026-11-15 · **Current:** Milestone 0 complete; Milestone 1 not started
+**Status:** Draft v0.3 · **Last updated:** 2026-11-15 · **Current:** Milestone 1 complete; Milestone 2 not started
 
-Milestones 1–10 are **planned**. Items are checked off only when built and tested.
+Milestones 2–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -35,18 +35,36 @@ what it does in your own words.
 
 **Done when:** a reviewer can read the docs and understand the plan.
 
-## Milestone 1 — Dev environment & core contracts
+## Milestone 1 — Dev environment & core contracts ✅
 **Goal:** A working, testable Python package with the shared "vocabulary" the
 rest of the project uses.
-- `pyproject.toml` with dependencies (simpy, pandas, plotly, streamlit,
-  pydantic, pyyaml, anthropic, python-dotenv) and dev tools (pytest, pytest-cov, ruff).
-- Virtual environment instructions; `pip install -e ".[dev]"` works.
-- `data/provenance.py`: `Provenance` enum + metadata helper.
-- `config/models.py`: Pydantic `SiteProfile` and `Scenario` models.
-- One example site profile: `config/sites/bronx_synthetic_example.yaml`
-  (clearly marked as illustrative assumptions).
-- **Tests:** provenance tags attach and persist; invalid configs (negative beds,
-  probabilities > 1) are rejected; example YAML loads.
+- [x] `pyproject.toml` (Python ≥ 3.12) with runtime dependencies (pydantic v2,
+  pyyaml, simpy, pandas, plotly, streamlit, anthropic, python-dotenv) and dev
+  tools (pytest, pytest-cov, ruff). Packages for later milestones are installed
+  but not yet used.
+- [x] Project virtual environment (`.venv`); `pip install -e ".[dev]"` works.
+- [x] `data/provenance.py`: `Provenance` enum (`PUBLIC`/`SYNTHETIC`/`SIMULATED`),
+  strict label parsing, and `ProvenanceRecord` (label + source + retrieval date
+  required for `PUBLIC`).
+- [x] `config/models.py`: Pydantic models for site identity, physician/nurse
+  staffing by shift, treatment spaces, hourly arrivals, inpatient capacity,
+  and intervention scenarios.
+- [x] `config/loader.py`: safe YAML loading (no code execution, duplicate keys
+  rejected) with readable error messages.
+- [x] `config/scenarios.py`: `apply_scenario()` produces a new, re-validated
+  site profile. *(Pulled forward from Milestone 6 so scenario validation could
+  be tested now.)*
+- [x] Fictional example site: `config/sites/fictional_bronx_community_ed.yaml`
+  ("Riverside Commons Community ED") and example scenario
+  `config/scenarios/add_evening_physician.yaml`.
+- [x] **Tests:** 132 unit tests, 100% line coverage of `src/`. They cover negative
+  staffing/beds, invalid arrival rates, missing fields, unsupported provenance
+  labels, shift coverage, real-hospital-name guard, scenario application, and
+  YAML safety.
+
+**Deferred:** attaching provenance to pandas DataFrames moves to Milestones 2–3,
+where the first DataFrames are created. Acuity mix and service-time assumptions
+move to Milestone 3, where the synthetic generator needs them.
 
 **You'll learn:** packaging, virtual environments, type-validated config, writing your first tests.
 
@@ -67,6 +85,8 @@ rest of the project uses.
 **Goal:** Realistic-but-fake patients driven by documented assumptions.
 - Time-varying arrivals (hour-of-day × day-of-week) via non-homogeneous Poisson process.
 - Patient attributes: acuity (1–5), needs lab / imaging, admission probability by acuity.
+- Extend the site profile with acuity mix and service-time assumptions (validated, with source notes).
+- Provenance helper for DataFrames (every generated table tagged `SYNTHETIC`).
 - Seeded randomness → identical output for identical seed.
 - **Tests:** reproducibility; acuity mix within tolerance of config; arrival
   counts match expected rate over many days; all rows tagged `SYNTHETIC`.
@@ -96,7 +116,8 @@ rest of the project uses.
 
 ## Milestone 6 — Scenarios, uncertainty & bottleneck decomposition
 **Goal:** Answer "what changes if we…?" honestly.
-- Scenario YAML files applied on top of a site profile.
+- More scenario YAML files, applied with `apply_scenario()` (built in Milestone 1);
+  extend scenario levers as new site-profile fields are added (e.g., lab turnaround).
 - Run N replications per scenario; compute means and 95% CIs.
 - Baseline vs. scenario differences with CIs.
 - LOS decomposition by stage → dominant simulated bottleneck.

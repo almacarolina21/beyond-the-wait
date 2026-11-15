@@ -1,10 +1,11 @@
 # Architecture — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.2 · **Last updated:** 2026-11-15
+**Status:** Draft v0.3 · **Last updated:** 2026-11-15
 
-> **Planned design.** This document describes the architecture we intend to
-> build. As of Milestone 0, the folders exist but **none of the modules below
-> are implemented**. Module names marked "planned" may change as we build.
+> **Mostly planned design.** As of Milestone 1, only the **configuration
+> layer (§2.2)** and the **provenance labels (§2.1)** are implemented and
+> tested. Everything else below is planned. Module names marked "planned"
+> may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
 > **Core principle:** *Python calculates. Claude explains. Humans decide.*
@@ -47,9 +48,9 @@
 
 **Purpose:** Supply inputs and keep real and fake data strictly separated.
 
-| Module (planned) | Responsibility |
+| Module | Responsibility |
 |---|---|
-| `provenance.py` | `Provenance` enum (`PUBLIC`, `SYNTHETIC`, `SIMULATED`) and a helper that attaches source metadata to every DataFrame/metric. |
+| `provenance.py` ✅ | **Implemented:** `Provenance` enum (`PUBLIC`, `SYNTHETIC`, `SIMULATED`), strict parsing that rejects unknown labels, and `ProvenanceRecord` (label + source, plus retrieval date for `PUBLIC`). **Planned (M2–3):** helper that attaches provenance to every DataFrame/metric. |
 | `public_reference.py` | Loads curated public aggregate metrics (e.g., CMS Care Compare ED timeliness measures, NYS DOH data) from `data/public/processed/`, with source, definition, and period. |
 | `synthetic_generator.py` | Creates synthetic patients: arrival time (time-varying Poisson process), acuity, diagnostic needs, admission flag. Driven by a site profile + random seed. |
 
@@ -57,18 +58,26 @@
 patient into production reporting. Same idea here — the provenance tag
 travels with the data so the UI and Claude can't confuse them.
 
-### 2.2 Configuration layer — `src/beyond_the_wait/config/` + `config/`
+### 2.2 Configuration layer — `src/beyond_the_wait/config/` + `config/` ✅ (Milestone 1)
 
 **Purpose:** Keep *what we model* separate from *how we model it*.
 
-- **Site profile** (`config/sites/*.yaml`): beds, staff by shift, arrival
-  pattern, acuity mix, service-time assumptions, admission rate. Each
-  assumption carries a `source` note ("assumption", "literature", or a public
-  dataset reference).
-- **Scenario** (`config/scenarios/*.yaml`): a named set of changes applied on
-  top of a site profile (e.g., "+1 evening provider", "lab turnaround −20%").
-- Validated with **Pydantic** models so a typo or impossible value (negative
+- **Site profile** (`config/sites/*.yaml`): site identity (must be marked
+  `fictional: true`), physician and nurse staffing by shift, treatment spaces,
+  24 hourly arrival rates, and inpatient capacity. Every section has a required
+  `source_note`. *(Acuity mix and service times are planned for Milestone 3.)*
+- **Scenario** (`config/scenarios/*.yaml`): a named set of *relative* changes
+  (e.g., "+1 evening physician", "×1.1 arrivals") applied on top of a site
+  profile by `apply_scenario()`, which re-validates the result.
+- Validated with **Pydantic v2** models so a typo or impossible value (negative
   beds) fails loudly before any simulation runs.
+
+| Module | Responsibility |
+|---|---|
+| `models.py` | The Pydantic models and all validation rules |
+| `loader.py` | Safe YAML loading (no code execution, duplicate keys rejected), readable errors |
+| `scenarios.py` | `apply_scenario()` — returns a new validated profile; never modifies the original |
+| `errors.py` | `ConfigError` / `ScenarioError` so callers can catch config problems in one place |
 
 **Why:** This is the reusability requirement. Adapting to a new health system
 means writing a new YAML file, not editing Python. It mirrors how Epic build
@@ -230,9 +239,11 @@ beyond-the-wait/
 │   ├── interpretation/        # Evidence packet, Claude client, guardrails
 │   └── evaluation/            # Eval harness and scorers
 ├── tests/
+│   ├── conftest.py · paths.py # Shared fixtures and file locations
 │   ├── unit/
 │   └── integration/
 ├── .env.example               # Template for the API key (real .env is git-ignored)
+├── pyproject.toml             # Package metadata, dependencies, tool settings
 ├── LICENSE                    # MIT
 ├── PROJECT_SPEC.md · ARCHITECTURE.md · DEVELOPMENT_PLAN.md · README.md
 ```

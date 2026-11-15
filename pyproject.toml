@@ -1,0 +1,52 @@
+# pyproject.toml — the single file that describes this Python project:
+# its name, which Python it needs, what it depends on, and how tools
+# (pytest, ruff) are configured. `pip install -e ".[dev]"` reads this file.
+
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beyond-the-wait"
+version = "0.1.0"
+description = "Decision-support lab for investigating emergency department patient-flow bottlenecks using synthetic data, simulation, and grounded AI explanations."
+readme = "README.md"
+license = "MIT"               # SPDX identifier (modern packaging standard)
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+# Runtime dependencies. Lower bounds only (">=") so pip can pick current
+# compatible releases; Pydantic is capped below 3 because our models use the
+# Pydantic v2 API.
+dependencies = [
+    "pydantic>=2.7,<3",      # Typed, validated configuration models (Milestone 1)
+    "pyyaml>=6.0",           # Read human-editable YAML config files (Milestone 1)
+    "simpy>=4.1",            # Discrete-event simulation (Milestone 4)
+    "pandas>=2.2",           # Tabular analysis (Milestones 2-6)
+    "plotly>=5.20",          # Charts (Milestone 7)
+    "streamlit>=1.35",       # Dashboard (Milestone 7)
+    "anthropic>=0.40",       # Claude API client (Milestone 8)
+    "python-dotenv>=1.0",    # Load API key from .env (Milestone 8)
+]
+
+[project.optional-dependencies]
+# Developer-only tools, installed with: pip install -e ".[dev]"
+dev = [
+    "pytest>=8.0",           # Test runner
+    "pytest-cov>=5.0",       # Test coverage reports
+    "ruff>=0.5",             # Linter / formatter
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]              # "src layout": importable code lives under src/
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]   # errors, pyflakes, imports, bugbear, pyupgrade

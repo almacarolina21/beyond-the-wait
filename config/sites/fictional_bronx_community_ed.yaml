@@ -1,0 +1,88 @@
+# =============================================================================
+#  FICTIONAL SITE PROFILE -- NOT A REAL HOSPITAL
+# =============================================================================
+#  "Riverside Commons Community ED" is an invented emergency department.
+#  Every number below is an ILLUSTRATIVE ASSUMPTION written for this project
+#  so the simulation has something plausible to run. None of these values
+#  were taken from, or represent, Lincoln, St. Barnabas, or any other real
+#  hospital, in the Bronx or elsewhere.
+#
+#  "Bronx-inspired" means only that the scenario context (a busy urban
+#  safety-net ED with boarding pressure) reflects challenges widely discussed
+#  in public reporting about Bronx emergency care.
+# =============================================================================
+
+schema_version: 1
+
+site:
+  site_id: riverside_commons_ed
+  display_name: "Riverside Commons Community ED (fictional)"
+  fictional: true
+  disclaimer: >-
+    Fictional emergency department. All values are illustrative assumptions
+    for simulation and teaching; they do not describe any real hospital.
+
+provenance:
+  label: SYNTHETIC
+  source: "Illustrative assumptions written for this project; not derived from any hospital's data."
+
+staffing:
+  # Three 8-hour shifts covering the full day. Counts are clinicians on duty
+  # *at the same time* during that shift, not total employees.
+  shifts:
+    - { name: day,     start_hour: 7,  duration_hours: 8 }   # 07:00-15:00
+    - { name: evening, start_hour: 15, duration_hours: 8 }   # 15:00-23:00
+    - { name: night,   start_hour: 23, duration_hours: 8 }   # 23:00-07:00
+  physicians_on_duty:
+    day: 4
+    evening: 4
+    night: 2
+  nurses_on_duty:
+    day: 14
+    evening: 14
+    night: 10
+  source_note: "Illustrative assumption sized for ~190 expected daily arrivals; not real staffing data."
+
+treatment_spaces:
+  acute_beds: 36
+  resuscitation_bays: 3
+  fast_track_chairs: 8
+  hallway_spaces: 6
+  source_note: "Illustrative assumption for a mid-to-large urban ED; not a real floor plan."
+
+arrivals:
+  # Average patients arriving in each clock hour; index 0 = 00:00-00:59.
+  # Shape (overnight low, late-morning peak) follows the widely described
+  # daily ED arrival pattern. Expected total: 190.5 patients/day.
+  hourly_rates:
+    - 5.5   # 00:00
+    - 4.5   # 01:00
+    - 4.0   # 02:00
+    - 3.5   # 03:00
+    - 3.0   # 04:00
+    - 3.0   # 05:00
+    - 3.5   # 06:00
+    - 5.0   # 07:00
+    - 7.5   # 08:00
+    - 10.0  # 09:00
+    - 11.5  # 10:00
+    - 12.0  # 11:00
+    - 12.0  # 12:00
+    - 11.5  # 13:00
+    - 11.0  # 14:00
+    - 11.0  # 15:00
+    - 10.5  # 16:00
+    - 10.5  # 17:00
+    - 10.0  # 18:00
+    - 9.5   # 19:00
+    - 9.0   # 20:00
+    - 8.5   # 21:00
+    - 7.5   # 22:00
+    - 6.5   # 23:00
+  source_note: "Illustrative hourly pattern; magnitudes are assumptions, not observed counts."
+
+inpatient:
+  staffed_beds: 300
+  typical_occupancy: 0.93       # high occupancy -> boarding pressure
+  ed_admission_fraction: 0.20   # 20% of ED patients admitted
+  source_note: "Illustrative assumption representing a high-occupancy hospital; not real census data."

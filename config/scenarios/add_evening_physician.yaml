@@ -1,0 +1,13 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Changes are relative to the site profile (here: +1 physician on evenings).
+
+schema_version: 1
+scenario_id: add_evening_physician
+name: "Add one evening physician"
+description: >-
+  Hypothetical intervention: add one physician to the evening shift
+  (15:00-23:00) to test whether provider capacity limits evening flow.
+applies_to_site: riverside_commons_ed
+
+staffing_changes:
+  - { role: physicians, shift: evening, change: 1 }

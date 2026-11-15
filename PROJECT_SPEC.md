@@ -3,9 +3,9 @@
 **Status:** Draft v0.2 · **Owner:** Project author · **Last updated:** 2026-11-15
 
 > **Planning document.** This spec describes what we *intend* to build. As of
-> Milestone 0, **no features are implemented** — only documentation and an
-> empty folder structure exist. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
-> for progress. Unfamiliar terms are defined in the [Glossary](#9-glossary).
+> Milestone 1, only the foundation exists: validated configuration models and
+> provenance labels. **None of features F1–F10 are implemented yet.** See
+> [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for progress. Unfamiliar terms are defined in the [Glossary](#9-glossary).
 
 ---
 
