@@ -1,0 +1,12 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+# SENSITIVITY: changes an UNCERTAIN ASSUMPTION, not an operational input.
+schema_version: 2
+scenario_id: sensitivity_physician_concurrency_3
+kind: sensitivity
+name: "Sensitivity: physicians evaluate up to 3 patients at once"
+description: >-
+  Expressly hypothetical assumption change for sensitivity analysis only: each
+  physician can actively evaluate up to 3 patients (baseline assumption: 2).
+applies_to_site: riverside_commons_ed
+physician_concurrency_override: 3

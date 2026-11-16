@@ -1,0 +1,12 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+# ARCHETYPE: a fictional problem condition used for teaching, not an intervention.
+schema_version: 2
+scenario_id: archetype_boarding_heavy
+kind: archetype
+name: "Archetype: boarding-heavy"
+description: >-
+  Fictional condition: only 38 inpatient beds open for ED patients per day
+  (about the expected 37.7 admissions), so boarding queues are near capacity.
+applies_to_site: riverside_commons_ed
+bed_release_change_per_day: -4

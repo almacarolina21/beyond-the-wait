@@ -116,8 +116,14 @@ With about 37.7 expected admissions a day, the boarding queue runs at about
 the time admitted patients have waited; there's no unit-specific bed matching
 (ICU vs. telemetry vs. medical); bed cleaning and transport time are zero; and
 `inpatient.staffed_beds` / `typical_occupancy` are **not** used by the
-simulation. The scenario lever `inpatient_bed_change` therefore **has no effect
-in Milestone 4**. A bed-release lever is planned for Milestone 6.
+simulation. **Milestone 6:** the ineffective `inpatient_bed_change` lever was
+removed (scenario schema v2 rejects it with guidance) and replaced by
+`bed_release_change_per_day`. Release times are now drawn by **thinning**:
+candidates at a ceiling rate of 200/day, each kept with probability
+`releases_per_day / 200` using its own random number. A higher release rate
+therefore keeps every release of a lower rate (paired scenarios differ only
+by the intervention). This changed the seed-42 bed randomness relative to the
+Milestone 4 run.
 
 ## 6. Stopping rule, unfinished visits, warm-up
 
@@ -225,11 +231,12 @@ same bed releases. Only the waiting changes. A test verifies this for the
 3. Lab and imaging have no capacity limits; there's no physician reassessment after results.
 4. Only triage nurses are modeled; nurse-to-patient ratios aren't.
 5. No left-without-being-seen behavior, and no patients leaving against advice.
-6. Boarding uses the simplified release stream (§5); `inpatient_bed_change` has no effect yet.
+6. Boarding uses the simplified release stream (§5); change it with `bed_release_change_per_day`.
 7. Transfer, bed cleaning, and transport times are zero.
 8. Fast track is open 24 hours; hallway spaces are always available.
 9. No ambulance diversion, surges, or seasonality.
-10. Results reflect one seed per run until Milestone 6.
+10. Single-run results reflect one seed. Multi-seed paired comparisons are in
+    [WHAT_IF_ANALYSIS.md](WHAT_IF_ANALYSIS.md).
 
 ## 11. How to run
 

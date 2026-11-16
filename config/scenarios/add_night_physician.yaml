@@ -1,0 +1,12 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+schema_version: 2
+scenario_id: add_night_physician
+kind: intervention
+name: "Add one night physician"
+description: >-
+  Hypothetical intervention: add one physician to the night shift
+  (23:00-07:00), targeting the 23:00 physician pinch point seen in Milestones 4-5.
+applies_to_site: riverside_commons_ed
+staffing_changes:
+  - { role: physicians, shift: night, change: 1 }

@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-milestone%205%20of%2010-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%206%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -87,7 +87,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestones 1–5 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, and metrics and validation gate.**
+✅ **Milestones 1–6 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, metrics and validation gate, and multi-seed what-if analysis.**
 
 *Milestone 1: configuration*
 - **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
@@ -150,11 +150,26 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
   not hidden. Safety limitations travel with every report. See
   [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md).
 
-**469 unit tests**, 100% line coverage, all offline.
+*Milestone 6: multi-seed what-if analysis*
+- **Real scenario levers:** physicians and triage nurses by shift, inpatient
+  bed releases per day, and diagnostic turnaround. Uncertain assumptions
+  (physician concurrency, demand) are allowed **only** in sensitivity and
+  stress tests. The ineffective `inpatient_bed_change` lever was removed.
+- **Paired comparisons:** baseline and intervention run on the same 30 seeds
+  with common random numbers, summarized as a paired-t 95% confidence interval
+  for the mean difference, kept separate from a prediction interval.
+- **Every replication passes through the validation gate.** A BLOCKED run
+  invalidates its comparison; CAUTION warnings are carried forward.
+- **Congestion shifts, archetypes, and sensitivity:** the analysis detects
+  interventions that relocate waiting, tests whether relieving a suspected
+  constraint actually helps (largest ≠ binding), and flags conclusions that
+  change with assumptions. See [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md).
+- **All findings are model-internal.** No intervention is claimed to be safe or
+  to apply to any real hospital.
 
-**Not built yet:** multi-seed scenario comparison, dashboard, and Claude
-integration. **Simulated results are from one seed at a time and are not yet
-suitable for comparing interventions.** See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+**568 unit tests**, 100% line coverage, all offline.
+
+**Not built yet:** dashboard and Claude integration. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -179,6 +194,12 @@ print(site.site.display_name, '-', site.arrivals.expected_daily_arrivals, 'expec
 new = apply_scenario(site, load_scenario('config/scenarios/add_evening_physician.yaml'))
 print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', new.staffing.physicians_on_duty['evening'])
 "
+```
+
+Run the multi-seed what-if analysis (about 6 minutes on 8 cores):
+
+```bash
+python -m beyond_the_wait.analysis.whatif_demo --seeds 30 --sensitivity-seeds 20 --workers 8
 ```
 
 Run the validated analysis (simulation + PASS/CAUTION/BLOCKED gate + detailed metrics):
@@ -245,6 +266,7 @@ until their milestone is built.
 - [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md) — every synthetic assumption, and how synthetic data differs from public data
 - [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md) — simulation journey, queue policies, boarding abstraction, stopping rule, validity checks, limitations
 - [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md) — PASS/CAUTION/BLOCKED gate, what each check protects against and cannot prove, detailed metrics, findings
+- [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md) — scenario levers, paired multi-seed method, results with 95% intervals, archetypes, sensitivity
 - [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer

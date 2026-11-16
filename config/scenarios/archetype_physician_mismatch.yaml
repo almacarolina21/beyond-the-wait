@@ -1,0 +1,14 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+# ARCHETYPE: a fictional problem condition used for teaching, not an intervention.
+schema_version: 2
+scenario_id: archetype_physician_mismatch
+kind: archetype
+name: "Archetype: physician staffing mismatch"
+description: >-
+  Fictional condition: same total physician shifts, but 5 on days, 3 on
+  evenings, 2 on nights, misaligned with the evening arrival peak.
+applies_to_site: riverside_commons_ed
+staffing_changes:
+  - { role: physicians, shift: day, change: 1 }
+  - { role: physicians, shift: evening, change: -1 }

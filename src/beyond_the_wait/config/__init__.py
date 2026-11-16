@@ -22,7 +22,7 @@ from beyond_the_wait.config.models import (
     TreatmentSpaceChange,
     TreatmentSpaces,
 )
-from beyond_the_wait.config.scenarios import apply_scenario
+from beyond_the_wait.config.scenarios import apply_scenario, scenario_effects
 
 __all__ = [
     "ArrivalAssumptions",
@@ -38,6 +38,7 @@ __all__ = [
     "TreatmentSpaceChange",
     "TreatmentSpaces",
     "apply_scenario",
+    "scenario_effects",
     "load_scenario",
     "load_site_profile",
 ]

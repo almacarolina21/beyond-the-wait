@@ -1,0 +1,12 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+schema_version: 2
+scenario_id: add_day_triage_nurse
+kind: intervention
+name: "Add one day triage nurse"
+description: >-
+  Hypothetical intervention for the triage-mismatch archetype: assign one more
+  nurse to triage on the day shift.
+applies_to_site: riverside_commons_ed
+staffing_changes:
+  - { role: triage_nurses, shift: day, change: 1 }

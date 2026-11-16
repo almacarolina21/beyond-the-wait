@@ -1,0 +1,12 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+schema_version: 2
+scenario_id: add_night_triage_nurse
+kind: intervention
+name: "Add one night triage nurse"
+description: >-
+  Hypothetical intervention: assign a second nurse to triage on the night
+  shift (drawn from nurses already on duty; total nurses unchanged).
+applies_to_site: riverside_commons_ed
+staffing_changes:
+  - { role: triage_nurses, shift: night, change: 1 }

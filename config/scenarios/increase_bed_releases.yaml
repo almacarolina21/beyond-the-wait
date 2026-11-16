@@ -1,0 +1,12 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+schema_version: 2
+scenario_id: increase_bed_releases
+kind: intervention
+name: "Six more inpatient beds released to the ED per day"
+description: >-
+  Hypothetical hospital-wide intervention (e.g., earlier inpatient discharges)
+  modeled as 6 more inpatient bed releases to the ED per day, with the same
+  afternoon-weighted timing.
+applies_to_site: riverside_commons_ed
+bed_release_change_per_day: 6

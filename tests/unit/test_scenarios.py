@@ -81,14 +81,19 @@ def test_apply_does_not_modify_original(site: SiteProfile, scenario: Scenario) -
 
 def test_apply_combined_changes(site: SiteProfile, scenario_dict: dict[str, Any]) -> None:
     scenario_dict.update(
+        kind="sensitivity",  # arrival_multiplier is an assumption, not an intervention
         treatment_space_changes=[{"space": "hallway_spaces", "change": -6}],
-        inpatient_bed_change=20,
+        bed_release_change_per_day=6,
+        diagnostic_turnaround_multiplier=0.75,
         arrival_multiplier=1.1,
     )
     changed = apply_scenario(site, Scenario.model_validate(scenario_dict))
     assert changed.treatment_spaces.hallway_spaces == 0
-    assert changed.inpatient.staffed_beds == 320
+    assert changed.operations.inpatient_bed_availability.releases_per_day == 48
+    assert changed.service_times.lab_turnaround.median == pytest.approx(45)
+    assert changed.service_times.imaging_turnaround.p90 == pytest.approx(112.5)
     assert changed.arrivals.expected_daily_arrivals == pytest.approx(190.5 * 1.1)
+    assert changed.inpatient.staffed_beds == site.inpatient.staffed_beds  # untouched
 
 
 def test_apply_to_wrong_site_rejected(site: SiteProfile, scenario_dict: dict[str, Any]) -> None:
@@ -129,6 +134,7 @@ def test_apply_cannot_make_beds_negative(site: SiteProfile, scenario_dict: dict[
 def test_apply_cannot_push_arrivals_past_plausible_ceiling(
     site: SiteProfile, scenario_dict: dict[str, Any]
 ) -> None:
+    scenario_dict["kind"] = "stress_test"
     scenario_dict["arrival_multiplier"] = 3.0  # 12/hr peak -> 36/hr is fine...
     apply_scenario(site, Scenario.model_validate(scenario_dict))
     tight = site.model_dump()

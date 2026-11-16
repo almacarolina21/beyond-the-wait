@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.7 · **Last updated:** 2026-11-16 · **Current:** Milestone 5 complete; Milestone 6 not started
+**Status:** Draft v0.8 · **Last updated:** 2026-11-16 · **Current:** Milestone 6 complete; Milestone 7 not started
 
-Milestones 6–10 are **planned**. Items are checked off only when built and tested.
+Milestones 7–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -192,25 +192,43 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 
 **You'll learn:** turning operational definitions into code (like building a report spec).
 
-## Milestone 6 — Scenarios, uncertainty & bottleneck decomposition
+## Milestone 6 — Multi-seed scenario comparison & what-if analysis ✅
 **Goal:** Answer "what changes if we…?" honestly.
-- More scenario YAML files, applied with `apply_scenario()` (built in Milestone 1);
-  extend scenario levers as new site-profile fields are added (e.g., lab turnaround).
-- Add a **bed-release lever** (`inpatient_bed_change` currently has no effect
-  on the simulation) and levers for physician concurrency and triage nurses.
-- Run N replications per scenario; compute means and 95% CIs. Run every
-  replication through the Milestone 5 gate; BLOCKED replications stop the analysis.
-- Baseline vs. scenario differences with CIs (common random numbers).
-- **Sensitivity analysis** of fictional assumptions: physician concurrency
-  (1–3) and bed releases per day.
-- Stage decomposition across seeds → a bottleneck claim only when CIs support it
-  (lift the gate's `no_bottleneck_claims` CAUTION only under those conditions).
-- Extend the gate with replication-level checks (CI width, seed count).
-- More priority-behavior tests (Milestone 4 mutation testing showed only one test guards ESI priority).
-- Example scenarios: boarding-heavy, staffing-mismatch, diagnostic-delay, coordination-delay.
-- **Tests:** reproducibility across runs; removing a constraint never *increases*
-  that stage's wait (directional sanity); each archetype scenario surfaces its
-  intended bottleneck.
+- [x] Lever audit: `nurses` has no simulated effect (flagged); spaces are wired up but
+  not binding at baseline; `inpatient_bed_change` had **no effect**, so it was
+  **removed** (scenario schema v2 rejects it with guidance).
+- [x] Real levers: physicians and **triage nurses** by shift,
+  **`bed_release_change_per_day`**, **`diagnostic_turnaround_multiplier`**, plus
+  assumption levers (`physician_concurrency_override` 1–3, `arrival_multiplier`),
+  allowed only in `sensitivity`/`stress_test` scenarios. `scenario_effects()`
+  reports simulated / not simulated / assumption changes. Baseline is immutable;
+  scenarios are reversible.
+- [x] Bed releases drawn by **thinning**, so paired scenarios share every release
+  (common random numbers for the bed lever).
+- [x] `analysis/statistics.py`: paired t CI (no SciPy; tested against published
+  tables), separate prediction interval, skewness.
+- [x] `analysis/experiments.py`: paired replications (parallel), every replication
+  through the Milestone 5 gate; BLOCKED → comparison BLOCKED with no numbers;
+  CAUTIONs carried forward; checks for seed coverage, pairing, missing data,
+  variability, skew, censoring, overload regime, unsupported conclusions;
+  congestion-shift detection; binding-constraint evidence (relief test, not
+  largest stage); sensitivity grid and stability verdicts.
+- [x] 12 fictional scenario files: 7 interventions, 4 archetypes (boarding-heavy,
+  physician mismatch, triage mismatch, diagnostic delay), 1 sensitivity.
+- [x] Demo `python -m beyond_the_wait.analysis.whatif_demo` (30 paired seeds; 20 for
+  sensitivity); CSV export for Milestone 7; `docs/WHAT_IF_ANALYSIS.md`.
+- [x] **Tests:** 568 total, 100% line coverage. Mutation-checked (BLOCKED handling,
+  pairing, bed-release coupling).
+
+**Changes from plan:**
+- The planned invariant "removing a constraint never increases a stage's wait" was
+  **deliberately dropped**: it isn't valid for interacting queues. Our own results
+  show extra triage capacity *increasing* physician waits, and tests now assert
+  that relocation instead.
+- "Coordination delay" was replaced by a triage-mismatch archetype, because no
+  coordination resource is modeled.
+- Seed-42 boarding numbers in Milestones 4–5 docs were updated for the new
+  bed-release sampling.
 
 **You'll learn:** experimental design, confidence intervals, counterfactual reasoning.
 
@@ -218,6 +236,10 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 **Goal:** An administrator can use the tool without code.
 - Pages: Public Context · Scenario Builder · Results & Comparison · About/Limitations.
 - Plotly charts; provenance badge on every metric and chart.
+- Visualize Milestone 6 outputs: paired-effect forest plots (mean difference + 95% CI
+  per intervention and metric), stage-time comparisons showing congestion moving,
+  a sensitivity heatmap (direction by assumption setting), archetype relief tests,
+  and validation-status and CAUTION badges. Always keep PUBLIC values on a separate page.
 - Caching so repeated runs are fast.
 - **Tests:** UI helper functions unit-tested; manual smoke-test checklist.
 

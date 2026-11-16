@@ -81,8 +81,8 @@ SAFETY_LIMITATIONS: tuple[str, ...] = (
     "TRIAGE IS FIRST COME, FIRST SERVED: acuity priority applies only after triage, so "
     "higher-acuity patients wait in the same triage line as everyone else.",
     "PHYSICIAN CONCURRENCY IS FICTIONAL: each physician is assumed to evaluate up to 2 "
-    "patients at once. Results are highly sensitive to this assumption and it has not been "
-    "varied (sensitivity analysis is planned for Milestone 6).",
+    "patients at once. Results are highly sensitive to this assumption; the Milestone 6 "
+    "sensitivity analysis varies it (1-3) and flags conclusions that change with it.",
     "BED RELEASES ARE A SIMPLIFIED ABSTRACTION: inpatient beds open for the ED at an "
     "assumed rate (42/day, afternoon-weighted). It is not derived from bed counts or "
     "occupancy, and boarding results depend heavily on it.",

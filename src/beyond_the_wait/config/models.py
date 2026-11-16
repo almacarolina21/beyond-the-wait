@@ -125,6 +125,9 @@ PROBABILITY_SUM_TOLERANCE = 1e-6
 ADMISSION_CONSISTENCY_TOLERANCE = 0.005
 # Ceiling for any single service-time assumption: 24 hours, in minutes.
 MAX_SERVICE_MINUTES = 24 * 60.0
+# Upper limit on inpatient bed releases per day. Also the "ceiling rate" the
+# simulation uses to draw coupled release times (see simulation/randomness.py).
+MAX_BED_RELEASES_PER_DAY = 200.0
 # z-score of the 90th percentile of a standard normal distribution.
 Z_90 = 1.2815515655446004
 
@@ -484,7 +487,9 @@ class InpatientBedAvailability(StrictModel):
     """
 
     model: Literal["simplified_release_stream"]
-    releases_per_day: Annotated[Number, Field(gt=0.0, le=500.0, allow_inf_nan=False)]
+    releases_per_day: Annotated[
+        Number, Field(gt=0.0, le=MAX_BED_RELEASES_PER_DAY, allow_inf_nan=False)
+    ]
     hourly_release_profile: Annotated[
         list[Fraction], Field(min_length=HOURS_PER_DAY, max_length=HOURS_PER_DAY)
     ]
@@ -638,9 +643,10 @@ class SiteProfile(StrictModel):
 # Intervention scenarios
 # ---------------------------------------------------------------------------
 
-StaffRole = Literal["physicians", "nurses"]
+StaffRole = Literal["physicians", "triage_nurses", "nurses"]
 TreatmentSpaceName = SpaceType  # one definition, shared with OperationsAssumptions
 NonZeroChange = Annotated[StrictInt, Field(description="Positive adds, negative removes.")]
+ScenarioKind = Literal["intervention", "archetype", "sensitivity", "stress_test"]
 
 
 def _nonzero(value: int) -> int:
@@ -650,7 +656,13 @@ def _nonzero(value: int) -> int:
 
 
 class StaffingChange(StrictModel):
-    """Add or remove staff of one role on one shift."""
+    """Add or remove staff of one role on one shift.
+
+    `physicians` and `triage_nurses` change simulated capacity. `nurses`
+    (total nurses on duty) has NO direct simulation effect: only triage
+    nurses are modeled. It only raises the ceiling on triage nurses and the
+    descriptive nurse-hour denominator.
+    """
 
     role: StaffRole
     shift: Slug
@@ -669,34 +681,79 @@ class TreatmentSpaceChange(StrictModel):
 
 
 class Scenario(StrictModel):
-    """A named what-if change applied on top of one site profile.
+    """A named what-if change applied on top of one site profile (schema v2).
 
-    Changes are *relative* (e.g., +1 physician), so the same scenario reads
-    naturally against its baseline. A scenario is validated twice: once on
-    its own (here), and again after it is applied, because a change that is
-    valid in isolation (-3 nurses) can still produce an invalid site.
+    Two kinds of change are kept apart:
+
+    CONTROLLABLE OPERATIONAL INPUTS (allowed in every kind)
+        staffing_changes (physicians, triage_nurses, nurses), treatment
+        space changes, bed_release_change_per_day, and
+        diagnostic_turnaround_multiplier.
+    UNCERTAIN ASSUMPTIONS (only in `sensitivity` or `stress_test` scenarios)
+        arrival_multiplier (demand) and physician_concurrency_override
+        (how many patients one physician can evaluate at once). Changing an
+        assumption is not an intervention; it asks "what if we were wrong?"
+
+    kinds: `intervention` (a hypothetical operational change), `archetype`
+    (a fictional condition used to build a teaching example), `sensitivity`
+    (vary an assumption), `stress_test` (deliberately overload the model).
+
+    Changes are relative, so the same scenario reads naturally against its
+    baseline, and the baseline profile is never modified (models are frozen;
+    apply_scenario returns a new profile).
     """
 
-    schema_version: Literal[1]
+    schema_version: Literal[2]
     scenario_id: Slug
+    kind: ScenarioKind
     name: Annotated[str, Field(min_length=3, max_length=120)]
     description: SourceNote
     applies_to_site: Slug
     staffing_changes: list[StaffingChange] = Field(default_factory=list)
     treatment_space_changes: list[TreatmentSpaceChange] = Field(default_factory=list)
-    inpatient_bed_change: StrictInt = 0
+    bed_release_change_per_day: Annotated[
+        Number,
+        Field(ge=-MAX_BED_RELEASES_PER_DAY, le=MAX_BED_RELEASES_PER_DAY, allow_inf_nan=False),
+    ] = 0.0
+    diagnostic_turnaround_multiplier: Annotated[
+        Number, Field(ge=0.25, le=4.0, allow_inf_nan=False)
+    ] = 1.0
     arrival_multiplier: Annotated[Number, Field(gt=0.0, le=3.0, allow_inf_nan=False)] = 1.0
+    physician_concurrency_override: Annotated[StrictInt, Field(ge=1, le=3)] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _retired_fields(cls, data: object) -> object:
+        if isinstance(data, dict) and "inpatient_bed_change" in data:
+            raise ValueError(
+                "inpatient_bed_change was removed: it changed staffed_beds, which the "
+                "simulation does not use, so it had no effect. Use "
+                "bed_release_change_per_day to change how many inpatient beds open for "
+                "ED patients each day."
+            )
+        return data
+
+    @property
+    def changes_assumptions(self) -> bool:
+        return self.arrival_multiplier != 1.0 or self.physician_concurrency_override is not None
 
     @model_validator(mode="after")
     def _check_changes(self) -> Scenario:
         has_change = (
             self.staffing_changes
             or self.treatment_space_changes
-            or self.inpatient_bed_change != 0
-            or self.arrival_multiplier != 1.0
+            or self.bed_release_change_per_day != 0
+            or self.diagnostic_turnaround_multiplier != 1.0
+            or self.changes_assumptions
         )
         if not has_change:
             raise ValueError("scenario makes no changes; the baseline is the site profile itself")
+        if self.changes_assumptions and self.kind in ("intervention", "archetype"):
+            raise ValueError(
+                f"a scenario of kind {self.kind!r} may not change uncertain assumptions "
+                "(arrival_multiplier, physician_concurrency_override); use kind "
+                "'sensitivity' or 'stress_test'"
+            )
 
         staff_keys = Counter((c.role, c.shift) for c in self.staffing_changes)
         space_keys = Counter(c.space for c in self.treatment_space_changes)

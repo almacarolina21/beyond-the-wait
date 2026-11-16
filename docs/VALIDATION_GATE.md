@@ -104,14 +104,23 @@ evaluation in the model, so any rate, even 0%, would be invented.
 
 ## 6. Baseline findings (seed 42; one run; suggestive, not established)
 
+> **Updated in Milestone 6.** Bed releases are now drawn by *thinning* so that
+> scenarios with different release rates stay paired (see
+> [WHAT_IF_ANALYSIS.md](WHAT_IF_ANALYSIS.md)). That changed the seed-42 bed
+> randomness, so the boarding numbers below differ from the original
+> Milestone 5 run (then: median 11 min overall; 410 min, 86% over 4 h for
+> night-shift decisions). Physician and triage results are unchanged. The
+> qualitative findings hold. Multi-seed estimates (Milestone 6) replace these
+> single-run figures for any comparison.
+
 Validation status: **CAUTION**. All 7 integrity checks PASS. CAUTIONs:
 peak-hour physician and triage load, bed releases near saturation, single
 seed, no bottleneck claims, model assumptions.
 
-- **Boarding finding survives and sharpens.** Overall median boarding is 11 min,
-  but for admissions decided on the **night shift** it's **410 min**, and 86%
-  of those patients boarded over 4 hours (day shift: 22 min, 0%). This is
-  driven by the *assumed* afternoon-weighted bed releases.
+- **Boarding finding survives.** Overall median boarding is 73 min, but for
+  admissions decided on the **night shift** it's **493 min**, and 84% of
+  those patients boarded over 4 hours (day shift: 31 min, 7%). This is driven
+  by the *assumed* afternoon-weighted bed releases.
 - **The "23:00 pinch point" is refined, not confirmed as unique.** By clock
   hour, the highest physician queue and utilization are at **13:00** (queue
   1.47, utilization 0.92). **23:00 is second** (0.94, 0.86), ahead of 12:00.
@@ -123,7 +132,7 @@ seed, no bottleneck claims, model assumptions.
   (15.0 min) is no faster than ESI 3–5 (13.3–14.4 min).
 - **ESI 1:** 11 patients, longest wait for a physician 4.2 min (PASS). The
   non-preemptive limitation still applies whenever the ED is full.
-- **No extreme waits in the baseline** (max LOS 907 min, an admitted ESI-1
+- **No extreme waits in the baseline** (max LOS 924 min, an admitted ESI-1
   patient who boarded). The overload stress test, by contrast, produces 540 of
   1,338 patients over 24 h. It's flagged CAUTION and overloaded, not hidden.
 

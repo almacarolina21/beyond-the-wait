@@ -1,0 +1,11 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+schema_version: 2
+scenario_id: faster_diagnostics
+kind: intervention
+name: "Lab and imaging turnaround 25% faster"
+description: >-
+  Hypothetical intervention: every lab and imaging turnaround time is 25%
+  shorter (median and 90th percentile both scaled by 0.75).
+applies_to_site: riverside_commons_ed
+diagnostic_turnaround_multiplier: 0.75

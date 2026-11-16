@@ -1,0 +1,13 @@
+# FICTIONAL what-if scenario for the fictional Riverside Commons Community ED.
+# Hypothetical; not a recommendation and not derived from any real hospital.
+schema_version: 2
+scenario_id: rebalance_physician_day_to_evening
+kind: intervention
+name: "Move one physician from day to evening"
+description: >-
+  Hypothetical intervention for the physician-mismatch archetype: same total
+  physician shifts, one moved from the day shift to the evening shift.
+applies_to_site: riverside_commons_ed
+staffing_changes:
+  - { role: physicians, shift: day, change: -1 }
+  - { role: physicians, shift: evening, change: 1 }

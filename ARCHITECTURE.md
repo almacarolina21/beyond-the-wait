@@ -1,11 +1,12 @@
 # Architecture — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.5 · **Last updated:** 2026-11-16
+**Status:** Draft v0.6 · **Last updated:** 2026-11-16
 
-> **Partly implemented.** As of Milestone 5, the **configuration layer
-> (§2.2)**, **provenance labels**, the **public-data pipeline**, the
-> **synthetic patient generator (§2.1)**, the **baseline simulation (§2.3)**,
-> and the **metrics and validation gate (§2.4)** are implemented and tested. Everything
+> **Partly implemented.** As of Milestone 6, the **configuration layer and
+> scenario levers (§2.2)**, **provenance labels**, the **public-data pipeline**,
+> the **synthetic patient generator (§2.1)**, the **baseline simulation
+> (§2.3)**, the **metrics and validation gate**, and **multi-seed paired
+> what-if analysis (§2.4)** are implemented and tested. Everything
 > else below is planned. Module names marked "planned" may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
@@ -73,9 +74,14 @@ travels with the data so the UI and Claude can't confuse them.
   (ESI distribution; lab, imaging, and admission probabilities by acuity),
   service-time assumptions (lognormal median/p90), and inpatient capacity.
   Every section has a required `source_note`. Schema version 2 (Milestone 3).
-- **Scenario** (`config/scenarios/*.yaml`): a named set of *relative* changes
-  (e.g., "+1 evening physician", "×1.1 arrivals") applied on top of a site
-  profile by `apply_scenario()`, which re-validates the result.
+- **Scenario** (`config/scenarios/*.yaml`, schema v2): a named set of *relative*
+  changes applied on top of a site profile by `apply_scenario()`, which
+  re-validates the result. Each scenario has a `kind` (`intervention`,
+  `archetype`, `sensitivity`, `stress_test`). **Controllable inputs**
+  (physicians and triage nurses per shift, spaces, bed releases per day,
+  diagnostic turnaround) are kept apart from **uncertain assumptions**
+  (demand, physician concurrency), which are only allowed in sensitivity and
+  stress tests.
 - Validated with **Pydantic v2** models so a typo or impossible value (negative
   beds) fails loudly before any simulation runs.
 
@@ -83,7 +89,7 @@ travels with the data so the UI and Claude can't confuse them.
 |---|---|
 | `models.py` | The Pydantic models and all validation rules |
 | `loader.py` | Safe YAML loading (no code execution, duplicate keys rejected), readable errors |
-| `scenarios.py` | `apply_scenario()` — returns a new validated profile; never modifies the original |
+| `scenarios.py` | `apply_scenario()` returns a new validated profile and never modifies the original; `scenario_effects()` reports which changes are simulated, not simulated, or assumptions |
 | `errors.py` | `ConfigError` / `ScenarioError` so callers can catch config problems in one place |
 
 **Why:** This is the reusability requirement. Adapting to a new health system
@@ -114,7 +120,7 @@ Full assumptions: [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md).
 | `engine.py` ✅ | `SimulationSettings`, `run_simulation()` → `SimulationResult` |
 | `validity.py` ✅ | Pre-run load checks; post-run flags (saturation, hard stop, unfinished, growing queue, short run, single seed) |
 | `demo.py` ✅ | Command-line demonstration |
-| *replications (planned, M6)* | Each scenario runs N times with different seeds; CIs across runs |
+| *replications* ✅ (M6) | Run in `analysis/experiments.py`: N paired seeds per arm; bed releases drawn by thinning so paired arms share every release |
 
 **Why discrete-event simulation?** Queues interact non-linearly — adding a
 provider does nothing if every bed is full of boarders. Spreadsheet averages
@@ -131,8 +137,9 @@ easy to test.
 | `detailed_metrics.py` ✅ | By-ESI percentiles and maxima, censoring-aware LOS, extreme waits, boarding distribution, **descriptive** stage decomposition, utilization by shift and hour, patients per staffed person-hour. LWBS marked **unavailable**. |
 | `validation.py` ✅ | **Validation gate**: typed report (PASS / CAUTION / BLOCKED); 7 integrity checks (conservation, event order and units, cohorts, resources, summary consistency, provenance, sample-path Little's Law) plus interpretation and scope checks. `release_for_interpretation()` refuses BLOCKED or mismatched reports. See [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md). |
 | `demo.py` ✅ | Validated-analysis demonstration with gate examples |
-| `comparison.py` *(planned, M6)* | Scenario vs. baseline differences with 95% confidence intervals across replications. |
-| *(planned, M6)* | Stage decomposition across seeds; a bottleneck claim only when confidence intervals support it. |
+| `statistics.py` ✅ | Paired t confidence interval for a mean difference (no SciPy), separate prediction interval, skewness. |
+| `experiments.py` ✅ | Paired multi-seed replications (parallel), every replication through the gate, BLOCKED → comparison BLOCKED, CAUTIONs carried forward, comparison-level checks, congestion-shift detection, binding-constraint evidence (relief test), sensitivity grid and stability verdicts. |
+| `whatif_demo.py` ✅ | What-if demonstration; exports CSVs for Milestone 7. See [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md). |
 
 ### 2.5 Interpretation layer — `src/beyond_the_wait/interpretation/`
 
@@ -256,6 +263,7 @@ beyond-the-wait/
 │   ├── SYNTHETIC_DATA_ASSUMPTIONS.md  # Every synthetic assumption (fictional, unverified)
 │   ├── SIMULATION_MODEL.md    # Simulation journey, policies, boarding abstraction, validity
 │   ├── VALIDATION_GATE.md     # PASS/CAUTION/BLOCKED gate, detailed metrics, limitations
+│   ├── WHAT_IF_ANALYSIS.md    # Paired multi-seed comparisons, levers, sensitivity, results
 │   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases
