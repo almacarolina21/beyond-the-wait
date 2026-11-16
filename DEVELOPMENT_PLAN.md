@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.8 · **Last updated:** 2026-11-16 · **Current:** Milestone 6 complete; Milestone 7 not started
+**Status:** Draft v0.9 · **Last updated:** 2026-11-16 · **Current:** Milestone 7 complete; Milestone 8 not started
 
-Milestones 7–10 are **planned**. Items are checked off only when built and tested.
+Milestones 8–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -232,16 +232,24 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 
 **You'll learn:** experimental design, confidence intervals, counterfactual reasoning.
 
-## Milestone 7 — Streamlit dashboard (no AI yet)
+## Milestone 7 — Streamlit dashboard (no AI yet) ✅
 **Goal:** An administrator can use the tool without code.
-- Pages: Public Context · Scenario Builder · Results & Comparison · About/Limitations.
-- Plotly charts; provenance badge on every metric and chart.
-- Visualize Milestone 6 outputs: paired-effect forest plots (mean difference + 95% CI
-  per intervention and metric), stage-time comparisons showing congestion moving,
-  a sensitivity heatmap (direction by assumption setting), archetype relief tests,
-  and validation-status and CAUTION badges. Always keep PUBLIC values on a separate page.
-- Caching so repeated runs are fast.
-- **Tests:** UI helper functions unit-tested; manual smoke-test checklist.
+- [x] Five pages: Overview · Bronx Public Data · Fictional Patient Flow · What-If Lab ·
+  Sensitivity, Validation & Methods (`app/streamlit_app.py`, `app/views/`).
+- [x] Testable support package `beyond_the_wait.dashboard` (data, charts, theme, ui);
+  pages hold no calculation logic. `boarding_values()` extracted for reuse.
+- [x] Fingerprinted **results bundle** (`analysis/results_bundle.py`) written by
+  `whatif_demo`; verified on load; BLOCKED comparisons excluded and listed.
+- [x] Provenance badge in every chart title; PUBLIC never mixed with simulated data;
+  unavailable and suppressed values as text; neutral effect colors (no traffic lights);
+  ESI-1 and "not a recommendation" callouts.
+- [x] Caching: public data and bundle by file timestamp; one live run by (seed, days),
+  capped at 14 days; 30-seed experiments never run by the app.
+- [x] Security: localhost only, no uploads, no telemetry, no API key.
+- [x] **Tests:** 633 total, 100% line coverage, including headless `AppTest` page tests
+  (missing, tampered, and BLOCKED bundles; selectors). Live server health check passed.
+- [ ] Visual inspection in a real browser: **not yet performed** (checklist in
+  `docs/DASHBOARD.md` §7). The palette validator was not run (Node.js unavailable).
 
 **You'll learn:** building interactive apps, state management, UX for non-technical users.
 
@@ -254,7 +262,8 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 - System prompt encoding the rules from PROJECT_SPEC §5.
 - Claude call via the `anthropic` Python SDK with structured JSON output.
 - Handle API errors, missing key, and refusals gracefully.
-- Explanation panel in the dashboard.
+- Explanation panel in the dashboard (What-If Lab), fed only by `ReleasedResults` and the
+  verified results bundle.
 - **Tests (mocked, offline):** packet contains only validated data; client handles
   errors; parsing of structured output.
 

@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-milestone%206%20of%2010-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%207%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -87,7 +87,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestones 1–6 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, metrics and validation gate, and multi-seed what-if analysis.**
+✅ **Milestones 1–7 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, metrics and validation gate, multi-seed what-if analysis, and an interactive dashboard.**
 
 *Milestone 1: configuration*
 - **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
@@ -167,9 +167,19 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 - **All findings are model-internal.** No intervention is claimed to be safe or
   to apply to any real hospital.
 
-**568 unit tests**, 100% line coverage, all offline.
+*Milestone 7: interactive dashboard*
+- **Five pages:** Overview · Bronx Public Data · Fictional Patient Flow ·
+  What-If Lab · Sensitivity, Validation & Methods (Streamlit + Plotly).
+- Reuses the existing modules; **no calculations in the UI**. Precomputed
+  multi-seed results are **fingerprint-verified** on load. BLOCKED comparisons
+  are never shown as data, and CAUTION reasons are always visible.
+- Every chart is labeled **PUBLIC**, **SYNTHETIC**, or **SIMULATED**; real and
+  simulated data never share a chart. No API key, no internet, localhost only.
+  See [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
-**Not built yet:** dashboard and Claude integration. See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+**633 unit tests**, 100% line coverage, all offline.
+
+**Not built yet:** Claude interpretation (Milestone 8). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -196,7 +206,14 @@ print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', 
 "
 ```
 
-Run the multi-seed what-if analysis (about 6 minutes on 8 cores):
+Open the dashboard (build the multi-seed results once first, about 6 minutes on 8 cores):
+
+```bash
+python -m beyond_the_wait.analysis.whatif_demo --seeds 30 --sensitivity-seeds 20 --workers 8
+streamlit run app/streamlit_app.py      # then open http://localhost:8501
+```
+
+Run the multi-seed what-if analysis on its own (also writes the dashboard's results bundle):
 
 ```bash
 python -m beyond_the_wait.analysis.whatif_demo --seeds 30 --sensitivity-seeds 20 --workers 8
@@ -237,7 +254,7 @@ An Anthropic API key is not needed until Milestone 8. When it is, you'll copy
 ## Repository layout
 
 ```
-app/               Streamlit dashboard
+app/               Streamlit dashboard (entry: app/streamlit_app.py; pages: app/views/)
 config/            Site profiles and intervention scenarios (YAML)
 data/              Public (aggregate) and synthetic data — see data/README.md
 docs/decisions/    Architecture decision records
@@ -267,6 +284,7 @@ until their milestone is built.
 - [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md) — simulation journey, queue policies, boarding abstraction, stopping rule, validity checks, limitations
 - [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md) — PASS/CAUTION/BLOCKED gate, what each check protects against and cannot prove, detailed metrics, findings
 - [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md) — scenario levers, paired multi-seed method, results with 95% intervals, archetypes, sensitivity
+- [docs/DASHBOARD.md](docs/DASHBOARD.md) — dashboard pages, data flow, safeguards, design, testing, visual checklist
 - [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer

@@ -1,12 +1,13 @@
 # Architecture — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.6 · **Last updated:** 2026-11-16
+**Status:** Draft v0.7 · **Last updated:** 2026-11-16
 
 > **Partly implemented.** As of Milestone 6, the **configuration layer and
 > scenario levers (§2.2)**, **provenance labels**, the **public-data pipeline**,
 > the **synthetic patient generator (§2.1)**, the **baseline simulation
 > (§2.3)**, the **metrics and validation gate**, and **multi-seed paired
-> what-if analysis (§2.4)** are implemented and tested. Everything
+> what-if analysis (§2.4)**, and the **Streamlit dashboard (§2.7)** are
+> implemented and tested. Everything
 > else below is planned. Module names marked "planned" may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
@@ -192,12 +193,19 @@ evidence and still draw the wrong conclusion from it. Those properties are
 assessed through the evaluation suite (§2.8) and human review, and the UI
 always presents output as decision support for human review.
 
-### 2.7 Presentation layer — `app/`
+### 2.7 Presentation layer — `app/` + `src/beyond_the_wait/dashboard/` ✅ (Milestone 7)
 
-**Streamlit** multipage app. Plotly charts. Every number and chart carries a
-provenance badge. The explanation panel shows Claude's output with its cited
-evidence IDs linked to the underlying metrics, plus a fixed banner:
-*"Decision support for human review. Based on simulated data."*
+**Streamlit** multipage app (`st.navigation`), **Plotly** charts. Page scripts in
+`app/views/` hold layout and text only; `beyond_the_wait.dashboard` holds tested
+data loaders (`data.py`), chart builders (`charts.py`), theme (`theme.py`), and
+helpers (`ui.py`), all calling existing APIs. Every chart title carries a
+provenance badge, and PUBLIC data never shares a chart with simulated data.
+Multi-seed results come from a fingerprint-verified **results bundle**
+(`analysis/results_bundle.py`), and BLOCKED comparisons are never displayed as
+data. The app runs offline on localhost, with no API key, uploads, or
+telemetry. Planned for Milestone 8: an explanation panel showing Claude's output
+with cited evidence IDs and the banner *"Decision support for human review.
+Based on simulated data."* See [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
 **Why Streamlit?** It turns Python scripts into an interactive web app with
 no front-end code, letting the project focus on the analytics and AI design.
@@ -248,7 +256,7 @@ Detailed decision records will live in `docs/decisions/` (one short file per dec
 
 ```
 beyond-the-wait/
-├── app/                       # Streamlit UI (Milestone 7)
+├── app/                       # Streamlit UI: streamlit_app.py + views/ (Milestone 7)
 ├── config/
 │   ├── sites/                 # Site profiles (YAML)
 │   └── scenarios/             # Intervention scenarios (YAML)
@@ -264,6 +272,7 @@ beyond-the-wait/
 │   ├── SIMULATION_MODEL.md    # Simulation journey, policies, boarding abstraction, validity
 │   ├── VALIDATION_GATE.md     # PASS/CAUTION/BLOCKED gate, detailed metrics, limitations
 │   ├── WHAT_IF_ANALYSIS.md    # Paired multi-seed comparisons, levers, sensitivity, results
+│   ├── DASHBOARD.md           # Dashboard pages, data flow, safeguards, testing
 │   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases

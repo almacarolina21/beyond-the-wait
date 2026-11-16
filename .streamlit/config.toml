@@ -1,0 +1,21 @@
+# Dashboard theme and privacy settings (committed; contains no secrets).
+[theme]
+base = "light"
+primaryColor = "#1c5cab"
+backgroundColor = "#fcfcfb"
+secondaryBackgroundColor = "#f3f2ee"
+textColor = "#0b0b0b"
+font = "sans serif"
+
+[browser]
+# Do not send usage statistics to Streamlit.
+gatherUsageStats = false
+
+[server]
+# Only accept connections from this computer (not the local network).
+address = "localhost"
+# No file uploads are used anywhere in this app.
+maxUploadSize = 1
+
+[client]
+toolbarMode = "minimal"

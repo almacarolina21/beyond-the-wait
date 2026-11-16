@@ -38,3 +38,28 @@ def scenario_dict() -> dict[str, Any]:
 def scenario(scenario_dict: dict[str, Any]) -> Scenario:
     """The example scenario as a validated model."""
     return Scenario.model_validate(scenario_dict)
+
+
+@pytest.fixture(scope="session")
+def small_bundle_dir(tmp_path_factory: pytest.TempPathFactory):  # noqa: ANN201
+    """A small but real results bundle (2 seeds, 2 days), built once per test session
+    by the same code path as the full 30-seed build."""
+    from beyond_the_wait.analysis import whatif_demo
+
+    out = tmp_path_factory.mktemp("bundle")
+    code = whatif_demo.main(
+        [
+            "--seeds",
+            "2",
+            "--sensitivity-seeds",
+            "2",
+            "--days",
+            "2",
+            "--workers",
+            "1",
+            "--out",
+            str(out),
+        ]
+    )
+    assert code == 0
+    return out

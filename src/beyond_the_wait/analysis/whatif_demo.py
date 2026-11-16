@@ -22,12 +22,12 @@ from beyond_the_wait.analysis.experiments import (
     ExperimentSettings,
     binding_constraint_evidence,
     compare,
-    comparison_table,
     congestion_shift,
     run_arms,
     sensitivity_analysis,
     stability,
 )
+from beyond_the_wait.analysis.results_bundle import write_bundle
 from beyond_the_wait.analysis.validation import SAFETY_LIMITATIONS, GateStatus
 from beyond_the_wait.config import ConfigError, Scenario, load_scenario, load_site_profile
 
@@ -67,6 +67,11 @@ MAIN_METRICS = (
     "physician_utilization",
     "triage_utilization",
 )
+ARCHETYPE_COLUMNS = [
+    "archetype", "relief", "outcome", "condition_effect", "condition_ci_low",
+    "condition_ci_high", "condition_direction", "relief_effect", "relief_ci_low",
+    "relief_ci_high", "relief_direction", "largest_stage", "provenance",
+]  # fmt: skip
 KEY_OUTCOMES = (
     "arrival_to_provider_p90",
     "los_median_discharged",
@@ -178,9 +183,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     for rep in reports:
         _print_comparison(rep, MAIN_METRICS)
-    comparison_table(reports, MAIN_METRICS + KEY_OUTCOMES[-1:]).to_csv(
-        args.out / "main_comparison.csv", index=False
-    )
+    bundle_reports: list = [("main", rep) for rep in reports]
+    arch_rows: list[dict] = []
+    sens = stab = None
 
     # --- 2. Archetypes ---------------------------------------------------------------------
     if not args.skip_archetypes:
@@ -188,7 +193,6 @@ def main(argv: list[str] | None = None) -> int:
             "\n2) FICTIONAL ARCHETYPES: does relieving the suspected constraint improve the "
             "outcome?"
         )
-        arch_rows = []
         for cond, (fix, outcome) in ARCHETYPES.items():
             cond_arm = Arm.from_scenario(base, _scenario(cond))
             cond_arm = Arm(cond, cond_arm.site, "archetype", "baseline", cond_arm.effects)
@@ -196,6 +200,7 @@ def main(argv: list[str] | None = None) -> int:
             r = run_arms([base, cond_arm, fix_arm], settings)
             harm = compare(base, cond_arm, r)
             relief = compare(cond_arm, fix_arm, r)
+            bundle_reports += [("archetype_condition", harm), ("archetype_relief", relief)]
             stages = {
                 m: relief.metrics[m].estimate.baseline_mean
                 for m in (
@@ -236,6 +241,9 @@ def main(argv: list[str] | None = None) -> int:
                     "relief": fix,
                     "outcome": outcome,
                     "condition_effect": h.mean_difference,
+                    "condition_ci_low": h.ci_low,
+                    "condition_ci_high": h.ci_high,
+                    "condition_direction": harm.metrics[outcome].direction,
                     "relief_effect": relief.metrics[outcome].estimate.mean_difference,
                     "relief_ci_low": relief.metrics[outcome].estimate.ci_low,
                     "relief_ci_high": relief.metrics[outcome].estimate.ci_high,
@@ -244,7 +252,6 @@ def main(argv: list[str] | None = None) -> int:
                     "provenance": "SIMULATED",
                 }
             )
-        pd.DataFrame(arch_rows).to_csv(args.out / "archetypes.csv", index=False)
 
     # --- 3. Sensitivity ----------------------------------------------------------------------
     if not args.skip_sensitivity:
@@ -264,7 +271,6 @@ def main(argv: list[str] | None = None) -> int:
             for n in ("add_night_physician", "increase_bed_releases", "faster_diagnostics")
         ]
         sens = sensitivity_analysis(site, chosen, sens_settings)
-        sens.to_csv(args.out / "sensitivity.csv", index=False)
         pivot = sens.pivot_table(
             index=["intervention", "metric"],
             columns=["concurrency", "releases_per_day"],
@@ -279,7 +285,6 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 f"   {row.intervention:24} {row.metric:28} {row.verdict:18} {row.directions}{flag}"
             )
-        stab.to_csv(args.out / "stability.csv", index=False)
 
     # --- 4. Summary ---------------------------------------------------------------------------
     print("\n4) INSIDE THE FICTIONAL MODEL (not a recommendation; see limitations):")
@@ -300,7 +305,16 @@ def main(argv: list[str] | None = None) -> int:
     print("\nLimitations:")
     for item in SAFETY_LIMITATIONS:
         print(textwrap.fill(item, width=104, initial_indent="  - ", subsequent_indent="    "))
-    print(f"\nCSV outputs for Milestone 7: {args.out}")
+    write_bundle(
+        args.out,
+        settings=settings,
+        reports=bundle_reports,
+        archetypes=pd.DataFrame(arch_rows, columns=ARCHETYPE_COLUMNS),
+        sensitivity=sens,
+        stability=stab,
+        sensitivity_seeds=None if args.skip_sensitivity else args.sensitivity_seeds,
+    )
+    print(f"\nVerified results bundle for the dashboard: {args.out}")
     return 0
 
 

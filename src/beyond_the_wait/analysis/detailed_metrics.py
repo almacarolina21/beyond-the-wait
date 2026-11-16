@@ -198,17 +198,37 @@ def extreme_waits(result: SimulationResult) -> pd.DataFrame:
     return _tag(pd.DataFrame(rows), result)
 
 
+def boarding_values(result: SimulationResult) -> pd.DataFrame:
+    """Per admitted measured patient: boarding minutes (unfinished boarders at
+    their time so far, a lower bound), whether still boarding at the stop, and
+    the shift in which the admission decision was made."""
+    m = measured(result)
+    adm = m[(m["disposition"] == "admit") & m["boarding_start_min"].notna()]
+    boarding = adm["boarding_min"].fillna(result.stop_time - adm["boarding_start_min"])
+    shift_of_hour = _shift_of_hour(result)
+    decision_shift = ((adm["boarding_start_min"] // 60) % 24).astype(int).map(shift_of_hour)
+    out = pd.DataFrame(
+        {
+            "synthetic_patient_id": adm["synthetic_patient_id"],
+            "acuity_esi": adm["acuity_esi"],
+            "boarding_min": boarding,
+            "still_boarding_at_stop": adm["bed_assigned_min"].isna(),
+            "decision_shift": decision_shift,
+            "unit": "minutes",
+        }
+    )
+    return _tag(out, result)
+
+
 def boarding_distribution(result: SimulationResult) -> pd.DataFrame:
     """Boarding for admitted measured patients, overall and by the shift in
     which the admission decision was made. Unfinished boarders are included
     at their time so far (lower bound)."""
-    m = measured(result)
-    adm = m[m["disposition"] == "admit"]
-    boarding = adm["boarding_min"].fillna(result.stop_time - adm["boarding_start_min"])
-    started = adm["boarding_start_min"].notna()
-    adm, boarding = adm[started], boarding[started]
+    values = boarding_values(result)
+    adm = measured(result).loc[values.index]
+    boarding = values["boarding_min"]
     shift_of_hour = _shift_of_hour(result)
-    decision_shift = ((adm["boarding_start_min"] // 60) % 24).astype(int).map(shift_of_hour)
+    decision_shift = values["decision_shift"]
     rows = []
     for label, mask in [
         ("all", adm.index),

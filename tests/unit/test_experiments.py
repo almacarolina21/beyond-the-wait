@@ -391,7 +391,7 @@ def test_whatif_demo_small_run(capsys: pytest.CaptureFixture[str], tmp_path) -> 
     ):
         assert text in out
     assert not any(name in out.lower() for name in REAL_NAMES)
-    assert (tmp_path / "main_comparison.csv").is_file() and (tmp_path / "archetypes.csv").is_file()
+    assert (tmp_path / "comparisons.csv").is_file() and (tmp_path / "manifest.json").is_file()
 
 
 def test_whatif_demo_rejects_bad_settings(capsys: pytest.CaptureFixture[str]) -> None:
