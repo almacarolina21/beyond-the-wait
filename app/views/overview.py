@@ -1,124 +1,120 @@
-"""Overview: the problem, the principle, the three kinds of data, and what the app can't do."""
+"""Overview: purpose, verified headline findings, a path into the What-If Lab, then detail."""
 
 from __future__ import annotations
 
 import streamlit as st
 
+from beyond_the_wait.dashboard import data as d
 from beyond_the_wait.dashboard import ui
 from beyond_the_wait.dashboard.theme import badge
 
 ui.page_header(
     "Beyond the Wait · Bronx ED Access Lab",
     "Why are patients waiting — and what might help?",
-    "An educational decision-support lab for exploring emergency department (ED) patient flow. "
-    "It pairs <b>real, public</b> Bronx hospital measures with a <b>fictional</b> ED simulation, "
-    "so leaders can explore what-if questions without touching real operations or real patients.",
+    "An educational lab for emergency department (ED) patient flow. It sets <b>real, public</b> "
+    "Bronx measures beside a <b>fictional</b> ED simulation, so leaders can test what-if "
+    "questions without touching real operations or real patients.",
 )
+ui.principle()
 
-st.subheader("The problem")
-st.markdown(
-    "Two emergency departments can report the same long waits for very different reasons: "
-    "admitted patients **boarding** in ED beds while they wait for an inpatient bed, **staffing** "
-    "that doesn't match when patients arrive, slow **lab or imaging** results, or delays "
-    "**coordinating** discharge. Fixing the wrong one costs money and staff energy. Public "
-    "measures show *how long* patients waited, not *why*. A simulation can explore *why* — but "
-    "only inside a model whose assumptions you can see."
-)
-
-st.subheader("Our principle")
-cols = st.columns(3)
-for col, (head, body) in zip(
-    cols,
-    [
-        (
-            "Python calculates",
-            "Every number comes from tested Python: the simulation, the statistics, "
-            "and a validation gate that blocks inconsistent results.",
-        ),
-        (
-            "Claude explains",
-            "In a later milestone, Claude will explain validated results in plain "
-            "language. It will never calculate numbers or invent causes. (Not built yet.)",
-        ),
-        (
-            "Humans decide",
-            "Nothing here is a recommendation. Operational and clinical decisions "
-            "require qualified people and real-world evidence.",
-        ),
-    ],
-    strict=True,
-):
-    col.markdown(
-        f"<div class='btw-card'><h4>{head}</h4><p>{body}</p></div>", unsafe_allow_html=True
+# --- Above the fold: what the fictional model shows, and where to go next -------------------
+load = ui.results()
+if load.status == "ok":
+    st.subheader("What the fictional model shows")
+    st.markdown(
+        "<span class='btw-small'>Three precomputed comparisons from the <b>fictional</b> "
+        f"Riverside Commons ED, each across {load.bundle.n_seeds} paired simulated weeks. "
+        "Model behavior under stated assumptions, not evidence about any real hospital.</span>",
+        unsafe_allow_html=True,
     )
+    findings = d.key_findings(load.bundle)
+    for col, f in zip(st.columns(len(findings) or 1), findings, strict=False):
+        with col:
+            ui.finding_card(f["title"], f["text"], f["status"])
+    st.markdown(
+        "<span class='btw-small'>CAUTION means the gate found issues worth reading (for "
+        "example, overloaded simulated weeks), not errors. Details are in the What-If Lab.</span>",
+        unsafe_allow_html=True,
+    )
+else:
+    st.info("Multi-seed results are not built yet; the What-If Lab explains how to build them.")
 
-st.subheader("Three kinds of data — always labeled")
-cols = st.columns(3)
-for col, (label, head, body) in zip(
-    cols,
-    [
-        (
-            "PUBLIC",
-            "Real, official, aggregate",
-            "CMS and NYS Department of Health figures for real "
-            "Bronx hospitals. Hospital-level totals and medians only. They describe what happened, not why.",
-        ),
-        (
-            "SYNTHETIC",
-            "Fictional inputs",
-            "Invented patients and operating assumptions for the fictional "
-            "Riverside Commons Community ED. No real person or hospital is described.",
-        ),
-        (
-            "SIMULATED",
-            "Model outputs",
-            "Waits, lengths of stay, and boarding produced by running the "
-            "fictional ED in a discrete-event simulation. Never compared on one chart with PUBLIC data.",
-        ),
-    ],
-    strict=True,
-):
+c1, c2, c3 = st.columns(3)
+with c1:
+    ui.page_link("what_if", "**Open the What-If Lab →**", icon=":material/science:")
+with c2:
+    ui.page_link("patient_flow", "See one simulated week", icon=":material/timeline:")
+with c3:
+    ui.page_link("public_data", "Explore Bronx public data", icon=":material/public:")
+
+# --- Below the fold: context, data types, limits ----------------------------------------------
+ui.section("Three kinds of data, always labeled")
+cards = [
+    (
+        "PUBLIC",
+        "Real, official, aggregate",
+        "CMS and NYS Department of Health figures for real Bronx hospitals. They show how "
+        "long patients waited, not why.",
+    ),
+    (
+        "SYNTHETIC",
+        "Fictional inputs",
+        "Invented patients and assumptions for the fictional Riverside Commons Community ED. "
+        "No real person or hospital is described.",
+    ),
+    (
+        "SIMULATED",
+        "Model outputs",
+        "Waits, lengths of stay, and boarding from running the fictional ED. Never placed on "
+        "one chart with PUBLIC data.",
+    ),
+]
+for col, (label, head, body) in zip(st.columns(3), cards, strict=True):
     col.markdown(
         f"<div class='btw-card'>{badge(label)}<h4>{head}</h4><p>{body}</p></div>",
         unsafe_allow_html=True,
     )
 
-st.subheader("What this app can and cannot tell you")
+ui.section("What this app can and cannot tell you")
 can, cannot = st.columns(2)
 with can:
-    st.markdown("**It can**")
     st.markdown(
-        "- Show official Bronx ED measures with their definitions, periods, and gaps\n"
+        "**It can**\n"
+        "- Show official Bronx ED measures with definitions, periods, and gaps\n"
         "- Show how waits build up in a *fictional* ED under stated assumptions\n"
-        "- Compare hypothetical interventions across 30 paired simulations, with 95% confidence intervals\n"
-        "- Reveal when an intervention **moves** waiting to another stage instead of removing it\n"
-        "- Show which conclusions change when uncertain assumptions change"
+        "- Compare hypothetical changes across paired simulations, with 95% intervals\n"
+        "- Reveal when a change **moves** waiting to another stage\n"
+        "- Show which findings depend on uncertain assumptions"
     )
 with cannot:
-    st.markdown("**It cannot**")
     st.markdown(
+        "**It cannot**\n"
         "- Explain why any real hospital has delays\n"
         "- Predict what would happen in a real ED\n"
-        "- Show that any intervention is clinically safe or advisable\n"
+        "- Show that any change is clinically safe or advisable\n"
         "- Replace clinical judgment, triage, or operational expertise\n"
         "- Report a left-without-being-seen rate for the model (not modeled)"
     )
 ui.callout(f"<b>Not a recommendation.</b> {ui.NOT_A_RECOMMENDATION}")
 
-st.subheader("How to use this app")
-st.markdown(
-    "1. **Bronx Public Data** — the real-world context, with measure definitions and caveats.\n"
-    "2. **Fictional Patient Flow** — one simulated week in the fictional ED: arrivals, stages, staffing, boarding.\n"
-    "3. **What-If Lab** — hypothetical interventions compared with the baseline across 30 paired seeds.\n"
-    "4. **Sensitivity, Validation & Methods** — which findings depend on assumptions, how results are "
-    "validated, and the safety limitations."
-)
-load = ui.results()
-if load.status == "ok":
-    ui.status_line(
-        "PASS",
-        f"Precomputed multi-seed results loaded and verified ({load.bundle.n_seeds} paired seeds).",
+with st.expander("The problem this lab explores"):
+    st.markdown(
+        "Two EDs can report the same long waits for very different reasons: admitted patients "
+        "**boarding** in ED beds, **staffing** that doesn't match arrivals, slow **lab or "
+        "imaging** results, or slow **discharge**. Fixing the wrong one wastes money and staff "
+        "energy. Public measures show *how long* patients waited, not *why*. A simulation can "
+        "explore *why*, but only inside a model whose assumptions you can see."
     )
-else:
-    st.caption("Multi-seed results are not built yet; the What-If Lab explains how to build them.")
+with st.expander("How the principle works in practice"):
+    st.markdown(
+        "- **Python calculates:** the simulation, the paired statistics, and a validation gate "
+        "that blocks inconsistent results are all tested Python code.\n"
+        "- **Claude explains:** in Milestone 8, Claude will describe validated results in plain "
+        "language. It will never calculate numbers or invent causes. *Not built yet; no API key "
+        "is used anywhere in this app.*\n"
+        "- **Humans decide:** operational and clinical decisions need qualified people and "
+        "real-world evidence."
+    )
+
+ui.verification_line(load)
 ui.footer()

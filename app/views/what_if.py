@@ -1,20 +1,25 @@
-"""What-If Lab: precomputed multi-seed paired comparisons (SIMULATED)."""
+"""What-If Lab: precomputed multi-seed paired comparisons (SIMULATED).
+
+Order: title -> short disclaimer -> outcome chart -> plain reading -> one intervention
+in detail -> archetypes -> methods and validation in expanders.
+"""
 
 from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
 
+from beyond_the_wait.analysis.experiments import MODEL_EVIDENCE_NOTE
 from beyond_the_wait.dashboard import charts, ui
 from beyond_the_wait.dashboard import data as d
-from beyond_the_wait.dashboard.theme import DIRECTION_TEXT
+from beyond_the_wait.dashboard.theme import direction_label, status_chip
 
 ui.page_header(
     "Fictional model",
     "What-If Lab",
-    "Each hypothetical intervention was simulated alongside the baseline on the <b>same</b> 30 random "
-    "weeks, so differences come from the intervention, not luck. Results describe the "
-    "<b>fictional model only</b>.",
+    "Compare hypothetical changes with the fictional ED's baseline. Each change was simulated "
+    "on the <b>same</b> random weeks as the baseline, so differences come from the change, "
+    "not luck.",
     badges=("SIMULATED",),
 )
 load = ui.results()
@@ -25,146 +30,177 @@ bundle = load.bundle
 names = d.scenario_names()
 
 ui.callout(
-    f"<b>Model-internal evidence only.</b> {bundle.manifest['evidence_note']} {ui.NOT_A_RECOMMENDATION}"
+    "<b>Fictional model only.</b> These results show how the model behaves under its "
+    "assumptions, not what would happen in a real ED. Nothing here is a recommendation."
 )
 if bundle.blocked:
     st.error(
-        "Some comparisons were BLOCKED by the validation gate and are not shown: "
+        "BLOCKED by the validation gate and therefore not shown as data: "
         + ", ".join(f"{b['scenario_id']} ({b['scope']})" for b in bundle.blocked)
     )
-
 main = [
     c for c in bundle.manifest["comparisons"] if c["scope"] == "main" and c["status"] != "BLOCKED"
 ]
-st.subheader("The interventions")
-st.dataframe(
-    pd.DataFrame(
-        [
-            {
-                "Intervention (hypothetical)": names.get(c["scenario_id"], c["scenario_id"]),
-                "What changes in the model": ", ".join(c["effects"].get("simulated", [])),
-                "Type": "Controllable operational input"
-                if not c["effects"].get("assumptions")
-                else "Uncertain assumption",
-                "Comparison status": c["status"],
-            }
-            for c in main
-        ]
-    ),
-    hide_index=True,
-    width="stretch",
+
+# --- 1. One outcome, all interventions --------------------------------------------------------
+st.subheader("Compare interventions on one outcome")
+metric = st.selectbox(
+    "Outcome", list(d.METRIC_LABELS), format_func=d.METRIC_LABELS.get, key="metric"
 )
+rows = d.comparison_rows(bundle, scope="main", metric=metric)
+ui.plot(charts.forest(rows, title=d.METRIC_LABELS[metric], n_seeds=bundle.n_seeds))
+
+st.markdown("**What this shows**")
+for line in d.interpretation(rows, metric_label=d.METRIC_LABELS[metric]):
+    st.markdown(f"- {line}")
 st.caption(
-    "Uncertain assumptions (how many patients a physician can handle at once, how many inpatient beds "
-    "open per day, demand) are not interventions; they are varied on the Sensitivity page."
+    "Generated from the verified results file. 'Lower' describes the number in the model; "
+    "it does not mean safer or better for patients."
 )
 
-with st.expander("How to read these charts", expanded=False):
+# --- 2. One intervention in detail ------------------------------------------------------------
+ui.section("One intervention in detail")
+scenario = st.selectbox(
+    "Intervention",
+    [c["scenario_id"] for c in main],
+    format_func=lambda s: names.get(s, s),
+    key="scenario",
+)
+meta = d.comparison_meta(bundle, scope="main", scenario_id=scenario)
+checks = d.comparison_checks(bundle, scope="main", scenario_id=scenario)
+effects = meta.get("effects", {})
+st.markdown(
+    f"{status_chip(meta.get('status', 'CAUTION'))} "
+    f"<span class='btw-small'><b>What changes in the model:</b> "
+    f"{', '.join(effects.get('simulated', [])) or 'n/a'}"
+    + (
+        f" · <b>Uncertain assumption:</b> {', '.join(effects['assumptions'])}"
+        if effects.get("assumptions")
+        else ""
+    )
+    + "</span>",
+    unsafe_allow_html=True,
+)
+if meta.get("status") == "CAUTION":
+    reasons = ", ".join(sorted(checks["check"].unique())) if not checks.empty else "see details"
     st.markdown(
-        "- Each dot is the **average change** across 30 paired simulated weeks (intervention minus baseline).\n"
-        "- The bar is the **95% confidence interval of that average**: the range of average effects "
-        "consistent with the simulations. If it crosses the dotted zero line, the model shows no "
-        "detectable effect.\n"
-        "- Negative means **lower in the model** (shorter waits). That is a property of the model, "
-        "not a verdict that an intervention is safe or advisable.\n"
-        "- A single future simulated week can differ much more than the interval suggests — see "
-        "confidence vs. prediction intervals on the Methods page."
+        f"<span class='btw-small'><b>Why CAUTION:</b> {reasons}. Read the validation "
+        "details below before relying on this comparison.</span>",
+        unsafe_allow_html=True,
     )
 
-st.subheader("Compare interventions on one outcome")
-metric_labels = {
-    "arrival_to_provider_p90": "Arrival to provider, 90th percentile",
-    "arrival_to_provider_median": "Arrival to provider, median",
-    "los_median_discharged": "Length of stay, discharged, median",
-    "los_median_admitted": "Length of stay, admitted, median",
-    "los_median_lower_bound_all": "Length of stay, all (includes unfinished visits)",
-    "boarding_p90": "Boarding, 90th percentile",
-    "boarding_share_over_4h": "Admitted patients boarding over 4 hours (share)",
-    "provider_wait_p90": "Waiting for a physician, 90th percentile",
-    "triage_wait_p90": "Waiting for triage, 90th percentile",
-    "physician_utilization": "Physician utilization",
-    "triage_utilization": "Triage-nurse utilization",
-}
-metric = st.selectbox("Outcome", list(metric_labels), format_func=metric_labels.get)
-rows = d.comparison_rows(bundle, scope="main", metric=metric)
-ui.plot(charts.forest(rows, title=metric_labels[metric], n_seeds=bundle.n_seeds))
-
-st.subheader("One intervention in detail")
-scenario = st.selectbox(
-    "Intervention", [c["scenario_id"] for c in main], format_func=lambda s: names.get(s, s)
-)
 detail = d.comparison_rows(bundle, scope="main", scenario_id=scenario)
-detail = detail[detail["metric"].isin(metric_labels)].copy()
-detail["order"] = detail["metric"].map({m: i for i, m in enumerate(metric_labels)})
+detail = detail[detail["metric"].isin(d.METRIC_LABELS)].copy()
+detail["order"] = detail["metric"].map({m: i for i, m in enumerate(d.METRIC_LABELS)})
+TABLE_WORD = {
+    "Lower within the fictional model": "Lower",
+    "Higher within the fictional model": "Higher",
+}
 table = []
 for r in detail.sort_values("order").itertuples():
     scale, unit = d.display_scale(r.unit)
+    unit = "%" if r.unit == "fraction" else unit
+    word = direction_label(r.direction, r.mean_difference)
     table.append(
         {
-            "Outcome": metric_labels[r.metric],
-            "Unit": "%" if r.unit == "fraction" else unit,
-            "Baseline": round(r.baseline_mean * scale, 1),
-            "Intervention": round(r.scenario_mean * scale, 1),
-            "Change": round(r.mean_difference * scale, 2),
-            "95% CI of mean change": f"[{r.ci95_low * scale:+.2f}, {r.ci95_high * scale:+.2f}]",
-            "In the model": DIRECTION_TEXT[r.direction],
+            "Outcome": d.METRIC_LABELS[r.metric],
+            "Baseline → with change": f"{r.baseline_mean * scale:.1f} → "
+            f"{r.scenario_mean * scale:.1f} {unit}",
+            "Change [95% CI]": f"{r.mean_difference * scale:+.1f} "
+            f"[{r.ci95_low * scale:+.1f}, {r.ci95_high * scale:+.1f}]",
+            "In the model": TABLE_WORD.get(word, word.split(" (")[0]),
         }
     )
-st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch")
+# Static table: wraps text to the page width instead of scrolling sideways.
+st.table(pd.DataFrame(table).set_index("Outcome"))
 st.caption(
-    "Utilization changes are reported as 'changed': lower utilization is neither better nor worse by itself."
+    "'Lower' and 'Higher' are within the fictional model; 'No detectable change' means the 95% CI "
+    "includes 0. Shares change in percentage points. Utilization is workload, not quality."
 )
 
 stages = d.stage_effects(bundle, scope="main", scenario_id=scenario)
 ui.plot(charts.stage_shift_chart(stages, scenario_name=names.get(scenario, scenario)))
 if d.moves_congestion(stages):
     ui.callout(
-        "<b>Congestion moves rather than disappears.</b> In the model, this intervention shortens one "
-        "waiting stage while another gets longer — patients reach the next queue sooner and wait there "
-        "instead. Look at total length of stay before concluding anything.",
-        kind="note",
+        "<b>Congestion moves rather than disappears.</b> In the model, this change shortens one "
+        "waiting stage while another gets longer: patients reach the next queue sooner and wait "
+        "there instead. Check total length of stay before drawing conclusions."
     )
 
-meta = d.comparison_meta(bundle, scope="main", scenario_id=scenario)
-with st.expander(f"Validation for this comparison · {meta.get('status', '?')}"):
-    st.markdown(f"Replication gate status: `{meta.get('replication_status')}`")
-    st.markdown(f"Overloaded replications: `{meta.get('overloaded_replications')}`")
-    st.markdown(
-        "CAUTION checks carried from individual runs: "
-        + ", ".join(f"{k} ×{v}" for k, v in sorted(meta.get("carried_cautions", {}).items()))
-    )
-    ui.checks_table(d.comparison_checks(bundle, scope="main", scenario_id=scenario))
-
-st.subheader("Archetypes: is the biggest delay the real constraint?")
+# --- 3. Archetypes ----------------------------------------------------------------------------
+ui.section("Archetypes: is the biggest delay the real constraint?")
 st.markdown(
-    "Four **fictional** problem conditions were built, and each was paired with a relief intervention. "
-    "A constraint is called *binding* (inside the model) only when relieving it measurably improves "
-    "the outcome — not because it is the largest stage."
+    "Four **fictional** problem conditions, each paired with a relief change. A constraint is "
+    "called *binding* (inside the model) only when relieving it measurably lowers the outcome, "
+    "not because it is the largest stage."
 )
 ui.plot(charts.archetype_chart(bundle.archetypes, names))
-arch = bundle.archetypes.copy()
-st.dataframe(
-    pd.DataFrame(
-        [
-            {
-                "Archetype": names.get(r.archetype, r.archetype),
-                "Relief": names.get(r.relief, r.relief),
-                "Outcome": r.outcome,
-                "Relief effect": f"{r.relief_effect:+.1f} [{r.relief_ci_low:+.1f}, {r.relief_ci_high:+.1f}]",
-                "Binding in the model?": "Supported"
-                if r.relief_direction == "improves"
-                else "Not supported",
-                "Largest stage": r.largest_stage.replace("stage_", "")
-                .replace("_mean", "")
-                .replace("_", " "),
-            }
-            for r in arch.itertuples()
-        ]
-    ),
-    hide_index=True,
-    width="stretch",
-)
+arch_rows = []
+for r in bundle.archetypes.itertuples():
+    arch_rows.append(
+        {
+            "Archetype": d.short_label(r.archetype),
+            "Outcome": d.METRIC_LABELS.get(r.outcome, r.outcome),
+            "Relief effect, min [95% CI]": f"{r.relief_effect:+.0f} "
+            f"[{r.relief_ci_low:+.0f}, {r.relief_ci_high:+.0f}]",
+            "Binding in the model?": "Supported"
+            if r.relief_direction == "improves"
+            else "Not supported",
+        }
+    )
+# Static table: wraps text to the page width instead of scrolling sideways.
+st.table(pd.DataFrame(arch_rows).set_index("Archetype"))
 st.caption(
-    "In most archetypes the largest stage (boarding) was not the constraint whose relief helped the outcome studied."
+    "In most archetypes the largest stage (boarding) was not the constraint whose relief "
+    "lowered the outcome studied. The largest stage is not automatically the cause."
+    if (bundle.archetypes["largest_stage"] == "stage_boarding_mean").all()
+    else "The largest stage is not automatically the constraint whose relief helps."
 )
+
+# --- 4. Methods and validation details --------------------------------------------------------
+ui.section("Methods and validation")
+with st.expander(f"Validation details: {names.get(scenario, scenario)} · {meta.get('status')}"):
+    st.markdown(f"Replication gate status: `{meta.get('replication_status')}`")
+    st.markdown(f"Overloaded simulated weeks: `{meta.get('overloaded_replications')}`")
+    st.markdown(
+        "CAUTION checks carried from individual runs: "
+        + (
+            ", ".join(f"{k} ×{v}" for k, v in sorted(meta.get("carried_cautions", {}).items()))
+            or "none"
+        )
+    )
+    ui.checks_table(checks)
+with st.expander("All interventions and what they change"):
+    st.dataframe(
+        pd.DataFrame(
+            [
+                {
+                    "Intervention (hypothetical)": names.get(c["scenario_id"], c["scenario_id"]),
+                    "What changes in the model": ", ".join(c["effects"].get("simulated", [])),
+                    "Type": "Uncertain assumption"
+                    if c["effects"].get("assumptions")
+                    else "Operational lever",
+                    "Status": c["status"],
+                }
+                for c in main
+            ]
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+    st.caption(
+        "Uncertain assumptions (patients per physician at once, inpatient bed releases, demand) "
+        "are not interventions; they are varied on the Sensitivity page."
+    )
+with st.expander("How to read these results"):
+    st.markdown(
+        f"- {MODEL_EVIDENCE_NOTE}\n"
+        f"- Each dot is the **average change** across {bundle.n_seeds} paired simulated weeks "
+        "(change minus baseline).\n"
+        "- The bar is the **95% confidence interval of that average**. If it crosses the dotted "
+        "zero line, the model shows no detectable change.\n"
+        "- A single future simulated week can differ much more than this interval suggests: "
+        "see confidence vs. prediction intervals on the Methods page.\n"
+        f"- {ui.NOT_A_RECOMMENDATION}"
+    )
 ui.footer()

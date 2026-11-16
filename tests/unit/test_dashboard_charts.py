@@ -38,7 +38,7 @@ def public_rows() -> pd.DataFrame:
 
 def test_public_chart_is_public_and_labels_unavailable(public_rows: pd.DataFrame) -> None:
     fig = charts.public_measure_bar(public_rows, measure_id="OP_18d", unit_label="Median minutes")
-    assert _title(fig).startswith("<b>PUBLIC</b>") and "CY 2025" in _title(fig)
+    assert _title(fig).startswith("<b>PUBLIC</b>") and "CY 2025" in fig.layout.title.subtitle.text
     notes = [a.text for a in fig.layout.annotations]
     assert any("Not available" in t for t in notes)
     assert all(v == 0 for v in fig.data[1].x)  # placeholder rows only, no fabricated values
@@ -109,7 +109,7 @@ def test_forest_error_bars_match_ci(bundle) -> None:  # noqa: ANN001
     rows = d.comparison_rows(bundle, scope="main", metric="arrival_to_provider_p90")
     fig = charts.forest(rows, title="A", n_seeds=2)
     for tr in fig.data:
-        for x, plus, minus, (lo, hi, _n) in zip(
+        for x, plus, minus, (lo, hi, _n, _name) in zip(
             tr.x, tr.error_x.array, tr.error_x.arrayminus, tr.customdata, strict=True
         ):
             assert x + plus == pytest.approx(hi) and x - minus == pytest.approx(lo)
@@ -159,3 +159,103 @@ def test_nys_chart_labels_suppressed_counts_as_text() -> None:
     fig = charts.nys_counts_bar(q1, measure_id="NYS_ED_ADMITTED", year=2025)
     assert any("Suppressed (S)" in a.text for a in fig.layout.annotations)
     assert "Suppressed (S)" not in [str(v) for v in fig.data[0].x]
+
+
+# --- Layout rules (Milestone 7.1): checked on every chart the app draws --------------------------
+
+
+def _all_figures(snap, bundle, public_rows):  # noqa: ANN001, ANN202
+    t = snap.tables
+    measures = d.load_public_data(PROCESSED_DIR).data.measures
+    row = d.comparison_rows(bundle, scope="main", metric="arrival_to_provider_p90").iloc[0]
+    return {
+        "op18b": charts.public_measure_bar(public_rows, measure_id="OP_18b", unit_label="min"),
+        "op18d": charts.public_measure_bar(public_rows, measure_id="OP_18d", unit_label="min"),
+        "nys": charts.nys_counts_bar(
+            d.nys_rows(measures, year=2025), measure_id="NYS_ED_ADMITTED", year=2025
+        ),
+        "arrivals": charts.arrivals_by_hour(snap.arrivals, 4),
+        "stages": charts.stage_time_bars(t["stage_decomposition"]),
+        "esi": charts.esi_outcome_dots(t["acuity_metrics"], measure="los_min", title="LOS"),
+        "shift": charts.shift_utilization_bars(t["shift_utilization"]),
+        "hourly": charts.hourly_line(
+            t["hourly_profile"], column="physician_utilization", title="U", yaxis="%", pct=True
+        ),
+        "boarding": charts.boarding_box(snap.boarding),
+        "forest": charts.forest(
+            d.comparison_rows(bundle, scope="main", metric="boarding_p90"), title="B", n_seeds=2
+        ),
+        "stage_shift": charts.stage_shift_chart(
+            d.stage_effects(bundle, scope="main", scenario_id="add_night_triage_nurse"),
+            scenario_name="A very long fictional scenario name " * 3,
+        ),
+        "archetype": charts.archetype_chart(bundle.archetypes, d.scenario_names()),
+        "heat": charts.sensitivity_heatmap(
+            d.sensitivity_grid(bundle, intervention="increase_bed_releases", metric="boarding_p90"),
+            title="Beds",
+        ),
+        "cipi": charts.ci_vs_pi_chart(row, scenario_name="x"),
+    }
+
+
+def test_every_chart_passes_layout_rules(snap, bundle, public_rows) -> None:  # noqa: ANN001
+    for name, fig in _all_figures(snap, bundle, public_rows).items():
+        assert charts.layout_problems(fig) == [], name
+
+
+def test_layout_checker_catches_violations() -> None:
+    bad = go.Figure(go.Scatter(x=[1], y=["x" * 60], mode="markers", name="a"))
+    bad.add_scatter(x=[2], y=["b"], name="b")
+    bad.update_layout(title="no label<br>second line", margin={"t": 10, "b": 10}, height=100)
+    bad.update_yaxes(automargin=False)
+    problems = " ".join(charts.layout_problems(bad))
+    for text in ("line break", "provenance", "top margin", "automargin", "legend", "longer than",
+                 "too short", "hover"):  # fmt: skip
+        assert text in problems, text
+    assert "height not set" in " ".join(charts.layout_problems(go.Figure()))
+
+
+def test_long_names_are_shortened_on_axes_but_kept_in_hover(bundle) -> None:  # noqa: ANN001
+    fig = charts.archetype_chart(bundle.archetypes, d.scenario_names())
+    assert all(len(y) <= charts.MAX_AXIS_LABEL for y in fig.data[0].y)
+    assert any("Archetype:" in str(c[0]) for c in fig.data[0].customdata)
+
+
+def test_duplicate_facility_names_get_their_own_rows() -> None:
+    df = pd.DataFrame(
+        {"facility_id": ["1", "2", "3"], "facility_name": ["Same", "Same", "Other " + "y" * 50]}
+    )
+    labels = charts.facility_axis_labels(df)
+    assert labels[0] != labels[1] and "(ID 1)" in labels[0] and labels[2].endswith("…")
+    assert len(set(labels)) == 3 and max(map(len, labels)) <= charts.MAX_AXIS_LABEL
+
+
+def test_nys_duplicate_bronxcare_sites_both_visible() -> None:
+    measures = d.load_public_data(PROCESSED_DIR).data.measures
+    nys = d.nys_rows(measures, year=2025)
+    fig = charts.nys_counts_bar(nys, measure_id="NYS_ED_ADMITTED", year=2025)
+    ys = list(fig.data[0].y) + list(fig.data[1].y)
+    assert len(ys) == len(set(ys)) == len(nys[nys["measure_id"] == "NYS_ED_ADMITTED"])
+
+
+def test_stage_colors_are_unique_and_not_cycled(snap) -> None:  # noqa: ANN001
+    fig = charts.stage_time_bars(snap.tables["stage_decomposition"])
+    colors = [tr.marker.color for tr in fig.data]
+    assert len(colors) == len(set(colors))
+
+
+def test_effect_wording_is_model_scoped(bundle) -> None:  # noqa: ANN001
+    rows = d.comparison_rows(bundle, scope="main", metric="arrival_to_provider_p90")
+    names = {tr.name for tr in charts.forest(rows, title="A", n_seeds=2).data}
+    allowed = {"Lower within the fictional model", "Higher within the fictional model",
+               "No detectable change (95% CI includes 0)", "Identical in both arms"}  # fmt: skip
+    assert names <= allowed
+    assert not any(w in " ".join(names).lower() for w in ("better", "worse", "safe", "recommend"))
+
+
+def test_direction_helpers_neutral_for_unsigned() -> None:
+    from beyond_the_wait.dashboard.theme import NEUTRAL, direction_color, direction_label
+
+    assert direction_color("inconclusive", -5.0) == NEUTRAL
+    assert direction_color("changes", -1.0) != direction_color("changes", 1.0)
+    assert direction_label("blocked", 0.0) == "BLOCKED: not shown"

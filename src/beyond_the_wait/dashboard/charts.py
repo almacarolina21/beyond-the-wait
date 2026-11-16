@@ -1,12 +1,16 @@
 """Plotly chart builders. Each takes prepared data and returns a Figure.
 
 Conventions
-    * The title starts with the provenance label (PUBLIC / SYNTHETIC / SIMULATED).
-      No figure ever mixes PUBLIC with SYNTHETIC or SIMULATED values.
-    * Units are in axis titles; hover text repeats value, unit, and context.
-    * One y-axis per chart. Legends appear for 2+ series.
-    * Effects are shown as point + 95% CI of the MEAN paired difference, with
-      the zero line marked, and a text verdict in hover and legend.
+    * The title starts with the provenance label (PUBLIC / SYNTHETIC / SIMULATED);
+      the subtitle uses Plotly's own subtitle field, in a fixed title area.
+    * No figure mixes PUBLIC with SYNTHETIC or SIMULATED values.
+    * Axis margins grow to fit labels (automargin). Long category names are
+      shortened on the axis only; the full name is always in the hover text.
+    * Legends sit in a reserved band at the bottom of the figure, so they can't
+      cover titles, data, or axis labels.
+    * Effects are a point + 95% CI of the MEAN paired difference with the zero
+      line marked, described as lower/higher WITHIN THE FICTIONAL MODEL.
+`layout_problems()` checks these rules programmatically (used by the tests).
 """
 
 from __future__ import annotations
@@ -17,24 +21,60 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from beyond_the_wait.dashboard.data import display_scale
+from beyond_the_wait.dashboard.data import display_scale, short_label
 from beyond_the_wait.dashboard.theme import (
     CATEGORICAL,
-    DIRECTION_COLORS,
-    DIRECTION_TEXT,
     ESI_COLORS,
-    NEUTRAL,
+    LEGEND_AREA_PX,
     PROVENANCE_COLORS,
     TEMPLATE,
     TEXT_2,
+    TITLE_AREA_PX,
+    direction_color,
+    direction_label,
 )
+
+ROW_PX = 46  # height per horizontal category row
+MIN_PLOT_PX = 160
+MAX_AXIS_LABEL = 40  # longest category label drawn on an axis (full text in hover)
+BOTTOM_PX = 64  # room for the x-axis title
+# Fixed color per stage (never cycled): 7 categorical slots + dark gray for boarding.
+STAGE_COLORS = {
+    "waiting for triage": CATEGORICAL[0],
+    "triage": CATEGORICAL[1],
+    "waiting for a space": CATEGORICAL[2],
+    "waiting for a physician": CATEGORICAL[3],
+    "provider evaluation": CATEGORICAL[4],
+    "lab/imaging results": CATEGORICAL[5],
+    "discharge process": CATEGORICAL[6],
+    "boarding": TEXT_2,
+}
+ZERO_LINE = {"color": "#52514e", "width": 1.5, "dash": "dot"}
+CI_BAR = {"type": "data", "symmetric": False, "color": "#8a8984", "thickness": 2, "width": 6}
 
 
 def _fig(title: str, provenance: str, subtitle: str = "") -> go.Figure:
     fig = go.Figure()
-    sub = f"<br><span style='font-size:12px;color:{TEXT_2}'>{subtitle}</span>" if subtitle else ""
-    fig.update_layout(template=TEMPLATE, title={"text": f"<b>{provenance}</b> · {title}{sub}"})
+    fig.update_layout(
+        template=TEMPLATE,
+        title={"text": f"<b>{provenance}</b> · {title}", "subtitle": {"text": subtitle}},
+    )
     return fig
+
+
+def _rows_height(n_rows: int, *, legend: bool) -> int:
+    plot = max(MIN_PLOT_PX, ROW_PX * n_rows)
+    return TITLE_AREA_PX + plot + BOTTOM_PX + (LEGEND_AREA_PX if legend else 0)
+
+
+def _legend_below(fig: go.Figure) -> go.Figure:
+    """Reserve the bottom band for the legend (anchored there by the template)."""
+    fig.update_layout(margin={"b": BOTTOM_PX + LEGEND_AREA_PX}, showlegend=True)
+    return fig
+
+
+def _clip(label: str, limit: int = MAX_AXIS_LABEL) -> str:
+    return label if len(label) <= limit else label[: limit - 1].rstrip() + "…"
 
 
 def _empty(fig: go.Figure, message: str) -> go.Figure:
@@ -49,6 +89,7 @@ def _empty(fig: go.Figure, message: str) -> go.Figure:
     )
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
+    fig.update_layout(height=TITLE_AREA_PX + 200)
     return fig
 
 
@@ -57,80 +98,83 @@ def _empty(fig: go.Figure, message: str) -> go.Figure:
 # ---------------------------------------------------------------------------
 
 
+def facility_axis_labels(df: pd.DataFrame) -> list[str]:
+    """Official names as published, one row per facility ID. When two facilities
+    share a name (NYS lists two 'BronxCare Hospital Center' sites), the ID is
+    appended so neither value can hide behind the other."""
+    counts = df["facility_name"].value_counts()
+    labels = []
+    for fid, name in zip(df["facility_id"], df["facility_name"], strict=True):
+        suffix = f" (ID {fid})" if counts[name] > 1 else ""
+        labels.append(_clip(name, MAX_AXIS_LABEL - len(suffix)) + suffix)
+    return labels
+
+
+def _public_bars(fig: go.Figure, df: pd.DataFrame, hover: str, x_title: str) -> go.Figure:
+    df = df.assign(axis_label=facility_axis_labels(df))
+    reported = df[df["status"] == "reported"]
+    missing = df[df["status"] != "reported"]
+    fig.add_bar(
+        y=reported["axis_label"],
+        x=reported["value"],
+        orientation="h",
+        marker={"color": PROVENANCE_COLORS["PUBLIC"], "cornerradius": 4},
+        text=reported["display"],
+        textposition="outside",
+        cliponaxis=False,
+        customdata=np.stack([reported["facility_name"], reported["display"]], axis=-1)
+        if len(reported)
+        else None,
+        hovertemplate="%{customdata[0]}<br>" + hover + "<extra></extra>",
+        showlegend=False,
+    )
+    # Unavailable values: an invisible zero-length bar keeps the row; text says why.
+    fig.add_bar(
+        y=missing["axis_label"],
+        x=[0] * len(missing),
+        orientation="h",
+        showlegend=False,
+        hoverinfo="skip",
+        marker={"color": "rgba(0,0,0,0)"},
+    )
+    for label, text in zip(missing["axis_label"], missing["display"], strict=True):
+        fig.add_annotation(
+            y=label,
+            x=0,
+            xanchor="left",
+            text=f"  {text}",
+            showarrow=False,
+            font={"color": TEXT_2, "size": 12},
+        )
+    fig.update_yaxes(categoryorder="array", categoryarray=list(df["axis_label"])[::-1])
+    fig.update_xaxes(title_text=x_title, rangemode="tozero")
+    fig.update_layout(height=_rows_height(len(df), legend=False), margin={"r": 80})
+    return fig
+
+
 def public_measure_bar(rows: pd.DataFrame, *, measure_id: str, unit_label: str) -> go.Figure:
     """One CMS measure across hospitals. Unavailable values are labeled, not drawn as 0."""
     df = rows[rows["measure_id"] == measure_id]
     if df.empty:
         return _empty(_fig(measure_id, "PUBLIC", "CMS Care Compare"), "No data")
     df = df.sort_values("facility_name")
-    period, name = df["period"].iloc[0], df["short_name"].iloc[0]
-    fig = _fig(f"{measure_id}: {name}", "PUBLIC", f"Reporting period {period} · CMS Care Compare")
-    reported = df[df["status"] == "reported"]
-    fig.add_bar(
-        y=reported["facility_name"],
-        x=reported["value"],
-        orientation="h",
-        marker={"color": PROVENANCE_COLORS["PUBLIC"], "cornerradius": 4},
-        text=reported["display"],
-        textposition="outside",
-        cliponaxis=False,
-        customdata=np.stack([reported["period"], reported["facility_id"]], axis=-1),
-        hovertemplate="%{y}<br>%{text} · %{customdata[0]}<br>CCN %{customdata[1]}<extra></extra>",
-        name=name,
-        showlegend=False,
+    period = df["period"].iloc[0]
+    fig = _fig(
+        f"{measure_id}: {df['short_name'].iloc[0]}",
+        "PUBLIC",
+        f"Reporting period {period} · CMS Care Compare · hospital names as published",
     )
-    for row in df[df["status"] != "reported"].itertuples():
-        fig.add_annotation(
-            y=row.facility_name,
-            x=0,
-            xanchor="left",
-            text=f"  {row.display}",
-            showarrow=False,
-            font={"color": TEXT_2, "size": 12},
-        )
-    fig.add_bar(
-        y=df[df["status"] != "reported"]["facility_name"],
-        x=[0] * int((df["status"] != "reported").sum()),
-        orientation="h",
-        showlegend=False,
-        hoverinfo="skip",
-    )
-    fig.update_layout(height=120 + 46 * len(df), xaxis_title=unit_label, yaxis_title=None)
-    fig.update_yaxes(categoryorder="array", categoryarray=list(df["facility_name"])[::-1])
-    return fig
+    return _public_bars(fig, df, "%{customdata[1]} · " + period, unit_label)
 
 
 def nys_counts_bar(rows: pd.DataFrame, *, measure_id: str, year: int) -> go.Figure:
     df = rows[rows["measure_id"] == measure_id]
-    subtitle = "NYS DOH SPARCS facility counts (aggregate) · NYS facility IDs"
+    subtitle = "NYS DOH SPARCS facility counts (aggregate) · reported per NYS site"
     if df.empty:
         return _empty(_fig(f"{measure_id}, calendar year {year}", "PUBLIC", subtitle), "No data")
     df = df.sort_values("facility_name")
-    fig = _fig(f"{df['short_name'].iloc[0]}, calendar year {year}", "PUBLIC", subtitle)
-    reported = df[df["status"] == "reported"]
-    fig.add_bar(
-        y=reported["facility_name"],
-        x=reported["value"],
-        orientation="h",
-        marker={"color": PROVENANCE_COLORS["PUBLIC"], "cornerradius": 4},
-        text=reported["display"],
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate="%{y}<br>%{text} encounters<extra></extra>",
-        showlegend=False,
-    )
-    for row in df[df["status"] != "reported"].itertuples():
-        fig.add_annotation(
-            y=row.facility_name,
-            x=0,
-            xanchor="left",
-            text=f"  {row.display}",
-            showarrow=False,
-            font={"color": TEXT_2, "size": 12},
-        )
-    fig.update_layout(height=120 + 40 * len(df), xaxis_title="ED encounters", yaxis_title=None)
-    fig.update_yaxes(categoryorder="array", categoryarray=list(df["facility_name"])[::-1])
-    return fig
+    fig = _fig(f"{df['short_name'].iloc[0]}, {year}", "PUBLIC", subtitle)
+    return _public_bars(fig, df, "%{customdata[1]} encounters", "ED encounters")
 
 
 # ---------------------------------------------------------------------------
@@ -157,24 +201,23 @@ def arrivals_by_hour(arrivals: pd.DataFrame, days: int) -> go.Figure:
         )
     fig.update_layout(
         barmode="stack",
-        xaxis_title="Clock hour of arrival",
-        yaxis_title="Patients per day (average)",
-        height=380,
         bargap=0.12,
+        legend_traceorder="normal",
+        height=TITLE_AREA_PX + 300 + BOTTOM_PX + LEGEND_AREA_PX,
     )
-    fig.update_xaxes(dtick=2)
-    return fig
+    fig.update_xaxes(title_text="Clock hour of arrival", dtick=2)
+    fig.update_yaxes(title_text="Patients per day (average)")
+    return _legend_below(fig)
 
 
 def stage_time_bars(stages: pd.DataFrame) -> go.Figure:
     """Mean minutes in each stage, by disposition (stacked; sums to mean LOS)."""
     fig = _fig(
-        "Where time in the ED goes (mean minutes per stage)",
+        "Where time in the ED goes",
         "SIMULATED",
-        "One run · descriptive only: the largest stage is not necessarily the cause of delay",
+        "Mean minutes per stage · one run · the largest stage is not necessarily the cause",
     )
-    order = list(dict.fromkeys(stages["stage"]))
-    for i, stage in enumerate(order):
+    for stage in dict.fromkeys(stages["stage"]):  # chronological order from the metrics
         part = stages[stages["stage"] == stage]
         fig.add_bar(
             y=part["disposition"].str.capitalize(),
@@ -182,19 +225,16 @@ def stage_time_bars(stages: pd.DataFrame) -> go.Figure:
             orientation="h",
             name=stage,
             marker={
-                "color": CATEGORICAL[i % len(CATEGORICAL)],
+                "color": STAGE_COLORS.get(stage, TEXT_2),
                 "line": {"color": "white", "width": 2},
             },
             hovertemplate=f"{stage}<br>%{{y}}: %{{x:.0f}} min (mean)<extra></extra>",
         )
     fig.update_layout(
-        barmode="stack",
-        xaxis_title="Minutes (mean per patient)",
-        height=300,
-        legend={"y": -0.35, "yanchor": "top"},
-        margin={"b": 110},
+        barmode="stack", height=_rows_height(2, legend=True) + 30, legend_traceorder="normal"
     )
-    return fig
+    fig.update_xaxes(title_text="Minutes (mean per patient)")
+    return _legend_below(fig)
 
 
 def esi_outcome_dots(acuity: pd.DataFrame, *, measure: str, title: str) -> go.Figure:
@@ -206,6 +246,16 @@ def esi_outcome_dots(acuity: pd.DataFrame, *, measure: str, title: str) -> go.Fi
     ].copy()
     df["esi_label"] = "ESI " + df["acuity_esi"].astype(str)
     fig = _fig(title, "SIMULATED", "One run · completed visits in the measured period")
+    for r in df.itertuples():
+        fig.add_shape(
+            type="line",
+            x0=r.median,
+            x1=r.p90,
+            y0=r.esi_label,
+            y1=r.esi_label,
+            line={"color": "#c9c8c2", "width": 2},
+            layer="below",
+        )
     fig.add_scatter(
         x=df["median"],
         y=df["esi_label"],
@@ -223,47 +273,39 @@ def esi_outcome_dots(acuity: pd.DataFrame, *, measure: str, title: str) -> go.Fi
         marker={"size": 11, "color": CATEGORICAL[1], "symbol": "diamond"},
         hovertemplate="%{y} 90th percentile: %{x:.0f} min<extra></extra>",
     )
-    for r in df.itertuples():
-        fig.add_shape(
-            type="line",
-            x0=r.median,
-            x1=r.p90,
-            y0=r.esi_label,
-            y1=r.esi_label,
-            line={"color": "#c9c8c2", "width": 2},
-            layer="below",
-        )
-    fig.update_layout(xaxis_title="Minutes", height=320)
     fig.update_yaxes(categoryorder="array", categoryarray=[f"ESI {i}" for i in range(5, 0, -1)])
-    return fig
+    fig.update_xaxes(title_text="Minutes")
+    fig.update_layout(height=_rows_height(5, legend=True))
+    return _legend_below(fig)
 
 
 def shift_utilization_bars(shift_util: pd.DataFrame) -> go.Figure:
-    df = shift_util[shift_util["resource"].isin(["physician_slots", "triage_nurses"])].copy()
+    df = shift_util[shift_util["resource"].isin(["physician_slots", "triage_nurses"])]
     fig = _fig(
         "Staff utilization by shift",
         "SIMULATED",
-        "Share of available staff time spent busy · labels show share of shift at ≥90% busy",
+        "Share of available staff time spent busy · hover for time spent at ≥90% busy",
     )
-    for i, (res, label) in enumerate(
-        [("physician_slots", "Physician slots"), ("triage_nurses", "Triage nurses")]
-    ):
+    resources = [("physician_slots", "Physician slots"), ("triage_nurses", "Triage nurses")]
+    for i, (res, label) in enumerate(resources):
         part = df[df["resource"] == res]
         fig.add_bar(
             x=part["shift"].str.capitalize(),
             y=part["utilization"] * 100,
             name=label,
             marker={"color": CATEGORICAL[i], "cornerradius": 4},
-            text=[f"{v:.0%} at ≥90%" for v in part["share_time_at_or_above_90pct"]],
+            text=[f"{v:.0f}%" for v in part["utilization"] * 100],
+            customdata=part["share_time_at_or_above_90pct"] * 100,
             textposition="outside",
+            cliponaxis=False,
             hovertemplate=(
-                f"{label} · %{{x}}<br>Utilization %{{y:.0f}}%<br>%{{text}}<extra></extra>"
+                f"{label} · %{{x}}<br>Utilization %{{y:.0f}}%"
+                "<br>%{customdata:.0f}% of the shift at ≥90% busy<extra></extra>"
             ),
         )
-    fig.update_layout(
-        barmode="group", yaxis_title="Utilization (%)", yaxis_range=[0, 105], height=360
-    )
-    return fig
+    fig.update_layout(barmode="group", height=TITLE_AREA_PX + 300 + BOTTOM_PX + LEGEND_AREA_PX)
+    fig.update_yaxes(title_text="Utilization (%)", range=[0, 112])
+    return _legend_below(fig)
 
 
 def hourly_line(
@@ -276,24 +318,24 @@ def hourly_line(
         y=y,
         mode="lines+markers",
         name=title,
+        showlegend=False,
         line={"color": CATEGORICAL[0], "width": 2},
         marker={"size": 8},
         hovertemplate="%{x}:00 · %{y:.2f}" + ("%" if pct else "") + "<extra></extra>",
-        showlegend=False,
     )
-    top = hourly.assign(yval=y).nlargest(2, "yval")
-    for r in top.itertuples():
+    for r in hourly.assign(yval=y).nlargest(2, "yval").itertuples():
         fig.add_annotation(
             x=r.hour,
             y=r.yval,
             text=f"{int(r.hour):02d}:00",
             showarrow=True,
             arrowhead=0,
-            ay=-28,
+            ay=-24,
             font={"color": TEXT_2, "size": 12},
         )
-    fig.update_layout(xaxis_title="Clock hour", yaxis_title=yaxis, height=320)
-    fig.update_xaxes(dtick=2)
+    fig.update_xaxes(title_text="Clock hour", dtick=2)
+    fig.update_yaxes(title_text=yaxis)
+    fig.update_layout(height=TITLE_AREA_PX + 260 + BOTTOM_PX, showlegend=False)
     return fig
 
 
@@ -301,10 +343,9 @@ def boarding_box(boarding: pd.DataFrame) -> go.Figure:
     fig = _fig(
         "Boarding time by shift of the admission decision",
         "SIMULATED",
-        "One run · simplified bed-release model · unfinished boarders at time so far",
+        "One run · simplified bed-release model · unfinished boarders counted so far",
     )
-    order = ["day", "evening", "night"]
-    for i, shift in enumerate(order):
+    for i, shift in enumerate(["day", "evening", "night"]):
         vals = boarding.loc[boarding["decision_shift"] == shift, "boarding_min"] / 60
         fig.add_box(
             y=vals,
@@ -314,7 +355,8 @@ def boarding_box(boarding: pd.DataFrame) -> go.Figure:
             line={"width": 2},
             hovertemplate="%{y:.1f} h<extra></extra>",
         )
-    fig.update_layout(yaxis_title="Hours boarding in the ED", showlegend=False, height=360)
+    fig.update_yaxes(title_text="Hours boarding in the ED")
+    fig.update_layout(showlegend=False, height=TITLE_AREA_PX + 300 + BOTTOM_PX)
     return fig
 
 
@@ -323,58 +365,69 @@ def boarding_box(boarding: pd.DataFrame) -> go.Figure:
 # ---------------------------------------------------------------------------
 
 
+def _effect_traces(fig: go.Figure, df: pd.DataFrame, *, y: str, full: str, unit: str) -> None:
+    """One trace per direction label so the legend explains each color in words."""
+    df = df.assign(
+        _label=[direction_label(r.direction, r.d) for r in df.itertuples()],
+        _color=[direction_color(r.direction, r.d) for r in df.itertuples()],
+    )
+    for label, part in df.groupby("_label", sort=False):
+        fig.add_scatter(
+            x=part["d"],
+            y=part[y],
+            mode="markers",
+            name=label,
+            marker={
+                "size": 12,
+                "color": part["_color"].iloc[0],
+                # identical-in-both-arms is hollow so it differs from "no detectable change"
+                # by shape, not only by its (identical) neutral color
+                "symbol": "circle-open" if part["direction"].iloc[0] == "no_change" else "circle",
+                "line": {
+                    "color": part["_color"].iloc[0]
+                    if part["direction"].iloc[0] == "no_change"
+                    else "white",
+                    "width": 2,
+                },
+            },
+            error_x=CI_BAR
+            | {"array": part["hi"] - part["d"], "arrayminus": part["d"] - part["lo"]},
+            customdata=np.stack(
+                [part["lo"], part["hi"], part["n_pairs"], part[full]], axis=-1
+            ).astype(object),
+            hovertemplate=(
+                "%{customdata[3]}<br>Mean change %{x:+.2f} "
+                + unit
+                + "<br>95% CI of the mean [%{customdata[0]:+.2f}, %{customdata[1]:+.2f}]"
+                + "<br>%{customdata[2]} paired seeds<extra>"
+                + label
+                + "</extra>"
+            ),
+        )
+    fig.add_vline(x=0, line=ZERO_LINE)
+
+
 def forest(rows: pd.DataFrame, *, title: str, n_seeds: int) -> go.Figure:
-    """Mean paired difference with 95% CI per scenario; zero line = no effect."""
+    """Mean paired difference with 95% CI per scenario; zero line = no change."""
     if rows.empty:
         return _empty(_fig(title, "SIMULATED"), "No comparisons available")
     scale, unit = display_scale(rows["unit"].iloc[0])
     df = rows.assign(
-        d=rows["mean_difference"] * scale, lo=rows["ci95_low"] * scale, hi=rows["ci95_high"] * scale
+        d=rows["mean_difference"] * scale,
+        lo=rows["ci95_low"] * scale,
+        hi=rows["ci95_high"] * scale,
+        axis_label=[short_label(s) for s in rows["scenario_id"]],
     )
     fig = _fig(
         title,
         "SIMULATED",
-        f"Mean paired difference vs. baseline with 95% CI of the mean · {n_seeds} paired seeds"
-        " · fictional model",
+        f"Change vs. baseline · dot = mean, bar = 95% CI of the mean · {n_seeds} paired seeds",
     )
-    for direction, part in df.groupby("direction", sort=False):
-        fig.add_scatter(
-            x=part["d"],
-            y=part["scenario_name"],
-            mode="markers",
-            name=DIRECTION_TEXT.get(direction, direction),
-            marker={
-                "size": 12,
-                "color": DIRECTION_COLORS.get(direction, NEUTRAL),
-                "line": {"color": "white", "width": 2},
-            },
-            error_x={
-                "type": "data",
-                "symmetric": False,
-                "array": part["hi"] - part["d"],
-                "arrayminus": part["d"] - part["lo"],
-                "color": "#8a8984",
-                "thickness": 2,
-                "width": 6,
-            },
-            customdata=np.stack([part["lo"], part["hi"], part["n_pairs"]], axis=-1),
-            hovertemplate=(
-                "%{y}<br>Mean difference %{x:+.2f} "
-                + unit
-                + "<br>95% CI [%{customdata[0]:+.2f}, %{customdata[1]:+.2f}]"
-                + "<br>%{customdata[2]} paired seeds<extra>"
-                + DIRECTION_TEXT.get(direction, "")
-                + "</extra>"
-            ),
-        )
-    fig.add_vline(x=0, line={"color": "#52514e", "width": 1.5, "dash": "dot"})
-    fig.update_layout(
-        xaxis_title=f"Change vs. baseline ({unit}) · negative = lower in the model",
-        height=170 + 52 * df["scenario_name"].nunique(),
-        legend={"y": -0.25, "yanchor": "top"},
-        margin={"b": 100},
-    )
-    return fig
+    _effect_traces(fig, df, y="axis_label", full="scenario_name", unit=unit)
+    fig.update_yaxes(categoryorder="array", categoryarray=list(df["axis_label"])[::-1])
+    fig.update_xaxes(title_text=f"Change vs. baseline ({unit}) · left of 0 = lower in the model")
+    fig.update_layout(height=_rows_height(df["axis_label"].nunique(), legend=True))
+    return _legend_below(fig)
 
 
 def stage_shift_chart(stages: pd.DataFrame, *, scenario_name: str) -> go.Figure:
@@ -383,82 +436,52 @@ def stage_shift_chart(stages: pd.DataFrame, *, scenario_name: str) -> go.Figure:
         return _empty(_fig("Stage effects", "SIMULATED"), "No stage data")
     df = stages.assign(d=stages["mean_difference"], lo=stages["ci95_low"], hi=stages["ci95_high"])
     fig = _fig(
-        f"Where waiting changes: {scenario_name}",
+        "Where waiting changes",
         "SIMULATED",
-        "Mean minutes per patient in each stage, change vs. baseline with 95% CI",
+        f"{_clip(scenario_name, 60)} · mean minutes per patient per stage vs. baseline, 95% CI",
     )
-    for direction, part in df.groupby("direction", sort=False):
-        fig.add_scatter(
-            x=part["d"],
-            y=part["stage"],
-            mode="markers",
-            name=DIRECTION_TEXT.get(direction, direction),
-            marker={
-                "size": 12,
-                "color": DIRECTION_COLORS.get(direction, NEUTRAL),
-                "line": {"color": "white", "width": 2},
-            },
-            error_x={
-                "type": "data",
-                "symmetric": False,
-                "array": part["hi"] - part["d"],
-                "arrayminus": part["d"] - part["lo"],
-                "color": "#8a8984",
-                "thickness": 2,
-                "width": 6,
-            },
-            hovertemplate="%{y}: %{x:+.2f} min<extra></extra>",
-        )
-    fig.add_vline(x=0, line={"color": "#52514e", "width": 1.5, "dash": "dot"})
+    _effect_traces(fig, df, y="stage", full="stage", unit="min")
     fig.update_yaxes(categoryorder="array", categoryarray=list(df["stage"])[::-1])
-    fig.update_layout(
-        xaxis_title="Change in mean minutes per patient",
-        height=360,
-        legend={"y": -0.3, "yanchor": "top"},
-        margin={"b": 100},
-    )
-    return fig
+    fig.update_xaxes(title_text="Change in mean minutes per patient (min)")
+    fig.update_layout(height=_rows_height(len(df), legend=True))
+    return _legend_below(fig)
 
 
 def archetype_chart(arch: pd.DataFrame, names: dict[str, str]) -> go.Figure:
     """Condition harm vs. relief effect, with 95% CIs, per fictional archetype."""
     fig = _fig(
-        "Archetypes: does relieving the suspected constraint help?",
+        "Does relieving the suspected constraint help?",
         "SIMULATED",
-        "Each row uses its own outcome metric (minutes) · fictional conditions",
+        "Fictional archetypes · each row uses its own outcome (min) · 95% CI of the mean",
     )
     if arch.empty:
         return _empty(fig, "No archetype results in the bundle")
-    labels = [names.get(a, a).replace("Archetype: ", "") for a in arch["archetype"]]
-    for i, (prefix, label) in enumerate(
-        [("condition", "Condition vs. baseline"), ("relief", "Relief vs. condition")]
-    ):
+    labels = [short_label(a) for a in arch["archetype"]]
+    full = [names.get(a, a) for a in arch["archetype"]]
+    series = [
+        ("condition", "Condition vs. baseline", "circle"),
+        ("relief", "Relief vs. condition", "diamond"),
+    ]
+    for i, (prefix, label, symbol) in enumerate(series):
         d, lo, hi = arch[f"{prefix}_effect"], arch[f"{prefix}_ci_low"], arch[f"{prefix}_ci_high"]
         fig.add_scatter(
             x=d,
             y=labels,
             mode="markers",
             name=label,
-            marker={
-                "size": 12,
-                "color": CATEGORICAL[i],
-                "symbol": "circle" if i == 0 else "diamond",
-            },
-            error_x={
-                "type": "data",
-                "symmetric": False,
-                "array": hi - d,
-                "arrayminus": d - lo,
-                "color": "#8a8984",
-                "thickness": 2,
-                "width": 6,
-            },
-            customdata=arch["outcome"],
-            hovertemplate=f"{label}<br>%{{y}} · %{{customdata}}<br>%{{x:+.1f}} min<extra></extra>",
+            marker={"size": 12, "color": CATEGORICAL[i], "symbol": symbol},
+            error_x=CI_BAR | {"array": hi - d, "arrayminus": d - lo},
+            customdata=np.stack([full, arch["outcome"]], axis=-1),
+            hovertemplate=(
+                f"{label}<br>%{{customdata[0]}}<br>Outcome: %{{customdata[1]}}"
+                "<br>%{x:+.1f} min<extra></extra>"
+            ),
         )
-    fig.add_vline(x=0, line={"color": "#52514e", "width": 1.5, "dash": "dot"})
-    fig.update_layout(xaxis_title="Mean paired difference (minutes)", height=360)
-    return fig
+    fig.add_vline(x=0, line=ZERO_LINE)
+    fig.update_yaxes(categoryorder="array", categoryarray=labels[::-1])
+    fig.update_xaxes(title_text="Mean paired difference (min)")
+    fig.update_layout(height=_rows_height(len(arch), legend=True))
+    return _legend_below(fig)
 
 
 SENS_CODES = {
@@ -486,8 +509,7 @@ def sensitivity_heatmap(grid: pd.DataFrame, *, title: str) -> go.Figure:
     fig = _fig(
         title,
         "SIMULATED",
-        "Cell = direction of the 95% CI under that assumption"
-        " · 'stress' = an overloaded replication occurred",
+        "Cell = direction of the 95% CI under that assumption · 'stress' = overloaded week",
     )
     if grid.empty:
         return _empty(fig, "No sensitivity results in the bundle")
@@ -498,15 +520,14 @@ def sensitivity_heatmap(grid: pd.DataFrame, *, title: str) -> go.Figure:
         zr, tr, hr = [], [], []
         for r in rel:
             row = grid[(grid["concurrency"] == c) & (grid["releases_per_day"] == r)].iloc[0]
+            word = SENS_TEXT.get(row["direction"], row["direction"])
             zr.append(SENS_CODES.get(row["direction"], 1))
             stress = " · stress" if row["regime"] == "stress_test" else ""
             md = row.get("mean_difference")
-            mdt = (
-                "" if md is None or (isinstance(md, float) and math.isnan(md)) else f"<br>{md:+.1f}"
-            )
-            tr.append(f"{SENS_TEXT.get(row['direction'], row['direction'])}{stress}{mdt}")
+            missing = md is None or (isinstance(md, float) and math.isnan(md))
+            tr.append(f"{word}{stress}" + ("" if missing else f"<br>{md:+.1f}"))
             hr.append(
-                f"Concurrency {c}, {r:g} releases/day<br>{DIRECTION_TEXT.get(row['direction'], '')}"
+                f"Concurrency {c}, {r:g} releases/day<br>{word} within the fictional model"
                 f"<br>Regime: {row['regime']}"
             )
         z.append(zr)
@@ -523,7 +544,7 @@ def sensitivity_heatmap(grid: pd.DataFrame, *, title: str) -> go.Figure:
     fig.add_heatmap(
         z=z,
         x=[f"{r:g}/day" for r in rel],
-        y=[f"Concurrency {c}" for c in conc],
+        y=[f"{c} at once" for c in conc],
         zmin=0,
         zmax=2,
         colorscale=colorscale,
@@ -536,11 +557,9 @@ def sensitivity_heatmap(grid: pd.DataFrame, *, title: str) -> go.Figure:
         xgap=3,
         ygap=3,
     )
-    fig.update_layout(
-        xaxis_title="Inpatient bed releases to the ED (assumption)",
-        yaxis_title="Patients per physician at once (assumption)",
-        height=340,
-    )
+    fig.update_xaxes(title_text="Inpatient bed releases to the ED (assumption)")
+    fig.update_yaxes(title_text="Patients per physician (assumption)")
+    fig.update_layout(height=TITLE_AREA_PX + 80 * len(conc) + BOTTOM_PX + 20)
     return fig
 
 
@@ -549,18 +568,13 @@ def ci_vs_pi_chart(row: pd.Series, *, scenario_name: str) -> go.Figure:
     scale, unit = display_scale(row["unit"])
     d = row["mean_difference"] * scale
     fig = _fig(
-        f"Confidence vs. prediction interval: {row['label']}",
+        f"Confidence vs. prediction interval · {row['label']}",
         "SIMULATED",
-        f"{scenario_name} · {int(row['n_pairs'])} paired seeds",
+        f"{_clip(scenario_name, 60)} · {int(row['n_pairs'])} paired seeds",
     )
     items = [
-        ("95% CI of the mean difference", row["ci95_low"], row["ci95_high"], CATEGORICAL[0]),
-        (
-            "95% prediction interval (one future run)",
-            row["pred95_low"],
-            row["pred95_high"],
-            CATEGORICAL[1],
-        ),
+        ("95% CI of the mean", row["ci95_low"], row["ci95_high"], CATEGORICAL[0]),
+        ("95% prediction (one run)", row["pred95_low"], row["pred95_high"], CATEGORICAL[1]),
     ]
     for label, lo, hi, color in items:
         fig.add_scatter(
@@ -570,18 +584,74 @@ def ci_vs_pi_chart(row: pd.Series, *, scenario_name: str) -> go.Figure:
             name=label,
             line={"color": color, "width": 6},
             marker={"size": 10, "color": color},
-            hovertemplate=f"{label}<br>%{{x:+.2f}} {unit}<extra></extra>",
             showlegend=False,
+            hovertemplate=f"{label}<br>%{{x:+.2f}} {unit}<extra></extra>",
         )
     fig.add_scatter(
         x=[d, d],
         y=[items[0][0], items[1][0]],
         mode="markers",
-        name="Mean difference",
+        name="Mean change",
+        showlegend=False,
         marker={"size": 13, "color": "#0b0b0b", "symbol": "line-ns-open", "line": {"width": 3}},
         hovertemplate=f"Mean %{{x:+.2f}} {unit}<extra></extra>",
-        showlegend=False,
     )
-    fig.add_vline(x=0, line={"color": "#52514e", "width": 1.5, "dash": "dot"})
-    fig.update_layout(xaxis_title=f"Change vs. baseline ({unit})", height=260)
+    fig.add_vline(x=0, line=ZERO_LINE)
+    fig.update_xaxes(title_text=f"Change vs. baseline ({unit})")
+    fig.update_layout(height=_rows_height(2, legend=False), showlegend=False)
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Layout checks (used by tests)
+# ---------------------------------------------------------------------------
+
+
+def _category_labels(fig: go.Figure) -> list[str]:
+    labels: list[str] = []
+    for t in fig.data:
+        if t.type not in ("bar", "scatter") or t.y is None or not len(t.y):
+            continue
+        if isinstance(t.y[0], str):
+            labels.extend(str(y) for y in t.y)
+    return labels
+
+
+def layout_problems(fig: go.Figure) -> list[str]:
+    """Human-readable layout problems, or [] if the figure follows the rules above."""
+    lay = fig.layout
+    problems: list[str] = []
+    title = lay.title.text or ""
+    if "<br>" in title:
+        problems.append("title contains a line break; use the subtitle field")
+    if not title.startswith(("<b>PUBLIC</b>", "<b>SYNTHETIC</b>", "<b>SIMULATED</b>")):
+        problems.append("title does not start with a provenance label")
+    template = lay.template.layout
+    if (lay.margin.t or template.margin.t or 0) < TITLE_AREA_PX:
+        problems.append("top margin smaller than the reserved title area")
+    for name in ("xaxis", "yaxis"):
+        axis, base = lay[name], template[name]
+        visible = axis.visible is not False
+        if (
+            visible
+            and (axis.automargin if axis.automargin is not None else base.automargin) is not True
+        ):
+            problems.append(f"{name} does not use automargin")
+    legend_items = [t for t in fig.data if t.showlegend is not False]
+    if lay.showlegend is not False and len(legend_items) >= 2:
+        if (lay.legend.yref or template.legend.yref) != "container":
+            problems.append("legend is not anchored to the bottom band of the figure")
+        if (lay.margin.b or 0) < BOTTOM_PX + LEGEND_AREA_PX:
+            problems.append("bottom margin too small for the legend band")
+    labels = _category_labels(fig)
+    if labels and max(len(x) for x in labels) > MAX_AXIS_LABEL:
+        problems.append(f"an axis label is longer than {MAX_AXIS_LABEL} characters")
+    n_rows = len(set(labels))
+    if n_rows and (lay.height or 0) < TITLE_AREA_PX + min(MIN_PLOT_PX, ROW_PX * n_rows):
+        problems.append("figure too short for its category rows")
+    if not lay.height:
+        problems.append("figure height not set")
+    for t in fig.data:
+        if t.type != "heatmap" and t.hoverinfo != "skip" and not t.hovertemplate:
+            problems.append(f"a {t.type} trace has no hover text")
+    return problems

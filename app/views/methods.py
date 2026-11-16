@@ -23,7 +23,7 @@ load = ui.results()
 bundle = load.bundle if load.status == "ok" else None
 names = d.scenario_names()
 
-st.header("Sensitivity to uncertain assumptions")
+ui.section("Sensitivity to uncertain assumptions")
 if bundle is None:
     ui.results_unavailable(load)
 elif bundle.sensitivity is None:
@@ -45,7 +45,7 @@ else:
     )
     metric_names = {
         "arrival_to_provider_p90": "Arrival to provider, p90",
-        "los_median_lower_bound_all": "Length of stay, all (incl. unfinished)",
+        "los_median_lower_bound_all": "Length of stay, all patients",
         "boarding_p90": "Boarding, p90",
     }
     metric = b.selectbox(
@@ -68,17 +68,17 @@ else:
     if stab is not None:
         st.markdown("**Stability across operating (non-stress) settings**")
         flag = {
-            "unstable": "⚠ unstable — direction depends on assumptions",
-            "reverses": "⚠ reverses — opposite directions under different assumptions",
-            "no_support": "no supported effect under any setting",
-            "stable_improves": "stable — lower in the model under every setting",
-            "stable_worsens": "stable — higher in the model under every setting",
+            "unstable": "⚠ Unstable: depends on assumptions",
+            "reverses": "⚠ Reverses direction",
+            "no_support": "No detectable change anywhere",
+            "stable_improves": "Stable: lower in every setting",
+            "stable_worsens": "Stable: higher in every setting",
         }
         st.dataframe(
             pd.DataFrame(
                 [
                     {
-                        "Intervention": names.get(r.intervention, r.intervention),
+                        "Intervention": d.short_label(r.intervention),
                         "Outcome": metric_names.get(r.metric, r.metric),
                         "Settings": r.settings,
                         "Verdict": flag.get(r.verdict, r.verdict),
@@ -88,11 +88,13 @@ else:
             ),
             hide_index=True,
             width="stretch",
+            height=ui.table_height(len(stab)),
         )
 
-st.header("How results are validated")
+ui.section("How results are validated")
 st.markdown(
-    f"{status_chip('PASS')} internally consistent and within scope &nbsp; "
+    f"{status_chip('PASS')} internally consistent and within scope (not a clinical-safety "
+    "validation) &nbsp; "
     f"{status_chip('CAUTION')} consistent, but interpretable only with stated limitations &nbsp; "
     f"{status_chip('BLOCKED')} corrupted or inconsistent — never shown as results",
     unsafe_allow_html=True,
@@ -103,7 +105,8 @@ st.markdown(
     "match the event log, and labels are correct. A failure **blocks** the run. Comparisons containing "
     "a blocked run are blocked too. Overloaded but consistent runs are kept as **stress tests** and "
     "labeled CAUTION. Every result here is at least CAUTION, because it comes from a fictional model "
-    "with unvalidated assumptions."
+    "with unvalidated assumptions. The gate checks that results are **internally consistent**; no "
+    "status, including PASS, means a change is clinically safe or would work in a real ED."
 )
 snap = ui.flow(42, 8)
 with st.expander(
@@ -117,7 +120,7 @@ with st.expander(
             unsafe_allow_html=True,
         )
 
-st.header("Confidence interval vs. prediction interval")
+ui.section("Confidence interval vs. prediction interval")
 st.markdown(
     "- A **95% confidence interval of the mean difference** describes the *average* effect over many "
     "simulated weeks. It gets narrower with more seeds.\n"
@@ -131,10 +134,11 @@ if bundle is not None:
         row = rows.iloc[0]
         ui.plot(charts.ci_vs_pi_chart(row, scenario_name=row["scenario_name"]))
 
-st.header("Model and data limitations")
+ui.section("Model and data limitations")
 for item in SAFETY_LIMITATIONS:
     head, _, rest = item.partition(":")
-    st.markdown(f"- **{head.title()}:** {rest.strip()}")
+    label = head.capitalize().replace("Esi-1", "ESI-1")
+    st.markdown(f"- **{label}:** {rest.strip()}")
 st.markdown(
     "- **Synthetic assumptions:** arrival patterns, acuity mix, task durations, and staffing are "
     "illustrative values, not measurements, and are not calibrated to any real hospital.\n"
@@ -142,7 +146,7 @@ st.markdown(
     "afternoon-weighted); 300 beds at 93% occupancy is *not* treated as 21 free beds."
 )
 
-st.header("Methodology documents")
+ui.section("Methodology documents")
 st.markdown(
     "- `docs/PUBLIC_DATA_METHODOLOGY.md` — public measures, definitions, matching, limitations\n"
     "- `docs/SYNTHETIC_DATA_ASSUMPTIONS.md` — every synthetic assumption\n"

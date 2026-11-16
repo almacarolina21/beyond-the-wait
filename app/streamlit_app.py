@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from beyond_the_wait.dashboard import ui
 from beyond_the_wait.dashboard.ui import apply_style
 
 st.set_page_config(
@@ -18,25 +19,27 @@ st.set_page_config(
 )
 apply_style()
 
+pages = {
+    "overview": st.Page(
+        "views/overview.py", title="Overview", icon=":material/home:", default=True
+    ),
+    "public_data": st.Page(
+        "views/public_data.py", title="Bronx Public Data", icon=":material/public:"
+    ),
+    "patient_flow": st.Page(
+        "views/patient_flow.py", title="Fictional Patient Flow", icon=":material/timeline:"
+    ),
+    "what_if": st.Page("views/what_if.py", title="What-If Lab", icon=":material/science:"),
+    "methods": st.Page(
+        "views/methods.py", title="Sensitivity, Validation & Methods", icon=":material/fact_check:"
+    ),
+}
+ui.PAGES.update(pages)
 navigation = st.navigation(
     {
-        "Start here": [
-            st.Page("views/overview.py", title="Overview", icon=":material/home:", default=True),
-        ],
-        "Real world · PUBLIC": [
-            st.Page("views/public_data.py", title="Bronx Public Data", icon=":material/public:"),
-        ],
-        "Fictional model · SIMULATED": [
-            st.Page(
-                "views/patient_flow.py", title="Fictional Patient Flow", icon=":material/timeline:"
-            ),
-            st.Page("views/what_if.py", title="What-If Lab", icon=":material/science:"),
-            st.Page(
-                "views/methods.py",
-                title="Sensitivity, Validation & Methods",
-                icon=":material/fact_check:",
-            ),
-        ],
+        "Start here": [pages["overview"]],
+        "Real world · PUBLIC": [pages["public_data"]],
+        "Fictional model · SIMULATED": [pages["patient_flow"], pages["what_if"], pages["methods"]],
     }
 )
 with st.sidebar:

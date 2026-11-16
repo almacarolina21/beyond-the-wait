@@ -160,3 +160,32 @@ def test_checks_table_handles_empty_and_rows(tmp_path: Path) -> None:
     at = AppTest.from_file(str(script)).run()
     text = " ".join(m.value for m in at.markdown)
     assert "No non-PASS checks." in text and "single_seed" in text and "CAUTION" in text
+
+
+def test_overview_features_verified_findings_and_file_check_disclaimer(with_bundle: Path) -> None:
+    at = _run("overview")
+    text = _text(at)
+    assert "What the fictional model shows" in " ".join(s.value for s in at.subheader)
+    assert text.count("within the fictional model") >= 3
+    assert "not</b> clinical or real-world validation" in text
+    assert "What-If Lab" in text  # link text (plain fallback when run standalone)
+
+
+def test_overview_without_bundle_still_renders(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("BTW_RESULTS_DIR", str(tmp_path))
+    at = _run("overview")
+    assert not at.exception and any("not built yet" in i.value for i in at.info)
+
+
+def test_what_if_order_and_single_disclaimer(with_bundle: Path) -> None:
+    at = _run("what_if")
+    text = _text(at)
+    assert text.count("Model-internal evidence only") == 1  # once, in an expander
+    heads = [s.value for s in at.subheader]
+    assert heads.index("Compare interventions on one outcome") < heads.index(
+        "One intervention in detail"
+    )
+    assert heads[-1] == "Methods and validation"
+    assert "Why CAUTION" in text

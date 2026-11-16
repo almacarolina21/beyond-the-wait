@@ -177,7 +177,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
   simulated data never share a chart. No API key, no internet, localhost only.
   See [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
-**633 unit tests**, 100% line coverage, all offline.
+**649 unit tests**, 100% line coverage, all offline.
 
 **Not built yet:** Claude interpretation (Milestone 8). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 

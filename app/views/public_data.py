@@ -33,17 +33,22 @@ measures, facilities = load.data.measures, load.data.facilities
 rows = d.cms_measure_rows(measures)
 
 st.subheader("Reporting periods differ")
-periods = d.reporting_periods(measures)
-c1, c2 = st.columns([2, 3])
-c1.dataframe(
-    periods.rename(columns={"measure_id": "Measure", "measure": "Name", "period": "Period"}),
+st.markdown(
+    "OP-18 (time in the ED) covers **calendar 2025**; OP-22 (left without being seen) and ED volume "
+    "cover **calendar 2024**. Putting them side by side mixes years, so each chart states its own "
+    "period."
+)
+st.dataframe(
+    d.reporting_periods(measures).rename(
+        columns={"measure_id": "Measure", "measure": "Name", "period": "Period"}
+    ),
     hide_index=True,
     width="stretch",
-)
-c2.markdown(
-    "OP-18 (time in the ED) covers **calendar 2025**; OP-22 (left without being seen) and ED volume "
-    "cover **calendar 2024**. Putting them side by side mixes years, so each chart below states its "
-    "own period."
+    column_config={
+        "Measure": st.column_config.TextColumn(width="small"),
+        "Name": st.column_config.TextColumn(width="large"),
+        "Period": st.column_config.TextColumn(width="small"),
+    },
 )
 
 tabs = st.tabs(
@@ -51,9 +56,9 @@ tabs = st.tabs(
         "ED time (OP-18)",
         "Left without being seen (OP-22)",
         "ED volume",
-        "NYS encounter counts",
-        "Facility matching",
-        "Definitions & sources",
+        "NYS counts",
+        "Matching",
+        "Sources",
     ]
 )
 

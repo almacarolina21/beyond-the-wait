@@ -32,6 +32,54 @@ def callout(text: str, kind: str = "note") -> None:
     st.markdown(f"<div class='{cls}'>{text}</div>", unsafe_allow_html=True)
 
 
+# Page registry, filled by app/streamlit_app.py so pages can link to each other.
+# Empty when a page script runs on its own (e.g. in tests); links then render as text.
+PAGES: dict[str, object] = {}
+
+
+def page_link(key: str, label: str, icon: str | None = None) -> None:
+    page = PAGES.get(key)
+    if page is None:
+        st.markdown(f"**{label}** (use the sidebar)")
+    else:
+        st.page_link(page, label=label, icon=icon)
+
+
+def section(title: str) -> None:
+    """A section heading with consistent spacing and a hairline divider."""
+    st.markdown("<div class='btw-section'></div>", unsafe_allow_html=True)
+    st.subheader(title)
+
+
+def finding_card(title: str, text: str, status: str) -> None:
+    st.markdown(
+        f"<div class='btw-finding'>{badge('SIMULATED')}{status_chip(status)}"
+        f"<div class='btw-finding-title'>{title}</div><p>{text}</p></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def principle() -> None:
+    st.markdown(
+        "<div class='btw-principle'><span><b>Python calculates.</b> Tested code produces "
+        "every number.</span><span><b>Claude explains.</b> Planned for Milestone 8; not "
+        "built yet.</span><span><b>Humans decide.</b> Nothing here is a recommendation."
+        "</span></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def verification_line(load) -> None:  # noqa: ANN001
+    """Bundle file checks passed. Explicitly NOT a clinical-safety validation."""
+    if load.status == "ok":
+        st.markdown(
+            f"{status_chip('PASS')} <span class='btw-small'>Results files verified "
+            f"({load.bundle.n_seeds} paired seeds; fingerprints and labels checked). File "
+            "verification only: it is <b>not</b> clinical or real-world validation.</span>",
+            unsafe_allow_html=True,
+        )
+
+
 def esi1_callout() -> None:
     callout(f"<b>Safety limitation.</b> {ESI1_LIMITATION}", kind="safety")
 
@@ -114,3 +162,8 @@ def checks_table(checks: pd.DataFrame) -> None:
         st.markdown(
             f"{status_chip(row.status)} <b>{row.check}</b> — {row.detail}", unsafe_allow_html=True
         )
+
+
+def table_height(n_rows: int) -> int:
+    """Pixel height that shows every row without an inner scrollbar (max 20 rows)."""
+    return 38 + 35 * min(n_rows, 20)

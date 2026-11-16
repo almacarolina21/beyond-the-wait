@@ -49,15 +49,29 @@ DIRECTION_COLORS = {
     "unavailable": NEUTRAL,
     "blocked": NEUTRAL,
 }
-DIRECTION_TEXT = {
-    "improves": "Better in the model (interval excludes 0)",
-    "worsens": "Worse in the model (interval excludes 0)",
-    "changes": "Changed (neither better nor worse by itself)",
-    "inconclusive": "No detectable effect (interval includes 0)",
-    "no_change": "No change (identical results)",
+DIRECTION_TEXT = {  # phrasing for estimates without a clear sign-based verdict
+    "inconclusive": "No detectable change (95% CI includes 0)",
+    "no_change": "Identical in both arms",
     "unavailable": "Unavailable",
     "blocked": "BLOCKED: not shown",
 }
+LOWER = "Lower within the fictional model"
+HIGHER = "Higher within the fictional model"
+
+
+def direction_label(direction: str, mean_difference: float) -> str:
+    """Plain, model-scoped wording. Describes the NUMBER (lower/higher), never
+    calls a result better, safer, or recommended."""
+    if direction in ("improves", "worsens", "changes"):
+        return LOWER if mean_difference < 0 else HIGHER
+    return DIRECTION_TEXT.get(direction, direction)
+
+
+def direction_color(direction: str, mean_difference: float) -> str:
+    if direction in ("improves", "worsens", "changes"):
+        return DIRECTION_COLORS["improves"] if mean_difference < 0 else DIRECTION_COLORS["worsens"]
+    return NEUTRAL
+
 
 # Reserved status palette with icons.
 STATUS_STYLE = {
@@ -71,36 +85,52 @@ FONT_STACK = (
 )
 
 
+# Fixed title area: title + subtitle live in the top margin (container coordinates),
+# legends live at the very bottom of the figure (container coordinates). Neither
+# can overlap the plot, the axis labels, or each other.
+TITLE_AREA_PX = 92
+LEGEND_AREA_PX = 44
+
+
 def plotly_template() -> go.layout.Template:
-    """Thin marks, recessive grid, readable type."""
+    """Thin marks, recessive grid, readable type, labels never clipped."""
+    axis = {
+        "gridcolor": GRID,
+        "zerolinecolor": "#c9c8c2",
+        "linecolor": GRID,
+        "tickfont": {"color": TEXT_2, "size": 12},
+        "title": {"font": {"color": TEXT_2, "size": 12}, "standoff": 10},
+        "automargin": True,  # grow margins to fit tick labels instead of clipping them
+    }
     t = go.layout.Template()
     t.layout = go.Layout(
         font={"family": FONT_STACK, "size": 13, "color": TEXT},
-        title={"font": {"size": 16, "color": TEXT}, "x": 0, "xanchor": "left"},
+        title={
+            "font": {"size": 16, "color": TEXT},
+            "x": 0,
+            "xanchor": "left",
+            "xref": "container",
+            "y": 1,
+            "yanchor": "top",
+            "yref": "container",
+            "pad": {"t": 14, "l": 14},
+            "subtitle": {"font": {"size": 12, "color": TEXT_2}},
+        },
         paper_bgcolor=SURFACE,
         plot_bgcolor=SURFACE,
         colorway=CATEGORICAL,
-        margin={"l": 10, "r": 20, "t": 64, "b": 48},
-        xaxis={
-            "gridcolor": GRID,
-            "zerolinecolor": "#c9c8c2",
-            "linecolor": GRID,
-            "tickfont": {"color": TEXT_2},
-            "title": {"font": {"color": TEXT_2}},
-        },
-        yaxis={
-            "gridcolor": GRID,
-            "zerolinecolor": "#c9c8c2",
-            "linecolor": GRID,
-            "tickfont": {"color": TEXT_2},
-            "title": {"font": {"color": TEXT_2}},
-        },
+        margin={"l": 16, "r": 32, "t": TITLE_AREA_PX, "b": 56},
+        xaxis=axis,
+        yaxis=axis,
         legend={
-            "font": {"color": TEXT_2},
+            "font": {"color": TEXT_2, "size": 12},
             "orientation": "h",
+            "xref": "container",
+            "yref": "container",
+            "x": 0.01,
+            "xanchor": "left",
+            "y": 0.01,
             "yanchor": "bottom",
-            "y": 1.0,
-            "x": 0,
             "title": {"text": ""},
         },
         hoverlabel={"font": {"family": FONT_STACK, "size": 12}, "bgcolor": "white"},
@@ -133,13 +163,13 @@ def status_chip(status: str) -> str:
 CSS = f"""
 <style>
 :root {{ --btw-text-2: {TEXT_2}; --btw-surface-2: {SURFACE_2}; }}
-.block-container {{ max-width: 1180px; padding-top: 2.2rem; padding-bottom: 4rem; }}
+.block-container {{ max-width: 1180px; padding-top: 3.6rem; padding-bottom: 4rem; }}
 h1, h2, h3 {{ letter-spacing: -0.01em; }}
 h1 {{ font-weight: 650; }}
 p, li {{ line-height: 1.6; }}
 .btw-eyebrow {{ text-transform: uppercase; letter-spacing: .08em; font-size: .78rem;
   color: {TEXT_2}; font-weight: 600; margin-bottom: .2rem; }}
-.btw-lede {{ font-size: 1.12rem; color: {TEXT_2}; max-width: 760px; }}
+.btw-lede {{ font-size: 1.1rem; color: {TEXT_2}; max-width: 720px; margin-bottom: .2rem; }}
 .btw-badge, .btw-status {{ display: inline-block; border: 1.5px solid; border-radius: 999px;
   padding: 1px 10px; font-size: .75rem; font-weight: 650; letter-spacing: .05em;
   background: white; vertical-align: middle; margin-right: 6px; }}
@@ -153,6 +183,17 @@ p, li {{ line-height: 1.6; }}
   padding: .75rem 1rem; margin: .4rem 0 1rem 0; color: {TEXT_2}; font-size: .92rem; }}
 .btw-footer {{ color: {TEXT_3}; font-size: .82rem; border-top: 1px solid {GRID};
   margin-top: 3rem; padding-top: .8rem; }}
+/* Section rhythm: one divider + consistent space before each major section. */
+.btw-section {{ margin-top: 1.8rem; padding-top: .2rem; border-top: 1px solid {GRID}; }}
+.btw-principle {{ display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; margin: .4rem 0 1.2rem 0;
+  font-size: .95rem; color: {TEXT_2}; }}
+.btw-principle b {{ color: {TEXT}; }}
+.btw-finding {{ background: white; border: 1px solid {GRID}; border-radius: 12px;
+  padding: .95rem 1.05rem; height: 100%; }}
+.btw-finding .btw-finding-title {{ font-weight: 650; font-size: 1rem; margin: .45rem 0 .35rem 0;
+  color: {TEXT}; }}
+.btw-finding p {{ color: {TEXT_2}; font-size: .92rem; margin: 0; line-height: 1.55; }}
+.btw-small {{ font-size: .85rem; color: {TEXT_2}; }}
 @media (max-width: 700px) {{ .block-container {{ padding-left: 1rem; padding-right: 1rem; }} }}
 </style>
 """

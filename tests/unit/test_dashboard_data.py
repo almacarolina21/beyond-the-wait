@@ -180,3 +180,55 @@ def test_sensitivity_grid(bundle) -> None:  # noqa: ANN001
 def test_scenario_names() -> None:
     names = d.scenario_names()
     assert names["baseline"] == "Baseline" and names["increase_bed_releases"].startswith("Six more")
+
+
+# --- Generated plain-language text (Milestone 7.1) ---------------------------------------------
+
+
+def _fake(direction: str, d_: float, lo: float, hi: float, unit: str = "min") -> pd.Series:
+    return pd.Series({"direction": direction, "mean_difference": d_, "ci95_low": lo,
+                      "ci95_high": hi, "unit": unit})  # fmt: skip
+
+
+def test_describe_change_wording() -> None:
+    assert d.describe_change(_fake("improves", -98.4, -130.9, -66.0)) == (
+        "98.4 min lower within the fictional model (95% CI 66.0 to 131 min lower)"
+    )
+    assert "higher within the fictional model" in d.describe_change(_fake("worsens", 3.2, 2.4, 4))
+    assert d.describe_change(_fake("inconclusive", -0.5, -1.3, 0.3)).startswith("no detectable")
+    assert "percentage points" in d.describe_change(
+        _fake("improves", -0.1, -0.2, -0.05, "fraction")
+    )
+
+
+def test_key_findings_come_from_bundle(bundle) -> None:  # noqa: ANN001
+    findings = d.key_findings(bundle)
+    assert [f["scenario_id"] for f in findings] == [s for s, _, _ in d.FEATURED_FINDINGS]
+    for f in findings:
+        assert "within the fictional model" in f["text"] or "no detectable" in f["text"]
+        assert f["status"] in {"PASS", "CAUTION"}
+        assert not any(w in f["text"].lower() for w in ("safe", "recommend", "better"))
+
+
+def test_key_findings_skip_missing_comparisons(bundle) -> None:  # noqa: ANN001
+    empty = dataclasses.replace(bundle, comparisons=bundle.comparisons.iloc[0:0])
+    assert d.key_findings(empty) == []
+
+
+def test_interpretation_groups_by_direction(bundle) -> None:  # noqa: ANN001
+    rows = d.comparison_rows(bundle, scope="main", metric="physician_utilization")
+    lines = d.interpretation(rows, metric_label="Physician utilization")
+    assert sum(f"of {len(rows)})" in ln for ln in lines) >= 1
+    assert lines[-1].startswith("Lower utilization is not better or worse")
+    assert d.interpretation(rows.iloc[0:0], metric_label="x") == []
+    fake = pd.DataFrame({"scenario_id": ["a", "b"], "direction": ["worsens", "inconclusive"],
+                         "mean_difference": [2.0, 0.1], "ci95_low": [1.0, -1.0],
+                         "ci95_high": [3.0, 1.0], "unit": ["min", "min"]})  # fmt: skip
+    text = " ".join(d.interpretation(fake, metric_label="Boarding"))
+    assert "Higher within the fictional model** (1 of 2)" in text and "No detectable" in text
+
+
+def test_short_labels() -> None:
+    assert d.short_label("increase_bed_releases") == "+6 bed releases per day"
+    assert d.short_label("unknown_id") == "unknown_id"
+    assert all(len(v) <= 34 for v in d.SHORT_LABELS.values())

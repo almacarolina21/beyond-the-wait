@@ -345,6 +345,33 @@ def scenario_names() -> dict[str, str]:
     return names
 
 
+# Short axis labels (<= 34 characters) for charts. The full scenario name is
+# always kept in hover text and tables; these only stop axis labels clipping.
+SHORT_LABELS = {
+    "baseline": "Baseline",
+    "add_day_triage_nurse": "+1 day triage nurse",
+    "add_night_triage_nurse": "+1 night triage nurse",
+    "add_evening_physician": "+1 evening physician",
+    "add_night_physician": "+1 night physician",
+    "rebalance_physician_day_to_evening": "Move 1 physician day→evening",
+    "faster_diagnostics": "Lab & imaging 25% faster",
+    "increase_bed_releases": "+6 bed releases per day",
+    "sensitivity_physician_concurrency_3": "Concurrency 3 (assumption)",
+    "archetype_boarding_heavy": "Boarding-heavy",
+    "archetype_diagnostic_delay": "Diagnostic delay",
+    "archetype_physician_mismatch": "Physician mismatch",
+    "archetype_triage_mismatch": "Triage mismatch",
+}
+
+
+def short_label(scenario_id: str) -> str:
+    """Compact axis label; falls back to a trimmed full name."""
+    if scenario_id in SHORT_LABELS:
+        return SHORT_LABELS[scenario_id]
+    name = scenario_names().get(scenario_id, scenario_id)
+    return name if len(name) <= 34 else name[:33].rstrip() + "…"
+
+
 def comparison_rows(
     bundle: Bundle,
     *,
@@ -420,3 +447,116 @@ def sensitivity_grid(bundle: Bundle, *, intervention: str, metric: str) -> pd.Da
         return pd.DataFrame()
     s = bundle.sensitivity
     return s[(s["intervention"] == intervention) & (s["metric"] == metric)].reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
+# Plain-language summaries, generated only from verified bundle rows
+# ---------------------------------------------------------------------------
+
+METRIC_LABELS = {
+    "arrival_to_provider_p90": "Arrival to provider, 90th percentile",
+    "arrival_to_provider_median": "Arrival to provider, median",
+    "los_median_discharged": "Length of stay, discharged, median",
+    "los_median_admitted": "Length of stay, admitted, median",
+    "los_median_lower_bound_all": "Length of stay, all patients, median",
+    "boarding_p90": "Boarding, 90th percentile",
+    "boarding_share_over_4h": "Admitted patients boarding > 4 h",
+    "provider_wait_p90": "Waiting for a physician, 90th percentile",
+    "triage_wait_p90": "Waiting for triage, 90th percentile",
+    "physician_utilization": "Physician utilization",
+    "triage_utilization": "Triage-nurse utilization",
+}
+# Featured on the Overview: (scenario, outcome, optional second outcome that
+# shows congestion moving). Text is generated from the bundle, never typed in.
+FEATURED_FINDINGS = [
+    ("increase_bed_releases", "los_median_admitted", None),
+    ("faster_diagnostics", "los_median_discharged", None),
+    ("add_night_triage_nurse", "triage_wait_p90", "provider_wait_p90"),
+]
+SIGNED = ("improves", "worsens", "changes")  # 95% CI excludes zero
+
+
+def _fmt(x: float) -> str:
+    return f"{x:.1f}" if abs(x) < 100 else f"{x:.0f}"
+
+
+def describe_change(row: pd.Series) -> str:
+    """'98 min lower within the fictional model (95% CI 66 to 131 min lower)'."""
+    scale, unit = display_scale(row["unit"])
+    d, lo, hi = (row[k] * scale for k in ("mean_difference", "ci95_low", "ci95_high"))
+    if row["direction"] in SIGNED:
+        word = "lower" if d < 0 else "higher"
+        a, b = sorted((abs(lo), abs(hi)))
+        return (
+            f"{_fmt(abs(d))} {unit} {word} within the fictional model "
+            f"(95% CI {_fmt(a)} to {_fmt(b)} {unit} {word})"
+        )
+    return f"no detectable change within the fictional model (95% CI {lo:+.1f} to {hi:+.1f} {unit})"
+
+
+def _row(bundle: Bundle, scenario_id: str, metric: str) -> pd.Series | None:
+    rows = comparison_rows(bundle, scope="main", scenario_id=scenario_id)
+    rows = rows[rows["metric"] == metric]
+    return None if rows.empty else rows.iloc[0]
+
+
+def key_findings(bundle: Bundle) -> list[dict[str, str]]:
+    """Featured findings for the Overview. BLOCKED comparisons are already absent
+    from the bundle, so they can never be featured."""
+    out = []
+    for scenario_id, metric, also in FEATURED_FINDINGS:
+        row = _row(bundle, scenario_id, metric)
+        if row is None:
+            continue
+        text = f"{METRIC_LABELS.get(metric, row['label'])}: {describe_change(row)}."
+        second = _row(bundle, scenario_id, also) if also else None
+        if second is not None and second["direction"] in SIGNED:
+            text += (
+                f" But {METRIC_LABELS.get(also, second['label']).lower()}: "
+                f"{describe_change(second)}, so waiting partly moved to the next queue."
+            )
+        meta = comparison_meta(bundle, scope="main", scenario_id=scenario_id)
+        out.append(
+            {
+                "scenario_id": scenario_id,
+                "title": scenario_names().get(scenario_id, scenario_id),
+                "text": text,
+                "status": meta.get("status", "CAUTION"),
+            }
+        )
+    return out
+
+
+def interpretation(rows: pd.DataFrame, *, metric_label: str) -> list[str]:
+    """Plain-language reading of one outcome across interventions."""
+    if rows.empty:
+        return []
+    lower, higher, flat = [], [], []
+    for r in rows.itertuples():
+        name = short_label(r.scenario_id)
+        if r.direction in SIGNED:
+            (lower if r.mean_difference < 0 else higher).append(name)
+        else:
+            flat.append(name)
+    n = len(rows)
+    out = []
+    if lower:
+        out.append(
+            f"**Lower within the fictional model** ({len(lower)} of {n}): {', '.join(lower)}."
+        )
+    if higher:
+        out.append(
+            f"**Higher within the fictional model** ({len(higher)} of {n}): {', '.join(higher)}."
+        )
+    if flat:
+        out.append(f"**No detectable change** ({len(flat)} of {n}): {', '.join(flat)}.")
+    signed = rows[rows["direction"].isin(SIGNED)]
+    if not signed.empty:
+        top = signed.loc[signed["mean_difference"].abs().idxmax()]
+        out.append(
+            f"Largest average change: **{short_label(top['scenario_id'])}**, "
+            f"{describe_change(top)}."
+        )
+    if metric_label.endswith("utilization"):
+        out.append("Lower utilization is not better or worse by itself; it describes workload.")
+    return out

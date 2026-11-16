@@ -246,10 +246,15 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 - [x] Caching: public data and bundle by file timestamp; one live run by (seed, days),
   capped at 14 days; 30-seed experiments never run by the app.
 - [x] Security: localhost only, no uploads, no telemetry, no API key.
-- [x] **Tests:** 633 total, 100% line coverage, including headless `AppTest` page tests
+- [x] **Tests:** 649 total (after 7.1), 100% line coverage, including headless `AppTest` page tests
   (missing, tampered, and BLOCKED bundles; selectors). Live server health check passed.
-- [ ] Visual inspection in a real browser: **not yet performed** (checklist in
-  `docs/DASHBOARD.md` §7). The palette validator was not run (Node.js unavailable).
+- [x] **7.1 Visual design and UX:** chart layout rules enforced in code and tests
+  (no clipped labels, fixed title/legend bands); Overview with generated findings and a
+  path into the What-If Lab; What-If Lab reordered (chart first, details in expanders);
+  model-scoped wording ("Lower within the fictional model"); duplicate NYS facility names
+  shown separately; compact tables. All pages screenshot in headless Chrome at 1024 px (most also at 1280/1440 px).
+- [ ] Not yet checked: phone widths, zoom, hover/expander states, screen readers
+  (`docs/DASHBOARD.md` §8). The palette validator was not run (Node.js unavailable).
 
 **You'll learn:** building interactive apps, state management, UX for non-technical users.
 

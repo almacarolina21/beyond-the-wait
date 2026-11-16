@@ -77,13 +77,13 @@ k[2].metric("LOS discharged, median", f"{ps.loc[('los_min', 'discharged'), 'medi
 k[3].metric("LOS admitted, median", f"{ps.loc[('los_min', 'admitted'), 'median_min']:.0f} min")
 st.caption("SIMULATED · fictional model · measured days only (warm-up excluded)")
 
-st.subheader("Who arrives, and when")
+ui.section("Who arrives, and when")
 ui.plot(charts.arrivals_by_hour(snap.arrivals, days))
 
-st.subheader("Where time goes")
+ui.section("Where time goes")
 ui.plot(charts.stage_time_bars(t["stage_decomposition"]))
 
-st.subheader("Outcomes by acuity")
+ui.section("Outcomes by acuity")
 measure = st.radio(
     "Measure",
     ["arrival_to_provider_min", "los_min"],
@@ -100,47 +100,50 @@ ui.plot(
 )
 st.caption("Medians can look reassuring while the slowest 10% wait much longer — both are shown.")
 
-st.subheader("Staff and shifts")
+ui.section("Staff and shifts")
 ui.plot(charts.shift_utilization_bars(t["shift_utilization"]))
-a, b = st.columns(2)
-with a:
-    ui.plot(
-        charts.hourly_line(
-            t["hourly_profile"],
-            column="physician_utilization",
-            pct=True,
-            title="Physician utilization by hour",
-            yaxis="Utilization (%)",
-        )
+ui.plot(
+    charts.hourly_line(
+        t["hourly_profile"],
+        column="physician_utilization",
+        pct=True,
+        title="Physician utilization by hour",
+        yaxis="Utilization (%)",
     )
-with b:
-    ui.plot(
-        charts.hourly_line(
-            t["hourly_profile"],
-            column="physician_queue_mean",
-            title="Patients waiting for a physician",
-            yaxis="Patients (average)",
-        )
+)
+ui.plot(
+    charts.hourly_line(
+        t["hourly_profile"],
+        column="physician_queue_mean",
+        title="Patients waiting for a physician",
+        yaxis="Patients (average)",
     )
+)
 
-st.subheader("Boarding")
+ui.section("Boarding")
 ui.plot(charts.boarding_box(snap.boarding))
 bd = t["boarding_distribution"][
     ["group", "admitted_patients", "median", "p90", "max", "share_over_4h"]
 ]
 st.dataframe(
-    bd.rename(
+    bd.assign(share_over_4h=bd["share_over_4h"] * 100).rename(
         columns={
             "group": "Group",
             "admitted_patients": "Admitted",
             "median": "Median (min)",
-            "p90": "p90 (min)",
+            "p90": "90th pct (min)",
             "max": "Max (min)",
-            "share_over_4h": "Share > 4 h",
+            "share_over_4h": "Over 4 h (%)",
         }
     ),
     hide_index=True,
     width="stretch",
+    column_config={
+        "Median (min)": st.column_config.NumberColumn(format="%.0f"),
+        "90th pct (min)": st.column_config.NumberColumn(format="%.0f"),
+        "Max (min)": st.column_config.NumberColumn(format="%.0f"),
+        "Over 4 h (%)": st.column_config.NumberColumn(format="%.0f%%"),
+    },
 )
 ui.callout(
     "Boarding comes from a <b>simplified bed-release model</b>: inpatient beds open for ED patients at "
@@ -149,11 +152,25 @@ ui.callout(
 )
 with st.expander("Extreme waits (unfinished visits counted at time so far)"):
     ew = t["extreme_waits"]
+    view = ew[ew["acuity_esi"] == "all"][
+        ["measure", "threshold_min", "patients_over", "denominator", "share_over", "max_min"]
+    ]
     st.dataframe(
-        ew[ew["acuity_esi"] == "all"][
-            ["measure", "threshold_min", "patients_over", "denominator", "share_over", "max_min"]
-        ],
+        view.assign(share_over=view["share_over"] * 100).rename(
+            columns={
+                "measure": "Measure",
+                "threshold_min": "Threshold (min)",
+                "patients_over": "Patients over",
+                "denominator": "Patients",
+                "share_over": "Share over (%)",
+                "max_min": "Longest (min)",
+            }
+        ),
         hide_index=True,
         width="stretch",
+        column_config={
+            "Share over (%)": st.column_config.NumberColumn(format="%.1f%%"),
+            "Longest (min)": st.column_config.NumberColumn(format="%.0f"),
+        },
     )
 ui.footer()
