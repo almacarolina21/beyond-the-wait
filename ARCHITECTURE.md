@@ -1,11 +1,12 @@
 # Architecture — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.3 · **Last updated:** 2026-11-15
+**Status:** Draft v0.4 · **Last updated:** 2026-11-16
 
-> **Partly implemented.** As of Milestone 3, the **configuration layer
-> (§2.2)**, **provenance labels**, the **public-data pipeline**, and the
-> **synthetic patient generator (§2.1)** are implemented and tested. Everything else below is planned. Module names marked "planned"
-> may change as we build.
+> **Partly implemented.** As of Milestone 4, the **configuration layer
+> (§2.2)**, **provenance labels**, the **public-data pipeline**, the
+> **synthetic patient generator (§2.1)**, the **baseline simulation (§2.3)**,
+> and **basic outcome metrics (§2.4)** are implemented and tested. Everything
+> else below is planned. Module names marked "planned" may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
 > **Core principle:** *Python calculates. Claude explains. Humans decide.*
@@ -89,18 +90,31 @@ travels with the data so the UI and Claude can't confuse them.
 means writing a new YAML file, not editing Python. It mirrors how Epic build
 separates configuration records from application code.
 
-### 2.3 Simulation layer — `src/beyond_the_wait/simulation/`
+### 2.3 Simulation layer — `src/beyond_the_wait/simulation/` ✅ (Milestone 4, baseline)
 
 **Purpose:** The *only* place ED operations are numerically modeled.
+Full assumptions: [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md).
 
-- **SimPy** discrete-event simulation. Resources: triage nurses, ED beds,
-  providers, lab, imaging, inpatient beds (for boarding), coordinators.
-- Patient pathway:
-  `arrive → triage → wait for bed → provider eval → diagnostics (optional) → disposition decision → [admit: board until inpatient bed] / [discharge: coordination delay] → depart`
-- Each patient produces an **event log row** with timestamps for every stage —
-  the same shape as an ED tracking-board audit trail.
-- **Replications:** each scenario runs N times (default 30) with different
-  seeds; a warm-up period is discarded.
+- **SimPy** discrete-event simulation. Constrained resources: triage nurses,
+  physician slots (shift-scheduled), treatment spaces by type (eligibility by
+  ESI), and a **simplified inpatient bed-release stream** for boarding. Lab and
+  imaging are delays without capacity limits. Coordinators are not yet modeled.
+- Patient pathway (implemented):
+  `arrive → triage (FIFO; ESI-1 bypass) → treatment space (priority) → provider (priority) → lab/imaging in parallel → disposition → [admit: board in the ED space until a bed is released] / [discharge: discharge process] → depart`
+- Each patient produces an **event log row** with timestamps for every stage,
+  the same shape as an ED tracking-board audit trail, tagged `SIMULATED`.
+- Stopping rule: arrival window, then drain until empty or a hard stop.
+  Unfinished visits are kept and labeled; the warm-up cohort is labeled and
+  excluded from metrics.
+
+| Module | Responsibility |
+|---|---|
+| `resources.py` ✅ | `ScheduledPool`, `TreatmentSpaceManager`, `InpatientBedQueue`, `StepSeries`; non-preemptive priority; every assignment logged |
+| `randomness.py` ✅ | Seeded child streams (common random numbers); lognormal durations; bed release times |
+| `engine.py` ✅ | `SimulationSettings`, `run_simulation()` → `SimulationResult` |
+| `validity.py` ✅ | Pre-run load checks; post-run flags (saturation, hard stop, unfinished, growing queue, short run, single seed) |
+| `demo.py` ✅ | Command-line demonstration |
+| *replications (planned, M6)* | Each scenario runs N times with different seeds; CIs across runs |
 
 **Why discrete-event simulation?** Queues interact non-linearly — adding a
 provider does nothing if every bed is full of boarders. Spreadsheet averages
@@ -111,9 +125,9 @@ easy to test.
 
 **Purpose:** Turn raw event logs into trustworthy metrics.
 
-| Module (planned) | Responsibility |
+| Module | Responsibility |
 |---|---|
-| `metrics.py` | Patient metrics (door-to-provider, LOS by disposition, boarding hours, LWBS proxy) and staff metrics (utilization, time above load threshold, patients per staff-hour). |
+| `metrics.py` ✅ (basic) | Implemented: triage/space/provider waits, arrival-to-provider, LOS by disposition, boarding, utilization, queue lengths, throughput (measured cohort/window; `SIMULATED`). Planned: LWBS proxy, per-shift staff metrics. |
 | `comparison.py` | Scenario vs. baseline differences with 95% confidence intervals across replications. |
 | `decomposition.py` | Breaks average LOS into time spent in each stage → identifies the dominant *simulated* bottleneck. |
 | `validation.py` | **Validation gate**: sanity checks (Little's Law, no negative durations, conservation of patients, CI width acceptable, warm-up adequate). Results that fail are *not* sent to Claude. |
@@ -238,6 +252,7 @@ beyond-the-wait/
 ├── docs/
 │   ├── PUBLIC_DATA_METHODOLOGY.md  # What public ED measures do and don't mean
 │   ├── SYNTHETIC_DATA_ASSUMPTIONS.md  # Every synthetic assumption (fictional, unverified)
+│   ├── SIMULATION_MODEL.md    # Simulation journey, policies, boarding abstraction, validity
 │   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases

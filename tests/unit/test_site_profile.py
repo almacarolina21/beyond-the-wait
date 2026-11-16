@@ -221,9 +221,9 @@ def test_misspelled_field_rejected(site_dict: dict[str, Any]) -> None:
     _assert_invalid(site_dict, "Extra inputs are not permitted")
 
 
-@pytest.mark.parametrize("version", [1, 3])
+@pytest.mark.parametrize("version", [1, 2, 4])
 def test_unsupported_schema_version_rejected(site_dict: dict[str, Any], version: int) -> None:
-    # Version 1 predates patient_mix/service_times; 3 doesn't exist yet.
+    # Versions 1-2 predate later sections; 4 does not exist yet.
     site_dict["schema_version"] = version
     _assert_invalid(site_dict, "schema_version")
 

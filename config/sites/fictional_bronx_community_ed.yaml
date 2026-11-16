@@ -12,7 +12,7 @@
 #  in public reporting about Bronx emergency care.
 # =============================================================================
 
-schema_version: 2
+schema_version: 3
 
 site:
   site_id: riverside_commons_ed
@@ -147,3 +147,63 @@ inpatient:
   typical_occupancy: 0.93       # high occupancy -> boarding pressure
   ed_admission_fraction: 0.20   # 20% of ED patients admitted
   source_note: "Illustrative assumption representing a high-occupancy hospital; not real census data."
+
+# -----------------------------------------------------------------------------
+# OPERATIONS -- how the SIMULATED ED uses its resources (Milestone 4).
+# Every value is an explicit, ILLUSTRATIVE modeling assumption.
+# -----------------------------------------------------------------------------
+operations:
+  # Nurses assigned to triage on each shift (a subset of nurses_on_duty).
+  # The remaining nurses are NOT modeled as a constraint in Milestone 4.
+  triage_nurses_on_duty:
+    day: 2
+    evening: 2
+    night: 1
+  # A physician may be actively evaluating up to this many patients at once.
+  # With 1, the fictional staffing above could not keep up (physician demand
+  # ~1.4x supply on an average day), so 2 is the documented baseline.
+  physician_concurrent_patients: 2
+  # Visibly critical (ESI 1) patients go straight to a treatment space.
+  esi1_bypasses_triage: true
+  # Allowed space types per ESI level, in order of preference.
+  treatment_space_eligibility:
+    1: [resuscitation_bays, acute_beds]
+    2: [acute_beds, resuscitation_bays]
+    3: [acute_beds, hallway_spaces]
+    4: [fast_track_chairs, acute_beds, hallway_spaces]
+    5: [fast_track_chairs, acute_beds, hallway_spaces]
+  inpatient_bed_availability:
+    # SIMPLIFIED MODEL -- see docs/SIMULATION_MODEL.md. NOT derived from
+    # staffed_beds x (1 - occupancy). ~37.7 admissions/day expected vs 42
+    # releases/day -> the boarding queue runs at ~90% load (tight on purpose).
+    model: simplified_release_stream
+    releases_per_day: 42
+    hourly_release_profile:   # share of daily releases in each clock hour; sums to 1
+      - 0.01  # 00:00
+      - 0.01  # 01:00
+      - 0.01  # 02:00
+      - 0.01  # 03:00
+      - 0.01  # 04:00
+      - 0.01  # 05:00
+      - 0.01  # 06:00
+      - 0.02  # 07:00
+      - 0.03  # 08:00
+      - 0.04  # 09:00
+      - 0.06  # 10:00
+      - 0.08  # 11:00
+      - 0.09  # 12:00
+      - 0.10  # 13:00
+      - 0.10  # 14:00
+      - 0.09  # 15:00
+      - 0.08  # 16:00
+      - 0.06  # 17:00
+      - 0.05  # 18:00
+      - 0.04  # 19:00
+      - 0.03  # 20:00
+      - 0.02  # 21:00
+      - 0.02  # 22:00
+      - 0.02  # 23:00
+    initial_available_beds: 2
+    max_unclaimed_beds: 4
+    source_note: "Illustrative simplified bed-release assumption; afternoon-weighted to reflect commonly described inpatient discharge timing. Not measured at any hospital."
+  source_note: "Illustrative operational assumptions for the fictional ED simulation; not taken from any hospital's policies."

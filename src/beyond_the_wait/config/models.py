@@ -455,6 +455,87 @@ class InpatientCapacity(StrictModel):
 
 
 # ---------------------------------------------------------------------------
+# Operations: how the simulated ED uses its resources (Milestone 4)
+# ---------------------------------------------------------------------------
+
+SpaceType = Literal["acute_beds", "resuscitation_bays", "fast_track_chairs", "hallway_spaces"]
+SPACE_TYPES: tuple[str, ...] = (
+    "acute_beds", "resuscitation_bays", "fast_track_chairs", "hallway_spaces",
+)  # fmt: skip
+
+
+class InpatientBedAvailability(StrictModel):
+    """SIMPLIFIED abstraction of when inpatient beds open up for ED patients.
+
+    Why not use staffed_beds x (1 - occupancy)? "300 beds at 93% occupancy"
+    describes an average snapshot, not 21 beds sitting empty for the ED. Beds
+    turn over as inpatients are discharged, and ED admissions compete with
+    surgical, transfer, and direct admissions for each one.
+
+    Abstraction used instead:
+      * Beds become available TO THE ED one at a time, at random moments
+        (a time-varying Poisson stream) averaging `releases_per_day`, spread
+        across the day by `hourly_release_profile` (24 weights summing to 1).
+      * A waiting admitted ED patient (FIFO) claims each released bed.
+      * If nobody is waiting, the bed is held for the ED, but at most
+        `max_unclaimed_beds` at once; beyond that it goes to other hospital
+        demand and is counted as "not used by the ED".
+      * `initial_available_beds` are open at the start of the run.
+    """
+
+    model: Literal["simplified_release_stream"]
+    releases_per_day: Annotated[Number, Field(gt=0.0, le=500.0, allow_inf_nan=False)]
+    hourly_release_profile: Annotated[
+        list[Fraction], Field(min_length=HOURS_PER_DAY, max_length=HOURS_PER_DAY)
+    ]
+    initial_available_beds: Headcount
+    max_unclaimed_beds: Headcount
+    source_note: SourceNote
+
+    @model_validator(mode="after")
+    def _check_profile(self) -> InpatientBedAvailability:
+        total = sum(self.hourly_release_profile)
+        if abs(total - 1.0) > PROBABILITY_SUM_TOLERANCE:
+            raise ValueError(f"hourly_release_profile must sum to 1.0 (got {total:.6f})")
+        if self.initial_available_beds > self.max_unclaimed_beds:
+            raise ValueError("initial_available_beds cannot exceed max_unclaimed_beds")
+        return self
+
+
+class OperationsAssumptions(StrictModel):
+    """How the simulated ED uses its staff, spaces, and inpatient beds.
+
+    All values are explicit modeling assumptions for the FICTIONAL site.
+    """
+
+    triage_nurses_on_duty: dict[str, Headcount] = Field(
+        description="Nurses assigned to triage per shift (a subset of nurses_on_duty)."
+    )
+    physician_concurrent_patients: Annotated[StrictInt, Field(ge=1, le=4)] = Field(
+        description=(
+            "How many patients one physician can be actively evaluating at once. "
+            "Real physicians interleave patients; 1 = strictly one at a time."
+        )
+    )
+    esi1_bypasses_triage: bool
+    treatment_space_eligibility: dict[StrictInt, list[SpaceType]] = Field(
+        description="For each ESI level, allowed space types in order of preference."
+    )
+    inpatient_bed_availability: InpatientBedAvailability
+    source_note: SourceNote
+
+    @model_validator(mode="after")
+    def _check_eligibility(self) -> OperationsAssumptions:
+        _check_esi_keys(self.treatment_space_eligibility, "treatment_space_eligibility")
+        for level, spaces in self.treatment_space_eligibility.items():
+            if not spaces:
+                raise ValueError(f"ESI {level} must be eligible for at least one space type")
+            if len(set(spaces)) != len(spaces):
+                raise ValueError(f"ESI {level} lists a space type more than once")
+        return self
+
+
+# ---------------------------------------------------------------------------
 # Hospital / site configuration
 # ---------------------------------------------------------------------------
 
@@ -488,10 +569,11 @@ class SiteProfile(StrictModel):
     """Complete configuration for one fictional emergency department.
 
     schema_version 2 (Milestone 3) added `patient_mix`, `service_times`, and
-    optional day-of-week arrival multipliers.
+    optional day-of-week arrival multipliers. schema_version 3 (Milestone 4)
+    added `operations`.
     """
 
-    schema_version: Literal[2]
+    schema_version: Literal[3]
     site: SiteInfo
     provenance: ProvenanceRecord
     staffing: StaffingPlan
@@ -500,6 +582,31 @@ class SiteProfile(StrictModel):
     patient_mix: PatientMix
     service_times: ServiceTimeAssumptions
     inpatient: InpatientCapacity
+    operations: OperationsAssumptions
+
+    @model_validator(mode="after")
+    def _operations_fit_the_site(self) -> SiteProfile:
+        shifts = [s.name for s in self.staffing.shifts]
+        triage = self.operations.triage_nurses_on_duty
+        if set(triage) != set(shifts):
+            raise ValueError(
+                f"operations.triage_nurses_on_duty must list exactly the shifts {shifts}"
+            )
+        for shift in shifts:
+            if triage[shift] < 1:
+                raise ValueError(f"shift {shift!r} needs at least one triage nurse")
+            if triage[shift] > self.staffing.nurses_on_duty[shift]:
+                raise ValueError(
+                    f"shift {shift!r}: {triage[shift]} triage nurses exceeds the "
+                    f"{self.staffing.nurses_on_duty[shift]} nurses on duty"
+                )
+        for level, spaces in self.operations.treatment_space_eligibility.items():
+            if not any(getattr(self.treatment_spaces, s) > 0 for s in spaces):
+                raise ValueError(
+                    f"ESI {level} patients are only eligible for space types with zero "
+                    f"capacity ({spaces}); they could never be placed"
+                )
+        return self
 
     @model_validator(mode="after")
     def _site_profiles_are_synthetic(self) -> SiteProfile:
@@ -532,9 +639,7 @@ class SiteProfile(StrictModel):
 # ---------------------------------------------------------------------------
 
 StaffRole = Literal["physicians", "nurses"]
-TreatmentSpaceName = Literal[
-    "acute_beds", "resuscitation_bays", "fast_track_chairs", "hallway_spaces"
-]
+TreatmentSpaceName = SpaceType  # one definition, shared with OperationsAssumptions
 NonZeroChange = Annotated[StrictInt, Field(description="Positive adds, negative removes.")]
 
 

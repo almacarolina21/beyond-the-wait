@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.5 · **Last updated:** 2026-11-15 · **Current:** Milestone 3 complete; Milestone 4 not started
+**Status:** Draft v0.6 · **Last updated:** 2026-11-16 · **Current:** Milestone 4 complete; Milestone 5 not started
 
-Milestones 4–10 are **planned**. Items are checked off only when built and tested.
+Milestones 5–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -130,22 +130,45 @@ separate.
 
 **You'll learn:** probability distributions, random seeds, statistical testing.
 
-## Milestone 4 — Baseline ED simulation
+## Milestone 4 — Baseline ED simulation ✅
 **Goal:** Patients flow through a simulated ED.
-- SimPy resources: triage, beds, providers, lab, imaging, inpatient beds, coordinators.
-- Patient process with timestamps for each stage → event log DataFrame.
-- Start simple (triage → bed → provider → depart), then add diagnostics,
-  boarding, and coordination one at a time, testing after each.
-- **Tests:** every patient that arrives is accounted for; timestamps are
-  ordered; a single-server case matches the M/M/1 formula within tolerance.
+- [x] Site profile **schema v3**: `operations` section (triage nurses per shift,
+  physician concurrency = 2, ESI-1 triage bypass, space eligibility by ESI,
+  **simplified inpatient bed-release stream**), each with a source note.
+- [x] `simulation/resources.py`: shift-scheduled staff pools, multi-type
+  treatment-space allocator, boarding bed queue; non-preemptive priority;
+  every assignment logged.
+- [x] `simulation/engine.py`: arrive → triage → space → provider → diagnostics
+  → discharge or board → leave. Stopping rule with drain period and hard stop;
+  unfinished visits kept and labeled; warm-up cohort labeled. Output tagged
+  `SIMULATED`.
+- [x] `simulation/randomness.py`: four independent seeded streams (arrivals,
+  attributes, durations, bed releases) for common random numbers.
+- [x] `analysis/metrics.py`: waits, arrival-to-provider, LOS by disposition,
+  boarding, utilization, queue lengths, throughput (measured window only).
+- [x] `simulation/validity.py`: pre-run load checks and post-run flags
+  (saturation, hard stop, unfinished, growing queue, short run, single seed).
+- [x] Demo CLI `python -m beyond_the_wait.simulation.demo`; `docs/SIMULATION_MODEL.md`.
+- [x] **Tests:** 418 total, 100% line coverage. Deterministic hand-checked
+  journeys; priority; shifts and midnight; zero arrivals; saturation;
+  admission and discharge paths; boarding; unfinished visits; no
+  double-booking; event order; reproducibility; common random numbers; an
+  M/G/1 Pollaczek–Khinchine check (only where its assumptions hold);
+  sample-path Little's Law. Mutation-checked.
+
+**Changes from plan:** no coordinator resource (no configured inputs); lab and
+imaging are delays without capacity limits. Basic metrics, Little's Law, and
+the validity flags were pulled forward from Milestone 5. A single-server
+M/G/1 check replaced M/M/1, because service times are lognormal.
 
 **You'll learn:** discrete-event simulation, generators/processes in SimPy, queueing basics.
 
 ## Milestone 5 — Metrics & validation gate
 **Goal:** Trustworthy numbers from event logs.
-- Patient metrics: door-to-provider, LOS (admitted vs. discharged), boarding hours, LWBS proxy.
-- Staff metrics: utilization by role/shift, time above high-load threshold, patients per staff-hour.
-- Validation gate: Little's Law, no negative durations, patient conservation, warm-up check.
+*Basic metrics and validity flags exist (Milestone 4). Remaining:*
+- Patient metrics: LWBS proxy (requires modeling patients who leave).
+- Staff metrics: utilization by shift, time above a high-load threshold, patients per staff-hour.
+- Validation **gate** that blocks results (not just flags them) before anything reaches Claude.
 - **Tests:** metrics on hand-built tiny event logs with known answers; validation
   catches deliberately broken data.
 
@@ -155,6 +178,8 @@ separate.
 **Goal:** Answer "what changes if we…?" honestly.
 - More scenario YAML files, applied with `apply_scenario()` (built in Milestone 1);
   extend scenario levers as new site-profile fields are added (e.g., lab turnaround).
+- Add a **bed-release lever** (`inpatient_bed_change` currently has no effect
+  on the simulation) and levers for physician concurrency and triage nurses.
 - Run N replications per scenario; compute means and 95% CIs.
 - Baseline vs. scenario differences with CIs.
 - LOS decomposition by stage → dominant simulated bottleneck.

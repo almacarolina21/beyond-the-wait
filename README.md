@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-milestone%203%20of%2010-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%204%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -87,7 +87,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestones 1–3 complete: configuration foundation, public reference data, and synthetic patient generator.**
+✅ **Milestones 1–4 complete: configuration foundation, public reference data, synthetic patient generator, and baseline simulation engine.**
 
 *Milestone 1: configuration*
 - **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
@@ -126,10 +126,23 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
   [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md).
   They are **not calibrated to any real hospital**.
 
-**337 unit tests**, 100% line coverage, all offline.
+*Milestone 4: baseline simulation engine*
+- **SimPy discrete-event simulation** of the fictional ED: triage, treatment
+  spaces by type, physicians on shift schedules, lab/imaging, discharge, and
+  **inpatient boarding** through an explicitly simplified bed-release model.
+- **Non-preemptive acuity priority** (ESI 1 first), documented as an
+  educational model, not a validated triage system.
+- **Outcomes labeled `SIMULATED`:** waits, arrival-to-provider, length of stay
+  by disposition, boarding, utilization, queue lengths, throughput.
+- **Validity flags** for saturated or near-saturated configurations, hard
+  stops, unfinished visits, growing queues, and single-seed runs. See
+  [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md).
 
-**Not built yet:** simulation, dashboard, and Claude integration. See
-[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+**418 unit tests**, 100% line coverage, all offline.
+
+**Not built yet:** multi-seed scenario comparison, dashboard, and Claude
+integration. **Simulated results are from one seed at a time and are not yet
+suitable for comparing interventions.** See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -154,6 +167,12 @@ print(site.site.display_name, '-', site.arrivals.expected_daily_arrivals, 'expec
 new = apply_scenario(site, load_scenario('config/scenarios/add_evening_physician.yaml'))
 print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', new.staffing.physicians_on_duty['evening'])
 "
+```
+
+Run the baseline simulation (8 fictional days, first day excluded as warm-up):
+
+```bash
+python -m beyond_the_wait.simulation.demo --days 8 --warmup-days 1 --seed 42
 ```
 
 Generate one day of fictional ED patients:
@@ -206,6 +225,7 @@ until their milestone is built.
 - [data/README.md](data/README.md) — data provenance rules
 - [data/public/SOURCES.md](data/public/SOURCES.md) — official public sources and manual-download steps
 - [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md) — every synthetic assumption, and how synthetic data differs from public data
+- [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md) — simulation journey, queue policies, boarding abstraction, stopping rule, validity checks, limitations
 - [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer
