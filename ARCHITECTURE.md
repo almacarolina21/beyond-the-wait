@@ -1,11 +1,11 @@
 # Architecture — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.4 · **Last updated:** 2026-11-16
+**Status:** Draft v0.5 · **Last updated:** 2026-11-16
 
-> **Partly implemented.** As of Milestone 4, the **configuration layer
+> **Partly implemented.** As of Milestone 5, the **configuration layer
 > (§2.2)**, **provenance labels**, the **public-data pipeline**, the
 > **synthetic patient generator (§2.1)**, the **baseline simulation (§2.3)**,
-> and **basic outcome metrics (§2.4)** are implemented and tested. Everything
+> and the **metrics and validation gate (§2.4)** are implemented and tested. Everything
 > else below is planned. Module names marked "planned" may change as we build.
 > Terms are defined in the [PROJECT_SPEC glossary](PROJECT_SPEC.md#9-glossary).
 
@@ -127,10 +127,12 @@ easy to test.
 
 | Module | Responsibility |
 |---|---|
-| `metrics.py` ✅ (basic) | Implemented: triage/space/provider waits, arrival-to-provider, LOS by disposition, boarding, utilization, queue lengths, throughput (measured cohort/window; `SIMULATED`). Planned: LWBS proxy, per-shift staff metrics. |
-| `comparison.py` | Scenario vs. baseline differences with 95% confidence intervals across replications. |
-| `decomposition.py` | Breaks average LOS into time spent in each stage → identifies the dominant *simulated* bottleneck. |
-| `validation.py` | **Validation gate**: sanity checks (Little's Law, no negative durations, conservation of patients, CI width acceptable, warm-up adequate). Results that fail are *not* sent to Claude. |
+| `metrics.py` ✅ | Basic waits, arrival-to-provider, LOS by disposition, boarding, utilization, queue lengths, throughput (measured cohort and window; `SIMULATED`). |
+| `detailed_metrics.py` ✅ | By-ESI percentiles and maxima, censoring-aware LOS, extreme waits, boarding distribution, **descriptive** stage decomposition, utilization by shift and hour, patients per staffed person-hour. LWBS marked **unavailable**. |
+| `validation.py` ✅ | **Validation gate**: typed report (PASS / CAUTION / BLOCKED); 7 integrity checks (conservation, event order and units, cohorts, resources, summary consistency, provenance, sample-path Little's Law) plus interpretation and scope checks. `release_for_interpretation()` refuses BLOCKED or mismatched reports. See [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md). |
+| `demo.py` ✅ | Validated-analysis demonstration with gate examples |
+| `comparison.py` *(planned, M6)* | Scenario vs. baseline differences with 95% confidence intervals across replications. |
+| *(planned, M6)* | Stage decomposition across seeds; a bottleneck claim only when confidence intervals support it. |
 
 ### 2.5 Interpretation layer — `src/beyond_the_wait/interpretation/`
 
@@ -253,6 +255,7 @@ beyond-the-wait/
 │   ├── PUBLIC_DATA_METHODOLOGY.md  # What public ED measures do and don't mean
 │   ├── SYNTHETIC_DATA_ASSUMPTIONS.md  # Every synthetic assumption (fictional, unverified)
 │   ├── SIMULATION_MODEL.md    # Simulation journey, policies, boarding abstraction, validity
+│   ├── VALIDATION_GATE.md     # PASS/CAUTION/BLOCKED gate, detailed metrics, limitations
 │   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases

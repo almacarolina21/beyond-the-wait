@@ -6,7 +6,7 @@
 
 **Python calculates. Claude explains. Humans decide.**
 
-![status](https://img.shields.io/badge/status-milestone%204%20of%2010-lightgrey)
+![status](https://img.shields.io/badge/status-milestone%205%20of%2010-lightgrey)
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 ---
@@ -87,7 +87,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestones 1–4 complete: configuration foundation, public reference data, synthetic patient generator, and baseline simulation engine.**
+✅ **Milestones 1–5 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, and metrics and validation gate.**
 
 *Milestone 1: configuration*
 - **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
@@ -138,7 +138,19 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
   stops, unfinished visits, growing queues, and single-seed runs. See
   [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md).
 
-**418 unit tests**, 100% line coverage, all offline.
+*Milestone 5: metrics and validation gate*
+- **Detailed metrics:** waits and LOS by ESI level (p90/p95/max), extreme
+  waits including unfinished visits, censoring-aware LOS, boarding
+  distributions, utilization by shift, time at ≥ 90% utilization, patients per
+  staffed hour, and a *descriptive* stage decomposition. The LWBS rate is
+  marked **unavailable**, not invented.
+- **Validation gate:** every run gets a typed **PASS / CAUTION / BLOCKED**
+  report. Corrupted or inconsistent outputs are **BLOCKED** and can't be
+  released for interpretation. Overload stress tests are flagged **CAUTION**,
+  not hidden. Safety limitations travel with every report. See
+  [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md).
+
+**469 unit tests**, 100% line coverage, all offline.
 
 **Not built yet:** multi-seed scenario comparison, dashboard, and Claude
 integration. **Simulated results are from one seed at a time and are not yet
@@ -167,6 +179,12 @@ print(site.site.display_name, '-', site.arrivals.expected_daily_arrivals, 'expec
 new = apply_scenario(site, load_scenario('config/scenarios/add_evening_physician.yaml'))
 print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', new.staffing.physicians_on_duty['evening'])
 "
+```
+
+Run the validated analysis (simulation + PASS/CAUTION/BLOCKED gate + detailed metrics):
+
+```bash
+python -m beyond_the_wait.analysis.demo --seed 42 --gate-examples
 ```
 
 Run the baseline simulation (8 fictional days, first day excluded as warm-up):
@@ -226,6 +244,7 @@ until their milestone is built.
 - [data/public/SOURCES.md](data/public/SOURCES.md) — official public sources and manual-download steps
 - [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md) — every synthetic assumption, and how synthetic data differs from public data
 - [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md) — simulation journey, queue policies, boarding abstraction, stopping rule, validity checks, limitations
+- [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md) — PASS/CAUTION/BLOCKED gate, what each check protects against and cannot prove, detailed metrics, findings
 - [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer

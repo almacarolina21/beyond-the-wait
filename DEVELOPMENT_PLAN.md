@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.6 · **Last updated:** 2026-11-16 · **Current:** Milestone 4 complete; Milestone 5 not started
+**Status:** Draft v0.7 · **Last updated:** 2026-11-16 · **Current:** Milestone 5 complete; Milestone 6 not started
 
-Milestones 5–10 are **planned**. Items are checked off only when built and tested.
+Milestones 6–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -163,14 +163,32 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 
 **You'll learn:** discrete-event simulation, generators/processes in SimPy, queueing basics.
 
-## Milestone 5 — Metrics & validation gate
+## Milestone 5 — Metrics & validation gate ✅
 **Goal:** Trustworthy numbers from event logs.
-*Basic metrics and validity flags exist (Milestone 4). Remaining:*
-- Patient metrics: LWBS proxy (requires modeling patients who leave).
-- Staff metrics: utilization by shift, time above a high-load threshold, patients per staff-hour.
-- Validation **gate** that blocks results (not just flags them) before anything reaches Claude.
-- **Tests:** metrics on hand-built tiny event logs with known answers; validation
-  catches deliberately broken data.
+- [x] `analysis/detailed_metrics.py`: waits, LOS, and boarding **by ESI and
+  disposition** (median/p90/p95/max, counts over 4 h and 24 h); censoring-aware
+  LOS (completed-only vs. lower bound including unfinished); extreme waits;
+  boarding distribution by decision shift; **descriptive** stage decomposition;
+  utilization **by shift**, time at ≥ 90% utilization, patients per staffed
+  physician-hour, triage-nurse-hour, and nurse-hour; hourly profile.
+- [x] LWBS rate explicitly **unavailable** (no departure mechanism yet; not invented).
+- [x] `analysis/validation.py`: typed `ValidationReport` (PASS / CAUTION /
+  BLOCKED). 7 integrity checks (BLOCKED on failure, including crashes), plus
+  interpretation and scope checks (CAUTION). Overload stress tests are flagged,
+  not discarded. `release_for_interpretation()` refuses BLOCKED or mismatched
+  (fingerprint) reports.
+- [x] Safety limitations attached to every report (ESI-1, triage FIFO,
+  physician concurrency, bed releases, LWBS, not clinically validated, not a
+  staffing recommendation).
+- [x] Demo `python -m beyond_the_wait.analysis.demo --seed 42 --gate-examples`;
+  `docs/VALIDATION_GATE.md`.
+- [x] **Tests:** 469 total, 100% line coverage. Adversarial cases: a falsely
+  reassuring median (hand-checked ESI-5 starvation), completed-only LOS bias,
+  invalid timestamps, unit error, lost patient, wrong provenance, resource
+  double-booking, bed accounting, census tampering, empty cohorts, report
+  reuse; overload stress test preserved; hand-checked shift staffing.
+  Mutation-checked.
+- [ ] LWBS proxy: needs a departure (balking/reneging) model; deferred.
 
 **You'll learn:** turning operational definitions into code (like building a report spec).
 
@@ -180,9 +198,15 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
   extend scenario levers as new site-profile fields are added (e.g., lab turnaround).
 - Add a **bed-release lever** (`inpatient_bed_change` currently has no effect
   on the simulation) and levers for physician concurrency and triage nurses.
-- Run N replications per scenario; compute means and 95% CIs.
-- Baseline vs. scenario differences with CIs.
-- LOS decomposition by stage → dominant simulated bottleneck.
+- Run N replications per scenario; compute means and 95% CIs. Run every
+  replication through the Milestone 5 gate; BLOCKED replications stop the analysis.
+- Baseline vs. scenario differences with CIs (common random numbers).
+- **Sensitivity analysis** of fictional assumptions: physician concurrency
+  (1–3) and bed releases per day.
+- Stage decomposition across seeds → a bottleneck claim only when CIs support it
+  (lift the gate's `no_bottleneck_claims` CAUTION only under those conditions).
+- Extend the gate with replication-level checks (CI width, seed count).
+- More priority-behavior tests (Milestone 4 mutation testing showed only one test guards ESI priority).
 - Example scenarios: boarding-heavy, staffing-mismatch, diagnostic-delay, coordination-delay.
 - **Tests:** reproducibility across runs; removing a constraint never *increases*
   that stage's wait (directional sanity); each archetype scenario surfaces its
@@ -202,6 +226,9 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 ## Milestone 8 — Claude interpretation
 **Goal:** Grounded plain-language explanations.
 - Evidence packet builder (IDs, values, CIs, provenance, assumptions, limitations).
+  It must accept **only** `ReleasedResults` from `release_for_interpretation()`
+  (Milestone 5), so BLOCKED runs can never be packaged, and must carry the
+  report's CAUTION reasons and safety limitations.
 - System prompt encoding the rules from PROJECT_SPEC §5.
 - Claude call via the `anthropic` Python SDK with structured JSON output.
 - Handle API errors, missing key, and refusals gracefully.

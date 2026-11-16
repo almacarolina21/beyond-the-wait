@@ -248,3 +248,10 @@ result = run_simulation(site, SimulationSettings(start_date=date(2026, 11, 16),
                                                  arrival_days=8, warmup_days=1, seed=42))
 patient_summary(result); resource_summary(result)
 ```
+
+## 12. Validation gate (Milestone 5)
+
+Every run can now be passed through a PASS / CAUTION / BLOCKED gate with
+integrity checks, censoring-aware and by-ESI metrics, and attached safety
+limitations. Inconsistent outputs are BLOCKED from interpretation. See
+[VALIDATION_GATE.md](VALIDATION_GATE.md).

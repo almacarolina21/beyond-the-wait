@@ -147,6 +147,8 @@ class SimulationResult:
     stop_time: float
     stop_reason: str
     bed_release_times: np.ndarray
+    site: SiteProfile | None = None  # the profile that was simulated (for shift metrics)
+    n_input_patients: int | None = None  # how many patients were fed in (conservation check)
 
 
 def _capacity_by_hour(site: SiteProfile, counts: dict[str, int], factor: int = 1) -> list[int]:
@@ -313,6 +315,8 @@ def run_simulation(
         stop_time=stop_time,
         stop_reason=stop_reason,
         bed_release_times=bed_release_times,
+        site=site,
+        n_input_patients=n,
     )
 
 
