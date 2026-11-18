@@ -453,18 +453,23 @@ Ready for a **small, supervised, explicitly approved** live evaluation:
 - Known weaknesses are documented, and the evaluation harness can score live
   responses the same way as hand-written ones.
 
-Proposed protocol (needs your approval and an API key with a spend limit; no
-call has been made):
+Protocol, now implemented offline as `python -m beyond_the_wait.live_eval` and
+documented in **`docs/LIVE_EVALUATION.md`** (needs your approval and an API key
+with a spend limit; no call has been made):
 
-1. Use the 5 frozen packets, 2 responses each (10 calls; at the Milestone 8
-   estimate of about $0.03–$0.18 per call with `claude-opus-5-5`, roughly
-   $0.30–$1.80).
-2. Save each raw response locally (git-ignored, not committed), run `assess()`,
-   and have a person score it with the rubric *before* seeing the verdict.
+1. Use the 5 frozen packets, 2 responses each, in a fixed round-robin order
+   (10 calls, hard-capped, no retries). Cost ceiling at list price: $2.38;
+   expected cost is well below it.
+2. Save each raw response locally (git-ignored, not committed), and have a person
+   score it with the rubric *before* the automated `assess()` verdict is computed
+   and revealed.
 3. Report agreement between the rubric verdict and `assess()`, every false
    accept, and the unnecessary-review rate on real text.
 4. Turn any real failure into a new held-out case (a new locked round).
 5. Stop if any response is falsely accepted with a hard-fail rubric score.
+
+The MOCK dry run (`python -m beyond_the_wait.live_eval dry-run`) exercises every
+step offline with scripted responses and pre-written reviewer answers.
 
 Not ready for unsupervised use: blind detection on unfamiliar wording was 55–61%
 before the vocabulary gate, and the gate's real-text review burden is unknown.

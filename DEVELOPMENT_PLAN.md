@@ -1,6 +1,6 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.10 · **Last updated:** 2026-11-17 · **Current:** Milestone 9 complete offline; live API activation and live evaluation await approval
+**Status:** Draft v0.10 · **Last updated:** 2026-11-18 · **Current:** Milestone 9 complete offline; live evaluation prepared and dry-run, awaiting approval
 
 Milestone 10 is **planned**. Items are checked off only when built and tested.
 
@@ -311,7 +311,10 @@ Done (2026-11-17) — see [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md):
   vocabulary gate); every miss fixed and kept as a case or test.
 - [x] Human review rubric ([docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md)); needs-review
   display in the What-If panel; AI Explanation Evaluation page.
-- [ ] Live evaluation of real Claude responses (protocol in AI_EVALUATION.md §10; needs approval).
+- [x] Supervised live-evaluation workflow prepared offline (`beyond_the_wait.live_eval`: fixed 10-call
+  plan, approval code + TTY + typed confirmation, no retries, hard cap, blind reviewer CLI, MOCK dry
+  run; docs/LIVE_EVALUATION.md).
+- [ ] Live evaluation of real Claude responses (needs explicit approval; not run).
 - [ ] Held-out cases written by independent reviewers.
 
 Original plan:

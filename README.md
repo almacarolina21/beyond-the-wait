@@ -186,9 +186,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 - Runs in **DEMO mode** (a labeled mock, no key, no API calls) unless live mode is
   explicitly enabled. See [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md).
 
-**1155 unit tests**, 100% line coverage, all offline (no test can reach the API).
+**1192 unit tests**, 100% line coverage, all offline (no test can reach the API).
 
-**AI evaluation (Milestone 9, offline):** 180 hand-written candidate explanations scored by the same checks the app uses, with three hash-locked blind rounds. Blind detection of unsafe explanations was 19/31 and 11/20 for the word-pattern checks, then 12/13 after adding a controlled-vocabulary gate that sends unfamiliar wording to human review. See [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md) and the review rubric [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md). Real Claude responses have not been evaluated yet.
+**AI evaluation (Milestone 9, offline):** 180 hand-written candidate explanations scored by the same checks the app uses, with three hash-locked blind rounds. Blind detection of unsafe explanations was 19/31 and 11/20 for the word-pattern checks, then 12/13 after adding a controlled-vocabulary gate that sends unfamiliar wording to human review. See [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md) and the review rubric [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md). Real Claude responses have not been evaluated yet; a supervised 10-call live evaluation is prepared and dry-run offline, waiting for explicit approval ([docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md)).
 
 **Not built yet:** Milestone 10 (polish and packaging). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
@@ -297,6 +297,8 @@ hold the offline AI evaluation (Milestone 9).
 - [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md) — PASS/CAUTION/BLOCKED gate, what each check protects against and cannot prove, detailed metrics, findings
 - [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md) — scenario levers, paired multi-seed method, results with 95% intervals, archetypes, sensitivity
 - [docs/DASHBOARD.md](docs/DASHBOARD.md) — dashboard pages, data flow, safeguards, design, testing, visual checklist
+- [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md), [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md), [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md) — AI explanation guardrails, offline evaluation, human review rubric
+- [docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md) — prepared (not run) supervised 10-call live evaluation: safeguards, blind reviewer workflow, stored data, approval steps
 - [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
 
 ## Disclaimer

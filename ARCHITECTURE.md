@@ -325,3 +325,8 @@ beyond-the-wait/
 - Milestone 8 does **not** store prompts or responses: they live only in the
   browser session's memory. Any future eval logging (Milestone 9) must go to the
   git-ignored `evals/results/` folder and contain no secrets.
+- The supervised live evaluation (`beyond_the_wait.live_eval`, docs/LIVE_EVALUATION.md)
+  is the only other path to the API. It does not use `BTW_AI_MODE`; instead it
+  requires the plan's approval code, a key, an interactive terminal, and a typed
+  confirmation, sends at most 10 requests per batch with no retries, and writes
+  only to the git-ignored `evals/results/live/`. The dashboard never reads it.

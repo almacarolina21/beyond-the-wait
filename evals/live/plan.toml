@@ -1,0 +1,28 @@
+# Supervised live Claude evaluation: the fixed plan (protocol live-eval-1).
+#
+# Changing ANY value here, a frozen packet, or the system prompt changes the plan
+# fingerprint, so an approval given for the old plan no longer works.
+# Running this plan live requires explicit human approval; see docs/LIVE_EVALUATION.md.
+
+protocol_version = "live-eval-1"
+model = "claude-opus-5-5"
+prompt_version = "2026-11-17.1"
+generations_per_packet = 2
+max_calls = 10
+# Slot order is round-robin: generation 1 for every packet in this order, then generation 2.
+packets = ["triage_nurse", "night_physician", "bed_releases", "evening_physician", "diagnostics"]
+
+[packet_sha256]
+triage_nurse = "5c1db4c2f7c013f1e6c58256be4eb1bc92195c22fd0d1a052609f95bc02008b5"
+night_physician = "9c94fe7d2a550aa9dbfc7b60feab5cb604d0949dfd9b70a561f0d0b681d782ce"
+bed_releases = "fe3aebebfa7b6a75a9f8ae163138abb06e810c2b27f44f650aef0f7742d19b01"
+evening_physician = "e5c7a08bd7c2161d810b06ead5ed264852a8bbd8f7240f821a8bc9a1c8ea94dd"
+diagnostics = "b1a25fd470a1632dc82a83320b90a73e060b2a98d7e2833f3dd431dd7c3068ae"
+
+[pricing]
+# Standard (non-batch, uncached) list prices in US dollars per million tokens.
+# Confirm on Anthropic's pricing page before approving; estimates are not invoices.
+input_usd_per_mtok = 4.0
+output_usd_per_mtok = 20.0
+checked_on = "2026-11-18"
+source = "Anthropic model pricing for claude-opus-5-5 (verify before approving)"
