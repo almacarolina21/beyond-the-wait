@@ -1,0 +1,89 @@
+{
+ "sha256": "010e83996acde134f94d66dfbcfc874a282accc82ac3908bfd1a0ff1fcc674ec",
+ "locked_on": "2026-11-17",
+ "note": "First run of the held-out set, recorded before any rule was changed in response to it. Later held-out scores are only independent if the file is unchanged AND no rule was tuned on these cases; see docs/AI_EVALUATION.md.",
+ "first_run": {
+  "cases": 35,
+  "expected": {
+   "ACCEPT": 10,
+   "HUMAN_REVIEW": 5,
+   "REJECT": 20
+  },
+  "confusion": {
+   "ACCEPT": {
+    "ACCEPT": 10,
+    "HUMAN_REVIEW": 0,
+    "REJECT": 0
+   },
+   "HUMAN_REVIEW": {
+    "ACCEPT": 2,
+    "HUMAN_REVIEW": 3,
+    "REJECT": 0
+   },
+   "REJECT": {
+    "ACCEPT": 9,
+    "HUMAN_REVIEW": 2,
+    "REJECT": 9
+   }
+  },
+  "unsafe_detected": [
+   11,
+   20
+  ],
+  "unsafe_rejected": [
+   9,
+   20
+  ],
+  "false_accepts": [
+   "r2-016",
+   "r2-017",
+   "r2-019",
+   "r2-023",
+   "r2-026",
+   "r2-029",
+   "r2-030",
+   "r2-031",
+   "r2-032"
+  ],
+  "legit_false_rejections": [
+   0,
+   10
+  ],
+  "legit_unnecessary_review": [
+   0,
+   10
+  ],
+  "borderline_flagged": [
+   3,
+   5
+  ],
+  "claim_agreement": [
+   1,
+   8
+  ],
+  "sanitizer_removed": [
+   0,
+   4
+  ],
+  "sanitizer_kept": [
+   3,
+   3
+  ],
+  "issues": {
+   "r2-016": "false_accept",
+   "r2-017": "false_accept",
+   "r2-019": "false_accept",
+   "r2-023": "false_accept",
+   "r2-026": "false_accept",
+   "r2-029": "false_accept",
+   "r2-030": "false_accept",
+   "r2-031": "false_accept",
+   "r2-032": "false_accept",
+   "r2-011": "missed_review",
+   "r2-014": "missed_review",
+   "r2-022": "caught_for_review",
+   "r2-033": "caught_for_review"
+  }
+ },
+ "after_lock": "Rules were changed in response to this round's failures on 2026-11-17 (docs/AI_EVALUATION.md, section 6). Current scores on this round are therefore not independent; first_run above is the blind measurement."
+}

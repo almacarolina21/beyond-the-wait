@@ -72,7 +72,26 @@ METRICS = tuple(METRIC_DEFINITIONS)
 _INJECTION = re.compile(
     r"ignore (all |any |the )?(previous|prior|above|earlier)|disregard|system prompt|"
     r"you are now|new instructions|</?\s*(system|assistant|instructions?|evidence_packet)\b|"
-    r"\bassistant\s*:|\buser\s*:|jailbreak",
+    r"\bassistant\s*:|\buser\s*:|jailbreak|"
+    r"note (to|for) (the )?(ai|assistant|model|explainer|reader|claude|llm)|"
+    r"\b(the )?(ai|assistant|explainer|claude|llm)s? (should|must|needs? to)|"
+    r"\bexplainers?\b|"
+    r"please (summari[sz]e|write|say|state|present|frame|describe|treat|recommend|include|add)|"
+    r"\btreat (this|these|the) (result|results|finding|findings|numbers?) as\b|"
+    r"reminder (for|to) |whoever (writes|reads|summari[sz]es|explains)|"
+    r"\b(important|attention|note)\s*:\s*(output|write|say|respond|reply|only|ignore|do not|"
+    r"don'?t)|\b(output|respond|reply|answer) (only|with only)\b|"
+    r"\bforget (the|your|all|any|previous|prior) |\b(the )?model (should|must|needs? to)\b|"
+    r"\byou (must|should|need to|are to|will)\b|\b(do not|don'?t|must not) mention\b|"
+    r"\bdescribe (this|it|these) as\b|\bemphasi[sz]e the\b|"
+    # Structural signals (Milestone 9, round 2): text that addresses a reader or
+    # a writer, opens with a command, or uses chat/instruction markup is never
+    # data about a simulation.
+    r"\[/?(inst|sys)\]|<<\s*/?sys\s*>>|\b(writers?|summari[sz]ers?|readers?|authors?)\s*:|"
+    r"\bact as\b|\bpretend\b|\brole[- ]?play|\brespond (in|with|as)\b|"
+    r"\boutput (only|in|as)\b|^\s*(say|write|output|respond|reply|act|forget|ignore|lead|"
+    r"emphasi[sz]e|describe|approve|answer|pretend|imagine|state|tell)\b|"
+    r"\b(new|next|different) task\b|\bbegin\b.{0,20}\btask\b",
     re.IGNORECASE,
 )
 _CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")

@@ -143,8 +143,11 @@ Length limits are enforced in Python because the API's schema subset has no
 
 ## 4. Verification (`interpretation/verify.py`)
 
-Every reply is **untrusted**. All ten checks must pass, or the whole reply is
-withheld. No partly valid text is ever shown.
+Every reply is **untrusted**. All eleven checks must pass, or the whole reply is
+withheld. No partly valid text is ever shown. (Milestone 9 added check 9,
+`claim_alignment`, and a second layer: a reply that passes every check is then
+assessed for claim faithfulness and may be marked **needs human review**; see
+[AI_EVALUATION.md](AI_EVALUATION.md).)
 
 | # | Check | Catches |
 |---|---|---|
@@ -156,8 +159,9 @@ withheld. No partly valid text is ever shown.
 | 6 | uncertainty_wording | "95% chance", "true effect … probability", "proves", "every/most weeks", forecasts ("will…", "once implemented"), overclaimed causes or bottlenecks |
 | 7 | real_world_claims | real Bronx hospital names; un-negated real-world or "in reality"/"nationally" claims; real-world causes |
 | 8 | recommendations_and_safety | advice ("should hire", "would be wise", "no downside"); safe/better/effective; outcomes never modeled (mortality, harm, LWBS); clinical directives |
-| 9 | sources_and_markup | URLs, DOIs, "et al.", outside authorities, links/HTML, prompt-injection echoes |
-| 10 | required_content | focus outcome cited; CAUTION stated and cited; LIM: cited; summary says "model"; disclaimer present; questions end with "?" |
+| 9 | claim_alignment (M9) | a value attached to the wrong outcome, statistic, patient group, or to workload vs. wait; a sensitivity fact cited for a different outcome or contradicted; "validated"/"no cautions"; capacity claims against overload cautions; sweeping "across the board" claims when outcomes moved differently |
+| 10 | sources_and_markup | URLs, DOIs, "et al.", outside authorities, links/HTML, prompt-injection echoes, role prefixes |
+| 11 | required_content | focus outcome cited; CAUTION stated and cited; LIM: cited; summary says "model"; disclaimer present; questions end with "?" |
 
 **Prefer rendering over trusting.** The UI calls `render()`, which replaces
 each value token with a value formatted by Python from the packet. Claude's
@@ -190,6 +194,12 @@ sentences rejected, plus 6 reasonable model-scoped sentences that must still
 pass). New phrasings will exist that no list anticipates. That is why
 Milestone 9 adds a scored evaluation harness and a human-review checklist, and
 why the UI always labels the output *"Decision support for human review"*.
+
+Milestone 9 then measured this on blind held-out rounds: the word patterns
+caught 19/31 and 11/20 unsafe responses phrased in new ways. A controlled-
+vocabulary gate now sends unfamiliar wording to human review instead of
+accepting it (12/13 on the next blind round). Details, all numbers, and every
+fix: [AI_EVALUATION.md](AI_EVALUATION.md).
 
 ## 5. Safety and privacy protections
 

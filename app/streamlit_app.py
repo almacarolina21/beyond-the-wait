@@ -33,6 +33,9 @@ pages = {
     "methods": st.Page(
         "views/methods.py", title="Sensitivity, Validation & Methods", icon=":material/fact_check:"
     ),
+    "ai_evaluation": st.Page(
+        "views/ai_evaluation.py", title="AI Explanation Evaluation", icon=":material/rule:"
+    ),
 }
 ui.PAGES.update(pages)
 navigation = st.navigation(
@@ -40,6 +43,7 @@ navigation = st.navigation(
         "Start here": [pages["overview"]],
         "Real world · PUBLIC": [pages["public_data"]],
         "Fictional model · SIMULATED": [pages["patient_flow"], pages["what_if"], pages["methods"]],
+        "AI explanation · offline evaluation": [pages["ai_evaluation"]],
     }
 )
 with st.sidebar:

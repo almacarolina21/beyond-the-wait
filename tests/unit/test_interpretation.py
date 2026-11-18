@@ -196,7 +196,7 @@ def _with(data: dict, path: tuple, value: object) -> dict:
 def test_good_response_passes_every_check(packet: EvidencePacket) -> None:
     report = verify(packet, json.dumps(_good(packet)))
     assert report.passed, report.problems
-    assert len(report.checks) == 10
+    assert len(report.checks) == 11
 
 
 def test_mock_interpretation_passes_on_hand_built_packet(packet: EvidencePacket) -> None:
@@ -421,7 +421,9 @@ def test_negated_and_model_scoped_language_is_allowed(packet: EvidencePacket) ->
         {
             "text": "In the model, a second triage nurse would lower triage waits only under "
             "these assumptions; the results cannot say why real EDs have delays.",
-            "evidence_ids": ["RUN:design", "SENS:boarding_p90"],
+            # Milestone 9: this used to also cite SENS:boarding_p90, a sensitivity fact for a
+            # different outcome. The claim-alignment check now rejects that misattribution.
+            "evidence_ids": ["RUN:design"],
         }
     )
     data["questions_for_humans"].append("Would patient safety be affected in a real ED?")
@@ -446,11 +448,8 @@ def test_typed_numbers_with_correct_units_and_rounding_pass(packet: EvidencePack
 
 def test_extract_numbers_ignores_ids_tokens_and_ci_phrase() -> None:
     text = "M:boarding_p90 {{M:boarding_p90.change}} 95% CI p90 ESI-1 4.8 min, 12%"
-    assert [(v, u) for v, u, _ in extract_numbers(text)] == [
-        (1.0, None),
-        (4.8, "min"),
-        (12.0, "pct"),
-    ]
+    # Milestone 9: "ESI-1" is the name of an acuity level, not a quantity.
+    assert [(v, u) for v, u, _ in extract_numbers(text)] == [(4.8, "min"), (12.0, "pct")]
 
 
 # ---------------------------------------------------------------------------

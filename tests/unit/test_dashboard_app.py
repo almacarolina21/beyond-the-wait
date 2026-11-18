@@ -13,7 +13,7 @@ from streamlit.testing.v1 import AppTest
 
 from tests.paths import REPO_ROOT
 
-PAGES = ["overview", "public_data", "patient_flow", "what_if", "methods"]
+PAGES = ["overview", "public_data", "patient_flow", "what_if", "methods", "ai_evaluation"]
 REAL_NAMES = ("lincoln", "barnabas", "jacobi", "montefiore", "bronxcare")
 
 
@@ -281,7 +281,8 @@ def test_demo_mode_explanation_is_labeled_and_verified(with_bundle: Path) -> Non
     assert not at.exception
     text = _text(at)
     assert "DEMONSTRATION" in text and "not written by Claude" in text
-    assert "Passed 10 local checks" in text and "mock-interpreter-v1" in text
+    assert "Passed 11 local checks" in text and "mock-interpreter-v1" in text
+    assert "Key result (calculated by Python)" in text and "NEEDS HUMAN REVIEW" not in text
     assert "Questions for qualified people to investigate" in text
     assert "{{" not in text  # every value token was replaced by a Python-formatted value
     assert not any(n in text.lower() for n in REAL_NAMES)
@@ -308,6 +309,51 @@ def test_rejected_explanation_is_withheld(
     assert not at.exception
     assert any("failed local verification" in w.value for w in at.warning)
     assert "Hire 3 nurses" not in _text(at) and "lincoln" not in _text(at).lower()
+
+
+def test_needs_review_explanation_is_shown_with_its_flags(
+    monkeypatch: pytest.MonkeyPatch, with_bundle: Path
+) -> None:
+    from beyond_the_wait.dashboard import ai_panel
+    from beyond_the_wait.interpretation.providers import ProviderResponse, mock_interpretation
+
+    class Interpretive:
+        mode, model = "LIVE", "fake-model"
+
+        def interpret(self, packet: object) -> ProviderResponse:
+            data = mock_interpretation(packet).model_dump()  # type: ignore[arg-type]
+            data["summary"] = data["summary"].replace(
+                "Validation status", "This suggests the queue moved downstream. Validation status"
+            )
+            return ProviderResponse(json.dumps(data), "LIVE", "fake-model")
+
+    monkeypatch.setattr(ai_panel, "make_provider", lambda *a, **k: Interpretive())
+    at = _run("what_if")
+    _explain_button(at).click().run()
+    assert not at.exception
+    text = _text(at)
+    assert "NEEDS HUMAN REVIEW" in text and "needs review" in text
+    assert "Key result (calculated by Python)" in text
+    assert any("hypotheses for a qualified person" in w.value for w in at.warning)
+
+
+def test_review_location_names_are_readable() -> None:
+    from beyond_the_wait.dashboard.ai_panel import where
+
+    assert where("key_findings[1]") == "Key finding 2"
+    assert where("summary") == "Summary" and where("response") == "Whole explanation"
+    assert where("odd loc!") == "odd loc!"
+
+
+def test_evaluation_page_reports_blind_rounds_and_limits() -> None:
+    at = _run("ai_evaluation")
+    assert not at.exception
+    text = _text(at)
+    assert "locked with a file hash" in text and "no Claude API call" in text
+    assert "not a safety certificate" in text and "100% test coverage is not 100% safety" in text
+    assert len(at.table[0].value) == 3  # one row per locked held-out round
+    at.selectbox(key="eval_split").set_value("heldout").run()
+    assert not at.exception and "not blind" in _text(at)
 
 
 def test_api_failure_shows_fallback(monkeypatch: pytest.MonkeyPatch, with_bundle: Path) -> None:

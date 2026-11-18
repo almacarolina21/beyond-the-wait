@@ -186,9 +186,11 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 - Runs in **DEMO mode** (a labeled mock, no key, no API calls) unless live mode is
   explicitly enabled. See [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md).
 
-**794 unit tests**, 100% line coverage, all offline (no test can reach the API).
+**848 unit tests**, 100% line coverage, all offline (no test can reach the API).
 
-**Not built yet:** the scored eval suite and human-review process (Milestone 9). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+**AI evaluation (Milestone 9, offline):** 180 hand-written candidate explanations scored by the same checks the app uses, with three hash-locked blind rounds. Blind detection of unsafe explanations was 19/31 and 11/20 for the word-pattern checks, then 12/13 after adding a controlled-vocabulary gate that sends unfamiliar wording to human review. See [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md) and the review rubric [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md). Real Claude responses have not been evaluated yet.
+
+**Not built yet:** Milestone 10 (polish and packaging). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -280,8 +282,8 @@ src/beyond_the_wait/
 tests/             Unit and integration tests
 ```
 
-Every package under `src/beyond_the_wait/` is built except `evaluation/`, which
-(with `evals/`) is a placeholder until Milestone 9.
+Every package under `src/beyond_the_wait/` is built. `evaluation/` and `evals/`
+hold the offline AI evaluation (Milestone 9).
 
 ## Documentation
 

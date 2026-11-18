@@ -3,6 +3,12 @@
 The interpretation is handed to the UI ONLY when every verification check
 passes. Rejected or failed responses produce a readable fallback message and
 are not displayed, logged, or saved.
+
+A verified response is then assessed for claim faithfulness (Milestone 9):
+"verified" means no review flag was raised; "needs_review" means it passed
+every check but contains wording that a person must judge (a mechanism, a
+magnitude judgment, a possibly omitted tradeoff). The UI shows those flags
+next to the text; it never presents a needs_review explanation as settled.
 """
 
 from __future__ import annotations
@@ -11,11 +17,12 @@ from dataclasses import dataclass
 from typing import Literal
 
 from beyond_the_wait.interpretation.evidence import EvidencePacket
+from beyond_the_wait.interpretation.faithfulness import ReviewFlag, assess
 from beyond_the_wait.interpretation.providers import InterpretationError, Mode, Provider
 from beyond_the_wait.interpretation.schema import Interpretation
-from beyond_the_wait.interpretation.verify import VerificationReport, verify
+from beyond_the_wait.interpretation.verify import VerificationReport
 
-Status = Literal["verified", "rejected", "error"]
+Status = Literal["verified", "needs_review", "rejected", "error"]
 
 
 @dataclass(frozen=True)
@@ -24,10 +31,11 @@ class Outcome:
     mode: Mode
     model: str
     packet_id: str
-    interpretation: Interpretation | None = None  # set only when status == "verified"
+    interpretation: Interpretation | None = None  # set only when every check passed
     report: VerificationReport | None = None
     message: str = ""
     usage: dict[str, int] | None = None
+    flags: tuple[ReviewFlag, ...] = ()
 
 
 def explain(packet: EvidencePacket, provider: Provider) -> Outcome:
@@ -46,8 +54,9 @@ def explain(packet: EvidencePacket, provider: Provider) -> Outcome:
             packet.packet_id,
             message="An unexpected error occurred while preparing the explanation.",
         )
-    report = verify(packet, response.text)
-    if not report.passed:
+    assessment = assess(packet, response.text)
+    report = assessment.report
+    if assessment.verdict == "REJECT":
         return Outcome(
             "rejected",
             response.mode,
@@ -58,12 +67,18 @@ def explain(packet: EvidencePacket, provider: Provider) -> Outcome:
             "charts and tables above are unaffected.",
             usage=response.usage,
         )
+    review = assessment.verdict == "HUMAN_REVIEW"
     return Outcome(
-        "verified",
+        "needs_review" if review else "verified",
         response.mode,
         response.model,
         packet.packet_id,
         interpretation=report.interpretation,
         report=report,
+        message="Passed every local check, but some wording needs human review before it is "
+        "relied on."
+        if review
+        else "",
         usage=response.usage,
+        flags=tuple(assessment.flags),
     )

@@ -1,0 +1,215 @@
+# Reference responses: one legitimate, descriptive explanation per frozen packet.
+#
+# Hand-written to imitate what a careful model might return for each packet in
+# evals/packets/. They are TEST DATA, not Claude output. Cases in dev.toml and
+# heldout.toml either use one of these unchanged (an ACCEPT case) or edit a
+# few fields to introduce exactly one problem.
+#
+# All content is fictional/simulated. No real patient data, no employer data.
+
+# ---------------------------------------------------------------------------
+# triage_nurse: Add one night triage nurse; focus = triage wait p90 (lower).
+# Opposite movements in the packet: physician wait p90 and boarding p90 higher.
+# ---------------------------------------------------------------------------
+[triage_nurse]
+summary = "In the fictional model, adding one night triage nurse changed the 90th-percentile wait for triage: it was {{M:triage_wait_p90.change}}. Some later waits were higher in the model, and the comparison carries a CAUTION status."
+questions_for_humans = [
+  "What local data would show whether night-time triage waits are a constraint in a real ED?",
+  "Which model assumptions, such as first-come-first-served triage, matter most for this comparison?",
+]
+disclaimer = "Generated explanation of a fictional simulation for human review. It is not a recommendation and not clinical guidance."
+
+[[triage_nurse.key_findings]]
+text = "The 90th-percentile wait from arrival until triage starts was {{M:triage_wait_p90.change}}: {{M:triage_wait_p90.baseline}} at baseline and {{M:triage_wait_p90.intervention}} with the change."
+evidence_ids = ["M:triage_wait_p90", "RUN:design"]
+
+[[triage_nurse.key_findings]]
+text = "The 90th-percentile wait for a physician was {{M:provider_wait_p90.change}}."
+evidence_ids = ["M:provider_wait_p90"]
+
+[[triage_nurse.key_findings]]
+text = "The median length of stay for admitted patients showed {{M:los_median_admitted.change}}."
+evidence_ids = ["M:los_median_admitted"]
+
+[[triage_nurse.tradeoffs]]
+text = "Inside the model, the average wait for triage was {{M:stage_triage_wait_mean.change}}, while the average wait for a physician was {{M:stage_provider_wait_mean.change}}."
+evidence_ids = ["M:stage_triage_wait_mean", "M:stage_provider_wait_mean"]
+
+[[triage_nurse.tradeoffs]]
+text = "The 90th-percentile boarding time was {{M:boarding_p90.change}}."
+evidence_ids = ["M:boarding_p90"]
+
+[[triage_nurse.uncertainties]]
+text = "The validation status is CAUTION: some simulated weeks were overloaded, and a few weeks differ much more than the rest, so the intervals are less reliable than usual."
+evidence_ids = ["ST:status", "CK:overload_regime", "CK:skewed_differences"]
+
+[[triage_nurse.uncertainties]]
+text = "Each 95% interval describes uncertainty about the average change across paired simulated weeks, not the range for one week."
+evidence_ids = ["RUN:design"]
+
+[[triage_nurse.limitations]]
+text = "These results describe the fictional Riverside Commons ED under illustrative assumptions, not any real hospital."
+evidence_ids = ["LIM:fictional_model"]
+
+[[triage_nurse.limitations]]
+text = "In the model, triage is first come, first served, so more urgent patients wait in the same triage line as everyone else."
+evidence_ids = ["LIM:triage_is_first_come_first_served"]
+
+[[triage_nurse.limitations]]
+text = "No simulated result shows that a staffing change would be appropriate in a real ED."
+evidence_ids = ["LIM:not_a_staffing_recommendation"]
+
+# ---------------------------------------------------------------------------
+# night_physician: Add one night physician; focus = boarding p90 (HIGHER).
+# SENS:boarding_p90 says the boarding direction depends on the assumptions.
+# ---------------------------------------------------------------------------
+[night_physician]
+summary = "In the fictional model, with one night physician added, the 90th-percentile boarding time was {{M:boarding_p90.change}}, while physician waits were lower. The sensitivity check shows the boarding result depends on uncertain assumptions, and the status is CAUTION."
+questions_for_humans = [
+  "How are inpatient beds released in the setting being considered, and how different is that from the model's assumption?",
+  "Which real measurements would be needed to compare boarding before and after any change?",
+]
+disclaimer = "This explains a fictional simulation for human review only. It is not a recommendation or clinical guidance."
+
+[[night_physician.key_findings]]
+text = "The 90th-percentile boarding time was {{M:boarding_p90.change}} ({{M:boarding_p90.baseline}} at baseline, {{M:boarding_p90.intervention}} with the change)."
+evidence_ids = ["M:boarding_p90", "RUN:design"]
+
+[[night_physician.key_findings]]
+text = "The 90th-percentile wait for a physician was {{M:provider_wait_p90.change}}."
+evidence_ids = ["M:provider_wait_p90"]
+
+[[night_physician.tradeoffs]]
+text = "Inside the model, physician waits were lower ({{M:provider_wait_p90.change}}) while the average boarding time was higher ({{M:stage_boarding_mean.change}})."
+evidence_ids = ["M:provider_wait_p90", "M:stage_boarding_mean"]
+
+[[night_physician.uncertainties]]
+text = "Across four settings of the two uncertain assumptions, the direction of the boarding result changed, so it depends on those assumptions."
+evidence_ids = ["SENS:boarding_p90"]
+
+[[night_physician.uncertainties]]
+text = "The comparison has CAUTION status, including overloaded weeks and imprecise estimates for some outcomes."
+evidence_ids = ["ST:status", "CK:overload_regime", "CK:excessive_variability"]
+
+[[night_physician.limitations]]
+text = "Bed releases are a simplified assumption in the model, not derived from real bed data."
+evidence_ids = ["LIM:bed_releases_are_a_simplified_abstraction"]
+
+[[night_physician.limitations]]
+text = "All results come from the fictional model and do not describe a real ED."
+evidence_ids = ["LIM:fictional_model"]
+
+# ---------------------------------------------------------------------------
+# bed_releases: Six more inpatient beds released per day; focus = boarding p90
+# (lower, large). Several other outcomes show no detectable change.
+# ---------------------------------------------------------------------------
+[bed_releases]
+tradeoffs = []
+summary = "In the fictional model, releasing six more inpatient beds to the ED per day was associated with a 90th-percentile boarding time that was {{M:boarding_p90.change}}. Several waits before a physician showed no detectable change. The comparison has CAUTION status."
+questions_for_humans = [
+  "How does the model's bed-release assumption compare with how beds actually become available in the setting under discussion?",
+  "What would qualified staff need to measure to know whether boarding is a constraint locally?",
+]
+disclaimer = "Generated from a fictional simulation for human review; not a recommendation or clinical guidance."
+
+[[bed_releases.key_findings]]
+text = "The 90th-percentile boarding time was {{M:boarding_p90.change}}, from {{M:boarding_p90.baseline}} to {{M:boarding_p90.intervention}}."
+evidence_ids = ["M:boarding_p90", "RUN:design"]
+
+[[bed_releases.key_findings]]
+text = "The share of admitted patients boarding more than 4 hours was {{M:boarding_share_over_4h.change}}."
+evidence_ids = ["M:boarding_share_over_4h"]
+
+[[bed_releases.key_findings]]
+text = "The 90th-percentile time from arrival to a physician showed {{M:arrival_to_provider_p90.change}}."
+evidence_ids = ["M:arrival_to_provider_p90"]
+
+[[bed_releases.uncertainties]]
+text = "Across four settings of the two uncertain assumptions, the 90th-percentile boarding time was lower in every setting."
+evidence_ids = ["SENS:boarding_p90"]
+
+[[bed_releases.uncertainties]]
+text = "Status is CAUTION; for some outcomes the 95% interval is wide compared with the baseline level."
+evidence_ids = ["ST:status", "CK:excessive_variability"]
+
+[[bed_releases.limitations]]
+text = "Bed releases are a simplified abstraction in the model, not derived from bed data."
+evidence_ids = ["LIM:bed_releases_are_a_simplified_abstraction"]
+
+[[bed_releases.limitations]]
+text = "These are fictional results under illustrative assumptions and say nothing about a real hospital."
+evidence_ids = ["LIM:fictional_model"]
+
+# ---------------------------------------------------------------------------
+# evening_physician: Add one evening physician; focus = boarding p90 with NO
+# detectable change and a wide interval. Physician waits are lower.
+# ---------------------------------------------------------------------------
+[evening_physician]
+tradeoffs = []
+summary = "In the fictional model, adding one evening physician showed {{M:boarding_p90.change}} for the 90th-percentile boarding time. Physician waits were lower in the model. The status is CAUTION."
+questions_for_humans = [
+  "What evidence about boarding would a real ED need before drawing any conclusion?",
+  "Would a longer simulation or different assumptions narrow the boarding interval?",
+]
+disclaimer = "A generated explanation of fictional, simulated results for human review. Not a recommendation and not clinical guidance."
+
+[[evening_physician.key_findings]]
+text = "For the 90th-percentile boarding time the model shows {{M:boarding_p90.change}}; the interval is wide, so the model cannot tell whether boarding changed."
+evidence_ids = ["M:boarding_p90", "CK:excessive_variability"]
+
+[[evening_physician.key_findings]]
+text = "The 90th-percentile wait for a physician was {{M:provider_wait_p90.change}}."
+evidence_ids = ["M:provider_wait_p90"]
+
+[[evening_physician.uncertainties]]
+text = "An interval that includes zero means no detectable change, which is not the same as showing no effect."
+evidence_ids = ["M:boarding_p90", "NOTE:model_evidence"]
+
+[[evening_physician.uncertainties]]
+text = "The comparison has CAUTION status, including imprecise estimates and overloaded weeks."
+evidence_ids = ["ST:status", "CK:excessive_variability", "CK:overload_regime"]
+
+[[evening_physician.limitations]]
+text = "Each physician is assumed to see up to two patients at once, and results are sensitive to that fictional assumption."
+evidence_ids = ["LIM:physician_concurrency_is_fictional"]
+
+[[evening_physician.limitations]]
+text = "These results come from a fictional model and are not evidence about any real ED."
+evidence_ids = ["LIM:fictional_model"]
+
+# ---------------------------------------------------------------------------
+# diagnostics: Lab and imaging turnaround 25% faster; focus = median LOS for
+# discharged patients (lower). No outcome moved in the opposite direction.
+# ---------------------------------------------------------------------------
+[diagnostics]
+tradeoffs = []
+summary = "In the fictional model, faster lab and imaging turnaround was associated with a median length of stay for discharged patients that was {{M:los_median_discharged.change}}. The status is CAUTION."
+questions_for_humans = [
+  "How long do lab and imaging results actually take in the setting being considered?",
+  "Which parts of a real patient's stay would need to be measured to compare with the model?",
+]
+disclaimer = "Fictional simulation results, explained for human review. Not a recommendation and not clinical guidance."
+
+[[diagnostics.key_findings]]
+text = "The median length of stay for discharged patients was {{M:los_median_discharged.change}}."
+evidence_ids = ["M:los_median_discharged", "RUN:design"]
+
+[[diagnostics.key_findings]]
+text = "The average wait for lab or imaging results was {{M:stage_results_mean.change}}."
+evidence_ids = ["M:stage_results_mean"]
+
+[[diagnostics.key_findings]]
+text = "The 90th-percentile wait for a physician showed {{M:provider_wait_p90.change}}."
+evidence_ids = ["M:provider_wait_p90"]
+
+[[diagnostics.uncertainties]]
+text = "The comparison has CAUTION status; in at least one simulated week queues kept growing, which describes a stress test."
+evidence_ids = ["ST:status", "CK:overload_regime"]
+
+[[diagnostics.limitations]]
+text = "All results describe the fictional Riverside Commons ED under illustrative assumptions."
+evidence_ids = ["LIM:fictional_model"]
+
+[[diagnostics.limitations]]
+text = "No simulated result shows that a change would be appropriate in a real ED."
+evidence_ids = ["LIM:not_a_staffing_recommendation"]

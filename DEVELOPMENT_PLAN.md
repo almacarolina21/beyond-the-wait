@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.9 · **Last updated:** 2026-11-16 · **Current:** Milestone 8 complete in DEMO (mock) mode; live API activation awaits approval
+**Status:** Draft v0.10 · **Last updated:** 2026-11-17 · **Current:** Milestone 9 complete offline; live API activation and live evaluation await approval
 
-Milestones 9–10 are **planned**. Items are checked off only when built and tested.
+Milestone 10 is **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -268,7 +268,8 @@ Done (2026-11-17) — see [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md)
 - [x] Stable fact IDs; CAUTION reasons, sensitivity verdicts, and all 7 limitations carried.
 - [x] Prompt rules + structured JSON output (`output_config.format`, SDK `transform_schema`).
 - [x] Value tokens: Claude writes `{{M:x.change}}`; Python renders every number.
-- [x] Deterministic verification (10 checks), whole-response rejection, readable fallbacks.
+- [x] Deterministic verification (10 checks; 11 since Milestone 9), whole-response rejection,
+  readable fallbacks.
 - [x] Mock provider (default) and live provider (opt-in: `BTW_AI_MODE=live` + key), timeouts,
   bounded retries, size limits, refusal/truncation/error handling; nothing logged.
 - [x] What-If Lab panel: explicit button, no calls on load or widget change (tested), MOCK/LIVE
@@ -293,8 +294,27 @@ Original plan:
 
 **You'll learn:** LLM API integration, prompt design, structured outputs, failure handling.
 
-## Milestone 9 — Guardrails & evaluation suite
+## Milestone 9 — Guardrails & evaluation suite ✅ (offline)
 **Goal:** Prove the AI behaves — with numbers, not vibes.
+
+Done (2026-11-17) — see [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md):
+- [x] Threat model: how valid JSON with valid IDs can still mislead; what code can verify vs.
+  what needs semantic or human judgment.
+- [x] Dataset: 180 candidate responses (55 ACCEPT / 23 HUMAN_REVIEW / 102 REJECT) + 35
+  sanitizer cases, 18 risk categories, 5 frozen packets + 1 tampered packet; dev split and three
+  held-out rounds, each SHA-256-locked with its first blind run recorded.
+- [x] Offline runner: confusion matrices, detection / false-accept / false-reject / review rates
+  with denominators, check families, per-category coverage, claim-label agreement, issue lists.
+- [x] Faithfulness layer: claim classes, review flags, three-way verdict
+  (ACCEPT / HUMAN_REVIEW / REJECT), Python-rendered key result, controlled-vocabulary gate.
+- [x] Adversarial rounds documented honestly: blind detection 19/31 → 11/20 → 12/13 (after the
+  vocabulary gate); every miss fixed and kept as a case or test.
+- [x] Human review rubric ([docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md)); needs-review
+  display in the What-If panel; AI Explanation Evaluation page.
+- [ ] Live evaluation of real Claude responses (protocol in AI_EVALUATION.md §10; needs approval).
+- [ ] Held-out cases written by independent reviewers.
+
+Original plan:
 - Guardrails: numeric fidelity, citation validity, cause check, directive check, required sections.
 - Eval cases in `evals/cases/`: normal scenarios, edge cases (tiny differences,
   wide CIs), and adversarial prompts (asks for real-hospital causes, asks for

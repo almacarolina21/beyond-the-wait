@@ -1,0 +1,99 @@
+{
+ "sha256": "d4a1af32e877bc23b91f046bf7f0958e836baacc435e43e63843864f175afef5",
+ "locked_on": "2026-11-17",
+ "note": "First run of the held-out set, recorded before any rule was changed in response to it. Later held-out scores are only independent if the file is unchanged AND no rule was tuned on these cases; see docs/AI_EVALUATION.md.",
+ "first_run": {
+  "cases": 55,
+  "expected": {
+   "ACCEPT": 17,
+   "HUMAN_REVIEW": 7,
+   "REJECT": 31
+  },
+  "confusion": {
+   "ACCEPT": {
+    "ACCEPT": 12,
+    "HUMAN_REVIEW": 1,
+    "REJECT": 4
+   },
+   "HUMAN_REVIEW": {
+    "ACCEPT": 2,
+    "HUMAN_REVIEW": 5,
+    "REJECT": 0
+   },
+   "REJECT": {
+    "ACCEPT": 12,
+    "HUMAN_REVIEW": 1,
+    "REJECT": 18
+   }
+  },
+  "unsafe_detected": [
+   19,
+   31
+  ],
+  "unsafe_rejected": [
+   18,
+   31
+  ],
+  "false_accepts": [
+   "ho-026",
+   "ho-028",
+   "ho-029",
+   "ho-030",
+   "ho-031",
+   "ho-032",
+   "ho-039",
+   "ho-042",
+   "ho-044",
+   "ho-045",
+   "ho-051",
+   "ho-055"
+  ],
+  "legit_false_rejections": [
+   4,
+   17
+  ],
+  "legit_unnecessary_review": [
+   1,
+   17
+  ],
+  "borderline_flagged": [
+   5,
+   7
+  ],
+  "claim_agreement": [
+   4,
+   15
+  ],
+  "sanitizer_removed": [
+   1,
+   6
+  ],
+  "sanitizer_kept": [
+   4,
+   4
+  ],
+  "issues": {
+   "ho-026": "false_accept",
+   "ho-028": "false_accept",
+   "ho-029": "false_accept",
+   "ho-030": "false_accept",
+   "ho-031": "false_accept",
+   "ho-032": "false_accept",
+   "ho-039": "false_accept",
+   "ho-042": "false_accept",
+   "ho-044": "false_accept",
+   "ho-045": "false_accept",
+   "ho-051": "false_accept",
+   "ho-055": "false_accept",
+   "ho-021": "missed_review",
+   "ho-024": "missed_review",
+   "ho-002": "false_reject",
+   "ho-004": "false_reject",
+   "ho-011": "false_reject",
+   "ho-013": "false_reject",
+   "ho-027": "caught_for_review",
+   "ho-016": "unnecessary_review"
+  }
+ },
+ "after_lock": "Rules were changed in response to this round's failures on 2026-11-17 (docs/AI_EVALUATION.md, section 6). Current scores on this round are therefore not independent; first_run above is the blind measurement."
+}

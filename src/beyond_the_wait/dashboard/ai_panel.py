@@ -27,9 +27,10 @@ from beyond_the_wait.interpretation.evidence import (
     MetricFact,
     build_evidence_packet,
 )
+from beyond_the_wait.interpretation.faithfulness import ReviewFlag
 from beyond_the_wait.interpretation.providers import ai_config, make_provider
 from beyond_the_wait.interpretation.service import Outcome, explain
-from beyond_the_wait.interpretation.verify import render, render_value
+from beyond_the_wait.interpretation.verify import headline, render, render_value
 
 BUTTON_LABEL = "Explain these results"
 BANNER = (
@@ -37,12 +38,42 @@ BANNER = (
     "explains the fictional model's verified numbers. It is not a recommendation and not "
     "clinical guidance; every number below is inserted by Python from the evidence packet."
 )
+REVIEW_NOTE = (
+    "Every local check passed, but the rules below found wording that goes beyond what the "
+    "evidence can prove. Treat the marked sentences as hypotheses for a qualified person to "
+    "judge, not as findings."
+)
+_SECTION_NAMES = {
+    "summary": "Summary",
+    "key_findings": "Key finding",
+    "tradeoffs": "Tradeoff",
+    "uncertainties": "Uncertainty",
+    "limitations": "Limitation",
+    "response": "Whole explanation",
+}
 _MD_SPECIAL = re.compile(r"([\\`*_{}\[\]()#+!|<>$~])")
 
 
 def md_escape(text: str) -> str:
     """Show generated text literally: no links, HTML, math, or formatting."""
     return _MD_SPECIAL.sub(r"\\\1", text)
+
+
+def where(loc: str) -> str:
+    """'key_findings[1]' -> 'Key finding 2' (readable location of a flag)."""
+    m = re.fullmatch(r"([a-z_]+)(?:\[(\d+)\])?", loc)
+    if not m:
+        return loc
+    name = _SECTION_NAMES.get(m.group(1), m.group(1).replace("_", " ").capitalize())
+    return f"{name} {int(m.group(2)) + 1}" if m.group(2) is not None else name
+
+
+def review_chip() -> str:
+    color = "#b77900"
+    return (
+        f"<span class='btw-status' style='border-color:{color};color:{color}'>"
+        "⚑ NEEDS HUMAN REVIEW</span>"
+    )
 
 
 def _secrets() -> object | None:
@@ -94,6 +125,10 @@ def render_panel(load: BundleLoad, *, scenario_id: str, metric: str, scenario_na
         show_outcome(outcome, packet)
 
 
+def _mark(flags: dict[str, list[ReviewFlag]], loc: str) -> str:
+    return " **⚑ needs review**" if loc in flags else ""
+
+
 def show_outcome(outcome: Outcome, packet: EvidencePacket) -> None:
     if outcome.status == "error":
         st.info(f"Explanation unavailable: {outcome.message} The results above are unaffected.")
@@ -111,32 +146,48 @@ def show_outcome(outcome: Outcome, packet: EvidencePacket) -> None:
 
     interp = outcome.interpretation
     n_checks = len(outcome.report.checks) if outcome.report else 0
+    flags: dict[str, list[ReviewFlag]] = {}
+    for f in outcome.flags:
+        flags.setdefault(f.loc, []).append(f)
     with st.container(border=True):
+        chip = review_chip() if outcome.status == "needs_review" else ""
         st.markdown(
-            f"{mode_chip(outcome.mode)}{status_chip('PASS')} <span class='btw-small'>Passed "
-            f"{n_checks} local checks · model: <code>{html.escape(outcome.model)}</code> · "
-            f"packet <code>{outcome.packet_id}</code></span>",
+            f"{mode_chip(outcome.mode)}{status_chip('PASS')}{chip} <span class='btw-small'>"
+            f"Passed {n_checks} local checks · model: <code>{html.escape(outcome.model)}</code>"
+            f" · packet <code>{outcome.packet_id}</code></span>",
             unsafe_allow_html=True,
         )
         ui.callout(BANNER)
-        st.markdown(md_escape(render(interp.summary, packet)))
+        st.markdown(f"**Key result (calculated by Python):** {md_escape(headline(packet))}")
+        if outcome.flags:
+            st.warning(
+                REVIEW_NOTE
+                + "\n"
+                + "\n".join(
+                    f"- **{where(f.loc)}:** {md_escape(f.message.split(': ', 1)[1])}"
+                    for f in outcome.flags
+                )
+            )
+        st.markdown("**Generated explanation**")
+        st.markdown(md_escape(render(interp.summary, packet)) + _mark(flags, "summary"))
 
-        def cited(section: str, items: list) -> None:  # noqa: ANN001
+        def cited(section: str, name: str, items: list) -> None:  # noqa: ANN001
             if not items:
                 return
-            st.markdown(f"**{section}**")
-            for s in items:
-                ids = " ".join(f"`{i}`" for i in s.evidence_ids)
-                st.markdown(f"- {md_escape(render(s.text, packet))}  \n  Evidence: {ids}")
+            st.markdown(f"**{name}**")
+            for i, s in enumerate(items):
+                ids = " ".join(f"`{x}`" for x in s.evidence_ids)
+                mark = _mark(flags, f"{section}[{i}]")
+                st.markdown(f"- {md_escape(render(s.text, packet))}{mark}  \n  Evidence: {ids}")
 
-        cited("Key findings", interp.key_findings)
-        cited("Tradeoffs inside the fictional model", interp.tradeoffs)
-        cited("Uncertainties and assumptions", interp.uncertainties)
+        cited("key_findings", "Key findings", interp.key_findings)
+        cited("tradeoffs", "Tradeoffs inside the fictional model", interp.tradeoffs)
+        cited("uncertainties", "Uncertainties and assumptions", interp.uncertainties)
         if interp.questions_for_humans:
             st.markdown("**Questions for qualified people to investigate**")
             for q in interp.questions_for_humans:
                 st.markdown(f"- {md_escape(q)}")
-        cited("Limitations", interp.limitations)
+        cited("limitations", "Limitations", interp.limitations)
         st.caption(md_escape(interp.disclaimer))
         if outcome.usage and outcome.mode == "LIVE":
             st.caption(

@@ -23,6 +23,7 @@ streamlit run app/streamlit_app.py
 | **Fictional Patient Flow** | Leaders | One live single-seed run (≈1 s, cached), plus generated patients | **SYNTHETIC** inputs, **SIMULATED** outcomes |
 | **What-If Lab** | Leaders | Precomputed 30-seed paired comparisons; optional verified AI explanation | **SIMULATED** |
 | **Sensitivity, Validation & Methods** | Reviewers | Sensitivity grid, gate checks, CI vs. PI, limitations | **SIMULATED** |
+| **AI Explanation Evaluation** | Reviewers | Offline evaluation of the explanation guardrails (hand-written cases) | **SIMULATED** packets; no API calls |
 
 ## 2. Architecture and data flow
 
@@ -208,8 +209,10 @@ tables stay above it, unchanged.
   request. Widget changes and page loads never call a provider (tested with a
   counting fake client).
 - **A verified result**, inside a bordered box:
-  - the mode, a PASS chip ("Passed 10 local checks"), the model name, and the packet ID;
+  - the mode, a PASS chip ("Passed 11 local checks"), the model name, and the packet ID;
   - the banner *"Decision support for human review. Based on simulated data."*;
+  - **Key result (calculated by Python)**: one sentence built from the packet only
+    (Milestone 9), so the main result never depends on generated wording;
   - the summary;
   - key findings, tradeoffs, uncertainties, and limitations, each with its evidence IDs;
   - questions for qualified people, and the disclaimer;
@@ -217,6 +220,11 @@ tables stay above it, unchanged.
 
   Two expanders follow: the evidence used (values formatted by Python) and the checks
   run, with what those checks cannot establish.
+- **A result that needs human review** (Milestone 9): every check passed, but the
+  faithfulness layer found wording it cannot vouch for (a mechanism, a size judgment,
+  an omitted opposite movement, unvetted words). It is shown with a
+  "⚑ NEEDS HUMAN REVIEW" chip, a warning listing each flag in plain words, and
+  "⚑ needs review" next to each flagged sentence.
 - **A rejected result:** a warning and the names of the failed checks. **None** of the
   generated text is shown.
 - **An error** (missing key, rate limit, timeout, refusal, …): a readable fallback
@@ -232,3 +240,22 @@ written to disk.
   not luck". It now says pairing removes *much* of the chance variation, and the 95%
   intervals show what remains.
 - "Why CAUTION" now lists readable sentences instead of check codes.
+
+## 10. Milestone 9: AI Explanation Evaluation page
+
+`app/views/ai_evaluation.py`, in its own sidebar group ("AI explanation ·
+offline evaluation"). It runs the offline evaluation suite on load (cached) and
+never calls the API.
+
+1. **Blind results**: one row per locked held-out round, from its lock file:
+   unsafe detected, unsafe accepted, useful text rejected or sent to review, and
+   whether the case file is unchanged since locking.
+2. **Current run**: choose a split; four metrics, the confusion matrix
+   (should vs. did), results by risk category, and every case the checks got
+   wrong or only partly right, with its first signal. Held-out splits are
+   labeled "after fixes, not blind".
+3. **What this does not show**: real Claude output is untested, same-author
+   cases, word patterns are not understanding, coverage is not safety.
+
+Full method and numbers: [AI_EVALUATION.md](AI_EVALUATION.md).
+

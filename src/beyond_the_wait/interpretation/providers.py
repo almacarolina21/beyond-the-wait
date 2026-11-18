@@ -119,7 +119,13 @@ def mock_interpretation(packet: EvidencePacket) -> Interpretation:
     lower = [f for f in stages if f.direction.startswith("lower")]
     higher = [f for f in stages if f.direction.startswith("higher")]
     cautions = [f.id for f in packet.facts if f.id.startswith("CK:")][:3]
-    sens = [f.id for f in packet.facts if f.id.startswith("SENS:")][:2]
+    # The focus outcome's own sensitivity verdict first: omitting an unstable verdict
+    # for the focus would hide the most important uncertainty.
+    sens_ids = [f.id for f in packet.facts if f.id.startswith("SENS:")]
+    focus_sens = f"SENS:{packet.focus_metric}"
+    sens = ([focus_sens] if focus_sens in sens_ids else []) + [
+        i for i in sens_ids if i != focus_sens
+    ][: 2 - (focus_sens in sens_ids)]
 
     findings = [
         {

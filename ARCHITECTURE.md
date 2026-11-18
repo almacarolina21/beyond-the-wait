@@ -230,11 +230,12 @@ no front-end code, letting the project focus on the analytics and AI design.
 | Unit tests | pytest | Generator distributions, metric formulas, config validation |
 | Integration tests | pytest | Full pipeline: config → sim → metrics → evidence packet |
 | Analytical validation | pytest | Simulation matches queueing theory on simple cases |
-| LLM evals | `evals/` harness | Claude outputs scored for accuracy, grounding, safety, limitations on a fixed case set (normal, edge, and adversarial) |
-| Human review | Documented review checklist | A person checks adversarial and safety-case outputs, and a sample of others, for causal overreach and unsafe framing that automated scoring can miss |
+| LLM evals | `evals/` + `evaluation/` (offline) | 180 hand-written candidate responses with expected ACCEPT / HUMAN_REVIEW / REJECT verdicts, scored by the same `assess()` the dashboard uses; dev split plus three hash-locked blind held-out rounds ([AI_EVALUATION.md](docs/AI_EVALUATION.md)). Live Claude responses are not yet evaluated. |
+| Human review | [AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md) | A person scores 7 dimensions with hard-fail rules; the dashboard shows HUMAN_REVIEW explanations only with their flags |
 
 Unit tests use a **mocked** Claude client so they are free, fast, and offline.
-LLM evals run on demand because they cost money.
+The offline eval suite is free and runs in the test suite; a live eval (real
+Claude responses) costs money and runs only with explicit approval.
 
 ## 3. Data Flow (one request, end to end)
 
