@@ -41,7 +41,7 @@
 | Condition | Verdict |
 |---|---|
 | Any hard fail | **REJECT**: do not show |
-| No hard fail, but any dimension scored 1, or an interpretation you cannot confirm from the packet | **HUMAN_REVIEW**: may be shown only with the concern written next to it |
+| No hard fail, but any dimension scored 1, or an interpretation you cannot confirm from the packet | **HUMAN_REVIEW**: not shown publicly; a reviewer may clear it after edits or record it as REJECT |
 | All dimensions 2 | **ACCEPT** |
 
 Total scores (out of 14) can be reported for trends, but the verdict comes from

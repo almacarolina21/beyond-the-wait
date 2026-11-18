@@ -311,7 +311,7 @@ def test_rejected_explanation_is_withheld(
     assert "Hire 3 nurses" not in _text(at) and "lincoln" not in _text(at).lower()
 
 
-def test_needs_review_explanation_is_shown_with_its_flags(
+def test_needs_review_explanation_is_withheld_from_the_public_page(
     monkeypatch: pytest.MonkeyPatch, with_bundle: Path
 ) -> None:
     from beyond_the_wait.dashboard import ai_panel
@@ -323,7 +323,8 @@ def test_needs_review_explanation_is_shown_with_its_flags(
         def interpret(self, packet: object) -> ProviderResponse:
             data = mock_interpretation(packet).model_dump()  # type: ignore[arg-type]
             data["summary"] = data["summary"].replace(
-                "Validation status", "This suggests the queue moved downstream. Validation status"
+                "Validation status",
+                "This suggests the queue moved downstream like a zorblax. Validation status",
             )
             return ProviderResponse(json.dumps(data), "LIVE", "fake-model")
 
@@ -332,9 +333,14 @@ def test_needs_review_explanation_is_shown_with_its_flags(
     _explain_button(at).click().run()
     assert not at.exception
     text = _text(at)
-    assert "NEEDS HUMAN REVIEW" in text and "needs review" in text
-    assert "Key result (calculated by Python)" in text
-    assert any("hypotheses for a qualified person" in w.value for w in at.warning)
+    shown = " ".join([text] + [w.value for w in at.warning] + [i.value for i in at.info])
+    assert "NEEDS HUMAN REVIEW" in text and "Key result (calculated by Python)" in text
+    assert any("requires human review and is not shown" in w.value for w in at.warning)
+    assert "Why it is held for review" in text and "Summary" in text
+    # neither the sentence nor any quoted word from a flag's detail reaches the page
+    assert "queue moved downstream" not in shown and "zorblax" not in shown
+    assert "Generated explanation" not in shown
+    assert "Evidence behind this explanation" in at.expander[0].label
 
 
 def test_review_location_names_are_readable() -> None:

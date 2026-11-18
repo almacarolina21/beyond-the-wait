@@ -222,9 +222,12 @@ tables stay above it, unchanged.
   run, with what those checks cannot establish.
 - **A result that needs human review** (Milestone 9): every check passed, but the
   faithfulness layer found wording it cannot vouch for (a mechanism, a size judgment,
-  an omitted opposite movement, unvetted words). It is shown with a
-  "⚑ NEEDS HUMAN REVIEW" chip, a warning listing each flag in plain words, and
-  "⚑ needs review" next to each flagged sentence.
+  an omitted opposite movement, unvetted words). **The generated text is
+  withheld in full**, as for a rejection. Visitors see a "⚑ NEEDS HUMAN REVIEW"
+  chip, the Python-calculated key result, a message that the explanation requires
+  human review, the flag categories with their locations (not the flagged
+  wording), and the evidence and checks expanders. There is no reviewer view in
+  the dashboard. Only ACCEPT text is ever displayed (`public_prose_allowed`).
 - **A rejected result:** a warning and the names of the failed checks. **None** of the
   generated text is shown.
 - **An error** (missing key, rate limit, timeout, refusal, …): a readable fallback

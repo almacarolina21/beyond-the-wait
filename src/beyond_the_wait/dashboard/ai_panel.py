@@ -8,6 +8,11 @@ Nothing is requested on page load or when a selector changes: only the
 browser session's memory, keyed by the packet ID, mode, and model, so a
 stale explanation is never shown for a different selection. Nothing is
 written to disk or logged.
+
+Public display policy (enforced by `public_prose_allowed`): generated prose is
+shown only when the verdict is ACCEPT. HUMAN_REVIEW and REJECT text is
+withheld in full; visitors see the Python-calculated key result, the evidence,
+and a message saying why. There is no reviewer view in the dashboard.
 """
 
 from __future__ import annotations
@@ -27,7 +32,7 @@ from beyond_the_wait.interpretation.evidence import (
     MetricFact,
     build_evidence_packet,
 )
-from beyond_the_wait.interpretation.faithfulness import ReviewFlag
+from beyond_the_wait.interpretation.faithfulness import FLAG_TEXT
 from beyond_the_wait.interpretation.providers import ai_config, make_provider
 from beyond_the_wait.interpretation.service import Outcome, explain
 from beyond_the_wait.interpretation.verify import headline, render, render_value
@@ -38,10 +43,11 @@ BANNER = (
     "explains the fictional model's verified numbers. It is not a recommendation and not "
     "clinical guidance; every number below is inserted by Python from the evidence packet."
 )
-REVIEW_NOTE = (
-    "Every local check passed, but the rules below found wording that goes beyond what the "
-    "evidence can prove. Treat the marked sentences as hypotheses for a qualified person to "
-    "judge, not as findings."
+WITHHELD_NOTE = (
+    "The AI explanation requires human review and is not shown. It passed every local check, "
+    "but automated rules found wording that code cannot verify against the evidence. Only a "
+    "qualified reviewer, outside this public dashboard, may read it. The key result above and "
+    "the evidence below are calculated by Python and are unaffected."
 )
 _SECTION_NAMES = {
     "summary": "Summary",
@@ -125,11 +131,33 @@ def render_panel(load: BundleLoad, *, scenario_id: str, metric: str, scenario_na
         show_outcome(outcome, packet)
 
 
-def _mark(flags: dict[str, list[ReviewFlag]], loc: str) -> str:
-    return " **⚑ needs review**" if loc in flags else ""
+def _status_line(outcome: Outcome, chip: str) -> None:
+    n_checks = len(outcome.report.checks) if outcome.report else 0
+    st.markdown(
+        f"{mode_chip(outcome.mode)}{status_chip('PASS')}{chip} <span class='btw-small'>"
+        f"Passed {n_checks} local checks · model: <code>{html.escape(outcome.model)}</code>"
+        f" · packet <code>{outcome.packet_id}</code></span>",
+        unsafe_allow_html=True,
+    )
+
+
+def public_prose_allowed(outcome: Outcome) -> bool:
+    """The single gate for showing generated prose to public visitors.
+
+    True only for a fully verified explanation (verdict ACCEPT) with no review
+    flag. HUMAN_REVIEW and REJECT are never displayed; HUMAN_REVIEW is not
+    converted to ACCEPT.
+    """
+    return outcome.status == "verified" and not outcome.flags and outcome.interpretation is not None
 
 
 def show_outcome(outcome: Outcome, packet: EvidencePacket) -> None:
+    """Public display. Generated prose is rendered ONLY for status "verified".
+
+    HUMAN_REVIEW ("needs_review") text is withheld exactly like rejected text:
+    no reviewer view exists in the public dashboard, so unreviewed prose is never
+    shown. Visitors see the Python headline, the cited evidence, and why it was held.
+    """
     if outcome.status == "error":
         st.info(f"Explanation unavailable: {outcome.message} The results above are unaffected.")
         return
@@ -143,51 +171,52 @@ def show_outcome(outcome: Outcome, packet: EvidencePacket) -> None:
                 + "\n".join(f"- **{c.description}** ({len(c.problems)} problem(s))" for c in failed)
             )
         return
+    if public_prose_allowed(outcome):
+        _show_verified(outcome, packet)
+    else:  # HUMAN_REVIEW, or anything unexpected: fail closed, prose withheld
+        _show_held_for_review(outcome, packet)
+    _evidence_and_checks(outcome, packet)
 
-    interp = outcome.interpretation
-    n_checks = len(outcome.report.checks) if outcome.report else 0
-    flags: dict[str, list[ReviewFlag]] = {}
-    for f in outcome.flags:
-        flags.setdefault(f.loc, []).append(f)
+
+def _show_held_for_review(outcome: Outcome, packet: EvidencePacket) -> None:
     with st.container(border=True):
-        chip = review_chip() if outcome.status == "needs_review" else ""
+        _status_line(outcome, review_chip())
+        st.markdown(f"**Key result (calculated by Python):** {md_escape(headline(packet))}")
+        st.warning(WITHHELD_NOTE)
+        # Flag categories and locations only: a flag's detail can quote generated words.
+        reasons = sorted({(where(f.loc), FLAG_TEXT[f.kind]) for f in outcome.flags})
         st.markdown(
-            f"{mode_chip(outcome.mode)}{status_chip('PASS')}{chip} <span class='btw-small'>"
-            f"Passed {n_checks} local checks · model: <code>{html.escape(outcome.model)}</code>"
-            f" · packet <code>{outcome.packet_id}</code></span>",
-            unsafe_allow_html=True,
+            "**Why it is held for review** (wording is not shown)\n"
+            + "\n".join(f"- **{loc}:** {text}" for loc, text in reasons)
         )
+
+
+def _show_verified(outcome: Outcome, packet: EvidencePacket) -> None:
+    interp = outcome.interpretation
+    assert interp is not None and public_prose_allowed(outcome)
+    with st.container(border=True):
+        _status_line(outcome, "")
         ui.callout(BANNER)
         st.markdown(f"**Key result (calculated by Python):** {md_escape(headline(packet))}")
-        if outcome.flags:
-            st.warning(
-                REVIEW_NOTE
-                + "\n"
-                + "\n".join(
-                    f"- **{where(f.loc)}:** {md_escape(f.message.split(': ', 1)[1])}"
-                    for f in outcome.flags
-                )
-            )
         st.markdown("**Generated explanation**")
-        st.markdown(md_escape(render(interp.summary, packet)) + _mark(flags, "summary"))
+        st.markdown(md_escape(render(interp.summary, packet)))
 
-        def cited(section: str, name: str, items: list) -> None:  # noqa: ANN001
+        def cited(name: str, items: list) -> None:  # noqa: ANN001
             if not items:
                 return
             st.markdown(f"**{name}**")
-            for i, s in enumerate(items):
+            for s in items:
                 ids = " ".join(f"`{x}`" for x in s.evidence_ids)
-                mark = _mark(flags, f"{section}[{i}]")
-                st.markdown(f"- {md_escape(render(s.text, packet))}{mark}  \n  Evidence: {ids}")
+                st.markdown(f"- {md_escape(render(s.text, packet))}  \n  Evidence: {ids}")
 
-        cited("key_findings", "Key findings", interp.key_findings)
-        cited("tradeoffs", "Tradeoffs inside the fictional model", interp.tradeoffs)
-        cited("uncertainties", "Uncertainties and assumptions", interp.uncertainties)
+        cited("Key findings", interp.key_findings)
+        cited("Tradeoffs inside the fictional model", interp.tradeoffs)
+        cited("Uncertainties and assumptions", interp.uncertainties)
         if interp.questions_for_humans:
             st.markdown("**Questions for qualified people to investigate**")
             for q in interp.questions_for_humans:
                 st.markdown(f"- {md_escape(q)}")
-        cited("limitations", "Limitations", interp.limitations)
+        cited("Limitations", interp.limitations)
         st.caption(md_escape(interp.disclaimer))
         if outcome.usage and outcome.mode == "LIVE":
             st.caption(
@@ -195,7 +224,11 @@ def show_outcome(outcome: Outcome, packet: EvidencePacket) -> None:
                 f"{outcome.usage.get('output_tokens', 0):,} out."
             )
 
-    used = sorted({i for _, s in interp.statements() for i in s.evidence_ids})
+
+def _evidence_and_checks(outcome: Outcome, packet: EvidencePacket) -> None:
+    interp = outcome.interpretation
+    cited_ids = {i for _, s in interp.statements() for i in s.evidence_ids} if interp else set()
+    used = sorted(i for i in cited_ids | {f"M:{packet.focus_metric}"} if packet.fact(i))
     with st.expander("Evidence behind this explanation (calculated by Python)"):
         measured = [f for i in used if isinstance(f := packet.fact(i), MetricFact)]
         if measured:

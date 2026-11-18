@@ -215,6 +215,9 @@ fix: [AI_EVALUATION.md](AI_EVALUATION.md).
   support for human review. Based on simulated data."* is always shown.
 - **Rejected output:** the panel names the checks that failed and their problem
   counts, and shows none of the rejected text.
+- **Output needing human review** (Milestone 9): withheld in full, like rejected
+  output. The panel shows the Python key result, the evidence, and the flag
+  categories only. Generated prose is public only when the verdict is ACCEPT.
 - **No storage:**
   - prompts and replies live only in the browser session's memory
     (`st.session_state`);

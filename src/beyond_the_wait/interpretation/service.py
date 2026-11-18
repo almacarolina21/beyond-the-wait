@@ -8,7 +8,8 @@ A verified response is then assessed for claim faithfulness (Milestone 9):
 "verified" means no review flag was raised; "needs_review" means it passed
 every check but contains wording that a person must judge (a mechanism, a
 magnitude judgment, a possibly omitted tradeoff). The UI shows those flags
-next to the text; it never presents a needs_review explanation as settled.
+only as reasons: the public dashboard withholds needs_review text entirely
+(see dashboard.ai_panel.public_prose_allowed).
 """
 
 from __future__ import annotations
