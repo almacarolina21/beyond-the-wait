@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.9 · **Last updated:** 2026-11-16 · **Current:** Milestone 7 complete; Milestone 8 not started
+**Status:** Draft v0.9 · **Last updated:** 2026-11-16 · **Current:** Milestone 8 complete in DEMO (mock) mode; live API activation awaits approval
 
-Milestones 8–10 are **planned**. Items are checked off only when built and tested.
+Milestones 9–10 are **planned**. Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -258,8 +258,27 @@ M/G/1 check replaced M/M/1, because service times are lognormal.
 
 **You'll learn:** building interactive apps, state management, UX for non-technical users.
 
-## Milestone 8 — Claude interpretation
+## Milestone 8 — Claude interpretation ✅ (mock-first)
 **Goal:** Grounded plain-language explanations.
+
+Done (2026-11-17) — see [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md):
+- [x] Typed evidence packet from the **verified results bundle** (multi-seed comparisons, every
+  replication gated in Milestone 6). This replaces the `ReleasedResults` input planned below,
+  which covers single runs only. BLOCKED, unverified, or unknown inputs raise `EvidenceRefused`.
+- [x] Stable fact IDs; CAUTION reasons, sensitivity verdicts, and all 7 limitations carried.
+- [x] Prompt rules + structured JSON output (`output_config.format`, SDK `transform_schema`).
+- [x] Value tokens: Claude writes `{{M:x.change}}`; Python renders every number.
+- [x] Deterministic verification (10 checks), whole-response rejection, readable fallbacks.
+- [x] Mock provider (default) and live provider (opt-in: `BTW_AI_MODE=live` + key), timeouts,
+  bounded retries, size limits, refusal/truncation/error handling; nothing logged.
+- [x] What-If Lab panel: explicit button, no calls on load or widget change (tested), MOCK/LIVE
+  label and model name, evidence and check expanders. Readable CAUTION reasons; softened
+  common-random-numbers wording.
+- [x] Tests: adversarial verifier cases + red-team regressions, fake-SDK provider tests,
+  AppTests. No real API request has been made.
+- [ ] Live activation: needs your approval, an API key, and one supervised test call.
+
+Original plan:
 - Evidence packet builder (IDs, values, CIs, provenance, assumptions, limitations).
   It must accept **only** `ReleasedResults` from `release_for_interpretation()`
   (Milestone 5), so BLOCKED runs can never be packaged, and must carry the

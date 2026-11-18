@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from beyond_the_wait.analysis.check_descriptions import check_title
 from beyond_the_wait.analysis.validation import SAFETY_LIMITATIONS
 from beyond_the_wait.dashboard import data as d
 from beyond_the_wait.dashboard.theme import CSS, badge, status_chip
@@ -62,8 +63,9 @@ def finding_card(title: str, text: str, status: str) -> None:
 def principle() -> None:
     st.markdown(
         "<div class='btw-principle'><span><b>Python calculates.</b> Tested code produces "
-        "every number.</span><span><b>Claude explains.</b> Planned for Milestone 8; not "
-        "built yet.</span><span><b>Humans decide.</b> Nothing here is a recommendation."
+        "every number.</span><span><b>Claude explains.</b> On request, from verified "
+        "evidence only (DEMO mode unless live access is enabled).</span><span><b>Humans "
+        "decide.</b> Nothing here is a recommendation."
         "</span></div>",
         unsafe_allow_html=True,
     )
@@ -160,7 +162,9 @@ def checks_table(checks: pd.DataFrame) -> None:
         return
     for row in checks.itertuples():
         st.markdown(
-            f"{status_chip(row.status)} <b>{row.check}</b> — {row.detail}", unsafe_allow_html=True
+            f"{status_chip(row.status)} <b>{check_title(row.check)}</b> "
+            f"<code>{row.check}</code> — {row.detail}",
+            unsafe_allow_html=True,
         )
 
 

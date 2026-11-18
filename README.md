@@ -87,7 +87,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ## Project status
 
-✅ **Milestones 1–7 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, metrics and validation gate, multi-seed what-if analysis, and an interactive dashboard.**
+✅ **Milestones 1–8 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, metrics and validation gate, multi-seed what-if analysis, an interactive dashboard, and grounded AI interpretation (DEMO mode; live API activation pending).**
 
 *Milestone 1: configuration*
 - **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
@@ -177,9 +177,18 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
   simulated data never share a chart. No API key, no internet, localhost only.
   See [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
-**649 unit tests**, 100% line coverage, all offline.
+*Milestone 8: grounded AI interpretation (mock-first)*
+- An **Explain these results** button on the What-If Lab sends a compact, typed
+  **evidence packet** (verified SIMULATED aggregates with stable fact IDs, never
+  patient records) to an interpreter and shows the reply **only if 10 local checks
+  pass**: cited IDs exist, numbers and units match, no real hospitals, no advice,
+  no misread confidence intervals. Python inserts every number.
+- Runs in **DEMO mode** (a labeled mock, no key, no API calls) unless live mode is
+  explicitly enabled. See [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md).
 
-**Not built yet:** Claude interpretation (Milestone 8). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
+**794 unit tests**, 100% line coverage, all offline (no test can reach the API).
+
+**Not built yet:** the scored eval suite and human-review process (Milestone 9). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Getting started
 
@@ -248,8 +257,10 @@ python -m beyond_the_wait.data.public_pipeline build      # validate + build (of
 If `download` is refused by a publisher's server, it prints manual-download
 steps; see [data/public/SOURCES.md](data/public/SOURCES.md).
 
-An Anthropic API key is not needed until Milestone 8. When it is, you'll copy
-`.env.example` to `.env` and add the key there.
+No Anthropic API key is needed: AI explanations run in DEMO (mock) mode by
+default. Live Claude explanations are opt-in and billed to an Anthropic API
+account (separate from any Claude Pro subscription); see
+[docs/AI_INTERPRETATION.md §8](docs/AI_INTERPRETATION.md#8-reproduction).
 
 ## Repository layout
 
@@ -269,9 +280,8 @@ src/beyond_the_wait/
 tests/             Unit and integration tests
 ```
 
-Working code so far is in `src/beyond_the_wait/config/`, `src/beyond_the_wait/data/`,
-`config/`, `data/public/`, and `tests/`. The other folders are placeholders
-until their milestone is built.
+Every package under `src/beyond_the_wait/` is built except `evaluation/`, which
+(with `evals/`) is a placeholder until Milestone 9.
 
 ## Documentation
 

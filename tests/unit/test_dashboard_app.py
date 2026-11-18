@@ -189,3 +189,173 @@ def test_what_if_order_and_single_disclaimer(with_bundle: Path) -> None:
     )
     assert heads[-1] == "Methods and validation"
     assert "Why CAUTION" in text
+
+
+# ---------------------------------------------------------------------------
+# Milestone 8: AI explanation panel (no real API traffic; see conftest guard)
+# ---------------------------------------------------------------------------
+
+
+class _CountingAnthropic:
+    """Stands in for anthropic.Anthropic; records construction and requests."""
+
+    instances = 0
+    requests = 0
+
+    def __init__(self, **kwargs: object) -> None:
+        type(self).instances += 1
+        self.messages = self
+
+    def create(self, **kwargs: object) -> object:
+        from types import SimpleNamespace
+
+        from beyond_the_wait.interpretation.evidence import EvidencePacket
+        from beyond_the_wait.interpretation.providers import mock_interpretation
+
+        type(self).requests += 1
+        content = kwargs["messages"][0]["content"]
+        blob = content.split("<evidence_packet>\n", 1)[1].split("\n</evidence_packet>", 1)[0]
+        interp = mock_interpretation(EvidencePacket.model_validate_json(blob))
+        text = json.dumps(interp.model_dump()).replace(
+            "DEMONSTRATION (mock output, not written by Claude). ", ""
+        )
+        return SimpleNamespace(
+            content=[SimpleNamespace(type="text", text=text)],
+            stop_reason="end_turn",
+            model="claude-opus-5-5",
+            usage=SimpleNamespace(input_tokens=4000, output_tokens=700),
+        )
+
+
+@pytest.fixture
+def live_fake(monkeypatch: pytest.MonkeyPatch, with_bundle: Path) -> type[_CountingAnthropic]:
+    import anthropic
+
+    _CountingAnthropic.instances = _CountingAnthropic.requests = 0
+    monkeypatch.setattr(anthropic, "Anthropic", _CountingAnthropic)
+    monkeypatch.setenv("BTW_AI_MODE", "live")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-not-real")
+    return _CountingAnthropic
+
+
+def _explain_button(at: AppTest):  # noqa: ANN202
+    return at.button(key="explain_button")
+
+
+def test_no_api_calls_on_page_load_or_widget_changes(live_fake: type) -> None:
+    at = _run("what_if")
+    assert not at.exception
+    at.selectbox[0].set_value("boarding_p90").run()
+    at.selectbox[1].set_value("increase_bed_releases").run()
+    at.selectbox[0].set_value("triage_wait_p90").run()
+    assert not at.exception
+    assert live_fake.instances == 0 and live_fake.requests == 0
+    assert "LIVE · Claude API" in _text(at)
+    assert "sk-test" not in _text(at)  # the key is never displayed
+
+
+def test_live_explanation_only_after_explicit_click(live_fake: type) -> None:
+    at = _run("what_if")
+    _explain_button(at).click().run()
+    assert not at.exception
+    assert live_fake.requests == 1
+    text = _text(at)
+    assert "Decision support for human review. Based on simulated data." in text
+    assert "LIVE · Claude API" in text and "claude-opus-5-5" in text
+    assert "Key findings" in text and "`M:" in text
+    assert "Tokens used: 4,000 in, 700 out." in " ".join(c.value for c in at.caption)
+    # Changing an unrelated widget re-runs the page but sends nothing new, and the
+    # old explanation is not shown for the new selection.
+    at.selectbox[1].set_value("increase_bed_releases").run()
+    assert live_fake.requests == 1
+    assert "Decision support for human review. Based on simulated data." not in _text(at)
+    at.selectbox[1].set_value(at.selectbox[1].options[0]).run()  # back: cached, no new call
+    assert live_fake.requests == 1
+
+
+def test_demo_mode_explanation_is_labeled_and_verified(with_bundle: Path) -> None:
+    at = _run("what_if")
+    assert "DEMO · mock, not Claude" in _text(at)
+    assert "Nothing is sent until you click the button" in _text(at)
+    _explain_button(at).click().run()
+    assert not at.exception
+    text = _text(at)
+    assert "DEMONSTRATION" in text and "not written by Claude" in text
+    assert "Passed 10 local checks" in text and "mock-interpreter-v1" in text
+    assert "Questions for qualified people to investigate" in text
+    assert "{{" not in text  # every value token was replaced by a Python-formatted value
+    assert not any(n in text.lower() for n in REAL_NAMES)
+    assert text.count("Model-internal evidence only") == 1
+
+
+def test_rejected_explanation_is_withheld(
+    monkeypatch: pytest.MonkeyPatch, with_bundle: Path
+) -> None:
+    from beyond_the_wait.dashboard import ai_panel
+    from beyond_the_wait.interpretation.providers import ProviderResponse
+
+    class Unsafe:
+        mode, model = "LIVE", "fake-model"
+
+        def interpret(self, packet: object) -> ProviderResponse:
+            return ProviderResponse(
+                json.dumps({"summary": "Hire 3 nurses at Lincoln."}), "LIVE", "fake-model"
+            )
+
+    monkeypatch.setattr(ai_panel, "make_provider", lambda *a, **k: Unsafe())
+    at = _run("what_if")
+    _explain_button(at).click().run()
+    assert not at.exception
+    assert any("failed local verification" in w.value for w in at.warning)
+    assert "Hire 3 nurses" not in _text(at) and "lincoln" not in _text(at).lower()
+
+
+def test_api_failure_shows_fallback(monkeypatch: pytest.MonkeyPatch, with_bundle: Path) -> None:
+    from beyond_the_wait.dashboard import ai_panel
+    from beyond_the_wait.interpretation.providers import InterpretationError
+
+    class Failing:
+        mode, model = "LIVE", "fake-model"
+
+        def interpret(self, packet: object) -> object:
+            raise InterpretationError("rate_limit")
+
+    monkeypatch.setattr(ai_panel, "make_provider", lambda *a, **k: Failing())
+    at = _run("what_if")
+    _explain_button(at).click().run()
+    assert not at.exception
+    assert any("rate limit" in i.value and "unaffected" in i.value for i in at.info)
+
+
+def test_live_requested_without_key_falls_back_to_demo(
+    monkeypatch: pytest.MonkeyPatch, with_bundle: Path, tmp_path: Path
+) -> None:
+    from beyond_the_wait.interpretation import providers
+
+    monkeypatch.setattr(providers, "REPO_ROOT", tmp_path)  # ignore any local .env
+    monkeypatch.setenv("BTW_AI_MODE", "live")
+    at = _run("what_if")
+    assert not at.exception
+    assert "no API key was found" in _text(at) and "DEMO · mock, not Claude" in _text(at)
+
+
+def test_md_escape_neutralizes_markup() -> None:
+    from beyond_the_wait.dashboard.ai_panel import md_escape
+
+    assert md_escape("[x](http://a) <b>$5</b>") == r"\[x\]\(http://a\) \<b\>\$5\</b\>"
+
+
+def test_panel_explains_refusal_instead_of_crashing(
+    monkeypatch: pytest.MonkeyPatch, with_bundle: Path
+) -> None:
+    from beyond_the_wait.dashboard import ai_panel
+    from beyond_the_wait.interpretation.evidence import EvidenceRefused
+
+    def refuse(*args: object, **kwargs: object) -> None:
+        raise EvidenceRefused("faster_diagnostics is BLOCKED by the validation gate")
+
+    monkeypatch.setattr(ai_panel, "build_evidence_packet", refuse)
+    at = _run("what_if")
+    assert not at.exception
+    assert any("No explanation is available" in w.value for w in at.warning)
+    assert all(b.key != "explain_button" for b in at.button)  # nothing to send

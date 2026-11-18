@@ -109,9 +109,11 @@ with st.expander("How the principle works in practice"):
     st.markdown(
         "- **Python calculates:** the simulation, the paired statistics, and a validation gate "
         "that blocks inconsistent results are all tested Python code.\n"
-        "- **Claude explains:** in Milestone 8, Claude will describe validated results in plain "
-        "language. It will never calculate numbers or invent causes. *Not built yet; no API key "
-        "is used anywhere in this app.*\n"
+        "- **Claude explains:** on the What-If Lab, an *Explain these results* button asks for "
+        "a plain-language explanation of one verified comparison. Claude sees only a compact "
+        "evidence packet, cites fact IDs, and never types the numbers: Python inserts them, "
+        "and local checks reject any reply that fails verification. By default the app runs in "
+        "DEMO mode with a built-in mock and makes no API calls.\n"
         "- **Humans decide:** operational and clinical decisions need qualified people and "
         "real-world evidence."
     )

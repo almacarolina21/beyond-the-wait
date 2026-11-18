@@ -11,7 +11,7 @@
 > binding-constraint analysis within the model (F6), patient and staff metrics
 > (F7), and a validation gate that blocks inconsistent results (groundwork for
 > F8–F10), as library, command-line, and dashboard tools (F1, F3–F7 are
-> visible in the Streamlit app; F4 offers scenario selection, not free-form building). **Claude interpretation (F8) and guardrails/evals (F9–F10) are not built yet.** See
+> visible in the Streamlit app; F4 offers scenario selection, not free-form building). **Claude interpretation (F8) is built mock-first (Milestone 8): evidence packets, a structured response, deterministic verification, and a What-If Lab panel that runs in DEMO mode until live API access is explicitly enabled. The scored eval suite and human-review process (F10, and F9's eval side) are Milestone 9.** See
 > [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for progress. Unfamiliar terms are defined in the [Glossary](#9-glossary).
 
 ---

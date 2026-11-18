@@ -63,3 +63,22 @@ def small_bundle_dir(tmp_path_factory: pytest.TempPathFactory):  # noqa: ANN201
     )
     assert code == 0
     return out
+
+
+@pytest.fixture(autouse=True)
+def _no_live_claude(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No test may reach the Claude API (Milestone 8).
+
+    Live mode is switched off, any API key in the environment is hidden, and the
+    SDK's HTTP layer raises if anything tries to send a request anyway. Tests that
+    exercise the live provider pass a fake client object instead.
+    """
+    import anthropic._base_client as base
+
+    monkeypatch.setenv("BTW_AI_MODE", "mock")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    def _blocked(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("Network access to the Claude API is blocked in tests.")
+
+    monkeypatch.setattr(base.SyncAPIClient, "request", _blocked)

@@ -1,8 +1,9 @@
-# Dashboard — Beyond the Wait (Milestones 7 and 7.1)
+# Dashboard — Beyond the Wait (Milestones 7, 7.1, and 8)
 
 An interactive Streamlit + Plotly app that presents the project to healthcare
-leaders and technical reviewers. **No Claude API, no API key, no internet
-connection needed** once the data files below exist.
+leaders and technical reviewers. **No API key and no internet connection
+needed** once the data files below exist: the AI explanation panel (Milestone 8)
+runs in DEMO (mock) mode unless live Claude access is explicitly enabled (§9).
 
 ```bash
 source .venv/bin/activate
@@ -20,7 +21,7 @@ streamlit run app/streamlit_app.py
 | **Overview** | Everyone | Three featured findings generated from the verified bundle; links into the app | Defines PUBLIC / SYNTHETIC / SIMULATED |
 | **Bronx Public Data** | Leaders, reviewers | Committed Milestone 2 tables | **PUBLIC** only |
 | **Fictional Patient Flow** | Leaders | One live single-seed run (≈1 s, cached), plus generated patients | **SYNTHETIC** inputs, **SIMULATED** outcomes |
-| **What-If Lab** | Leaders | Precomputed 30-seed paired comparisons | **SIMULATED** |
+| **What-If Lab** | Leaders | Precomputed 30-seed paired comparisons; optional verified AI explanation | **SIMULATED** |
 | **Sensitivity, Validation & Methods** | Reviewers | Sensitivity grid, gate checks, CI vs. PI, limitations | **SIMULATED** |
 
 ## 2. Architecture and data flow
@@ -33,6 +34,7 @@ src/beyond_the_wait/dashboard/
     charts.py  Plotly figure builders (provenance in every title)
     theme.py   palette, Plotly template, badges, CSS
     ui.py      Streamlit helpers, caching, callouts
+    ai_panel.py  What-If explanation panel (Milestone 8; calls interpretation/)
 ```
 
 | Data | Source API | Verified by |
@@ -89,7 +91,8 @@ altered, mislabeled, or has a BLOCKED comparison that still contains numbers.
   full model-evidence note appears once (What-If "How to read" expander), not
   repeated.
 - BLOCKED comparisons are listed in an error and can't be selected or plotted.
-  CAUTION reasons are shown per comparison.
+  CAUTION reasons are shown per comparison as readable sentences
+  (`analysis/check_descriptions.py`), with the raw check code beside them.
 - Sensitivity cells in an overload regime are marked **stress** and excluded
   from stability verdicts.
 
@@ -110,8 +113,9 @@ altered, mislabeled, or has a BLOCKED comparison that still contains numbers.
 
 ## 5. Security and reliability
 
-- No API keys, no Claude calls, no file uploads (`maxUploadSize = 1`), no YAML
-  upload or arbitrary file execution. Data paths are fixed (or set by the
+- No Claude calls unless live mode is enabled **and** a visitor clicks *Explain
+  these results*; no file uploads (`maxUploadSize = 1`), no free-text prompt box,
+  no YAML upload or arbitrary file execution. Data paths are fixed (or set by the
   `BTW_RESULTS_DIR` / `BTW_PUBLIC_DIR` environment variables, used in tests).
 - `server.address = "localhost"`: the app isn't reachable from the local network.
 - `browser.gatherUsageStats = false`: no Streamlit telemetry.
@@ -187,3 +191,44 @@ Remaining checks for a human reviewer:
 2. Open each expander on the What-If Lab and Methods pages.
 3. A window narrower than 1,000 px, and browser zoom at 125%.
 4. The sensitivity heatmap for each intervention.
+
+## 9. Milestone 8: AI explanation panel
+
+Full design: [AI_INTERPRETATION.md](AI_INTERPRETATION.md).
+
+**Position.** The panel is in the What-If Lab, after "One intervention in detail" and before
+"Archetypes". It explains the selected **intervention × outcome**. Charts and
+tables stay above it, unchanged.
+
+**What the visitor sees:**
+- **Mode label:** `DEMO · mock, not Claude` or `LIVE · Claude API`, with a one-line note.
+- **Evidence description:** the packet ID and the number of facts. It states that no
+  patient-level records are included and nothing is sent before a click.
+- **The button** *Explain these results*. Clicking it is the **only** way to make a
+  request. Widget changes and page loads never call a provider (tested with a
+  counting fake client).
+- **A verified result**, inside a bordered box:
+  - the mode, a PASS chip ("Passed 10 local checks"), the model name, and the packet ID;
+  - the banner *"Decision support for human review. Based on simulated data."*;
+  - the summary;
+  - key findings, tradeoffs, uncertainties, and limitations, each with its evidence IDs;
+  - questions for qualified people, and the disclaimer;
+  - token usage (LIVE only).
+
+  Two expanders follow: the evidence used (values formatted by Python) and the checks
+  run, with what those checks cannot establish.
+- **A rejected result:** a warning and the names of the failed checks. **None** of the
+  generated text is shown.
+- **An error** (missing key, rate limit, timeout, refusal, …): a readable fallback
+  message, and the rest of the page is unaffected.
+
+**Caching.** Each explanation is stored in session memory under its packet ID, mode
+and model. Returning to a selection shows its saved explanation without a new
+request, and an explanation is never shown for a different selection. Nothing is
+written to disk.
+
+**Wording fixes made at the same time:**
+- The What-If header no longer says pairing makes differences "come from the change,
+  not luck". It now says pairing removes *much* of the chance variation, and the 95%
+  intervals show what remains.
+- "Why CAUTION" now lists readable sentences instead of check codes.

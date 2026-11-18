@@ -142,7 +142,15 @@ easy to test.
 | `experiments.py` ✅ | Paired multi-seed replications (parallel), every replication through the gate, BLOCKED → comparison BLOCKED, CAUTIONs carried forward, comparison-level checks, congestion-shift detection, binding-constraint evidence (relief test), sensitivity grid and stability verdicts. |
 | `whatif_demo.py` ✅ | What-if demonstration; exports CSVs for Milestone 7. See [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md). |
 
-### 2.5 Interpretation layer — `src/beyond_the_wait/interpretation/`
+### 2.5 Interpretation layer — `src/beyond_the_wait/interpretation/` ✅ (Milestone 8, mock-first)
+
+> **Built:** `evidence.py` (typed packet from the verified bundle; BLOCKED refused),
+> `prompt.py`, `schema.py` (structured response), `providers.py` (DEMO mock by default;
+> live Claude only with `BTW_AI_MODE=live` **and** a key), `verify.py` (10 deterministic
+> checks; numbers rendered from the packet), `service.py`. Fact IDs look like
+> `M:boarding_p90`, `CK:overload_regime`, `LIM:fictional_model`; Claude writes value
+> tokens (`{{M:boarding_p90.change}}`) instead of numbers. The design sketch below is
+> kept for history. Full detail: [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md).
 
 **Purpose:** Use Claude to explain validated results in plain language.
 
@@ -171,7 +179,11 @@ easy to test.
 and that its numbers match. It does **not** prove the finding interprets that
 evidence correctly — that still requires evaluation and human review (§2.6).
 
-### 2.6 Guardrails — `src/beyond_the_wait/interpretation/guardrails.py` (planned)
+### 2.6 Guardrails — `src/beyond_the_wait/interpretation/verify.py` ✅ (Milestone 8; evals in Milestone 9)
+
+> Built as `verify.py`: a failed check withholds the **whole** response (nothing is shown
+> "with a warning"), and nothing is logged. Red-team regressions live in
+> `tests/unit/test_interpretation.py`.
 
 Deterministic checks run on every Claude response **before** display:
 
@@ -203,9 +215,10 @@ provenance badge, and PUBLIC data never shares a chart with simulated data.
 Multi-seed results come from a fingerprint-verified **results bundle**
 (`analysis/results_bundle.py`), and BLOCKED comparisons are never displayed as
 data. The app runs offline on localhost, with no API key, uploads, or
-telemetry. Planned for Milestone 8: an explanation panel showing Claude's output
-with cited evidence IDs and the banner *"Decision support for human review.
-Based on simulated data."* See [docs/DASHBOARD.md](docs/DASHBOARD.md).
+telemetry by default. Milestone 8 adds an explanation panel to the What-If Lab
+(`dashboard/ai_panel.py`): an explicit *Explain these results* button, verified
+output only, cited evidence IDs, and the banner *"Decision support for human
+review. Based on simulated data."* See [docs/DASHBOARD.md](docs/DASHBOARD.md).
 
 **Why Streamlit?** It turns Python scripts into an interactive web app with
 no front-end code, letting the project focus on the analytics and AI design.
@@ -295,7 +308,7 @@ beyond-the-wait/
 ├── PROJECT_SPEC.md · ARCHITECTURE.md · DEVELOPMENT_PLAN.md · README.md
 ```
 
-## 6. Security & Privacy (planned practices)
+## 6. Security & Privacy
 
 - **Data scope is the privacy control.** By project rule, the only data in this
   system is public aggregate data and synthetic data we generate. No real
@@ -305,6 +318,9 @@ beyond-the-wait/
 - `.gitignore` keeps local secrets (`.env`) and regenerable outputs out of Git.
   It is a convenience, **not** a privacy safeguard: ignore rules match file
   names, not file contents.
-- API key read from environment / `.env`; never logged or displayed.
-- Logs of Claude calls (evidence packets and responses, used for evaluation)
-  are written to a git-ignored folder.
+- API key read from the environment, a git-ignored `.env`, or git-ignored
+  Streamlit secrets; never logged or displayed. A key alone never enables live
+  calls (`BTW_AI_MODE=live` is also required).
+- Milestone 8 does **not** store prompts or responses: they live only in the
+  browser session's memory. Any future eval logging (Milestone 9) must go to the
+  git-ignored `evals/results/` folder and contain no secrets.

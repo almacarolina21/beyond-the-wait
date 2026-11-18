@@ -1,7 +1,7 @@
 """What-If Lab: precomputed multi-seed paired comparisons (SIMULATED).
 
 Order: title -> short disclaimer -> outcome chart -> plain reading -> one intervention
-in detail -> archetypes -> methods and validation in expanders.
+in detail -> optional AI explanation (button) -> archetypes -> methods and validation.
 """
 
 from __future__ import annotations
@@ -9,8 +9,9 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from beyond_the_wait.analysis.check_descriptions import describe_check
 from beyond_the_wait.analysis.experiments import MODEL_EVIDENCE_NOTE
-from beyond_the_wait.dashboard import charts, ui
+from beyond_the_wait.dashboard import ai_panel, charts, ui
 from beyond_the_wait.dashboard import data as d
 from beyond_the_wait.dashboard.theme import direction_label, status_chip
 
@@ -18,8 +19,8 @@ ui.page_header(
     "Fictional model",
     "What-If Lab",
     "Compare hypothetical changes with the fictional ED's baseline. Each change was simulated "
-    "on the <b>same</b> random weeks as the baseline, so differences come from the change, "
-    "not luck.",
+    "on the <b>same</b> random weeks as the baseline, which removes much of the week-to-week "
+    "chance variation from the comparison; the 95% intervals show the uncertainty that remains.",
     badges=("SIMULATED",),
 )
 load = ui.results()
@@ -82,12 +83,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 if meta.get("status") == "CAUTION":
-    reasons = ", ".join(sorted(checks["check"].unique())) if not checks.empty else "see details"
+    reasons = [describe_check(c) for c in sorted(checks["check"].unique())]
     st.markdown(
-        f"<span class='btw-small'><b>Why CAUTION:</b> {reasons}. Read the validation "
-        "details below before relying on this comparison.</span>",
+        "<span class='btw-small'><b>Why CAUTION:</b> read these before relying on this "
+        "comparison (details under Methods and validation below).</span>",
         unsafe_allow_html=True,
     )
+    st.markdown("\n".join(f"- {r}" for r in reasons) or "- See the validation details below.")
 
 detail = d.comparison_rows(bundle, scope="main", scenario_id=scenario)
 detail = detail[detail["metric"].isin(d.METRIC_LABELS)].copy()
@@ -127,7 +129,12 @@ if d.moves_congestion(stages):
         "there instead. Check total length of stay before drawing conclusions."
     )
 
-# --- 3. Archetypes ----------------------------------------------------------------------------
+# --- 3. Optional AI explanation (explicit button; verified before display) ----------------
+ai_panel.render_panel(
+    load, scenario_id=scenario, metric=metric, scenario_name=names.get(scenario, scenario)
+)
+
+# --- 4. Archetypes ----------------------------------------------------------------------------
 ui.section("Archetypes: is the biggest delay the real constraint?")
 st.markdown(
     "Four **fictional** problem conditions, each paired with a relief change. A constraint is "
@@ -157,7 +164,7 @@ st.caption(
     else "The largest stage is not automatically the constraint whose relief helps."
 )
 
-# --- 4. Methods and validation details --------------------------------------------------------
+# --- 5. Methods and validation details --------------------------------------------------------
 ui.section("Methods and validation")
 with st.expander(f"Validation details: {names.get(scenario, scenario)} · {meta.get('status')}"):
     st.markdown(f"Replication gate status: `{meta.get('replication_status')}`")
