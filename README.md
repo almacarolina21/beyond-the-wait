@@ -1,9 +1,10 @@
 # Beyond the Wait — Bronx ED Access Lab
 
 **An educational decision-support lab for exploring why emergency department
-patients wait. A tested simulation calculates the effects of hypothetical
-changes, and Claude's plain-language explanations are shown only after code
-checks them against the verified numbers.**
+patients wait. A tested simulation of a fictional ED calculates the effects of
+hypothetical changes. An explanation layer built for Claude may show
+plain-language text only after code checks it against the verified numbers.
+The public demo uses a labeled mock in place of Claude.**
 
 [![tests](https://img.shields.io/badge/tests-1196%20passed-brightgreen)](#reproduce-it)
 ![coverage](https://img.shields.io/badge/line%20coverage-100%25-brightgreen)
@@ -65,13 +66,19 @@ validation gate (for example, a few simulated weeks were overloaded).
 |---|---|---|
 | **Python** | Every number: simulation, paired statistics, confidence intervals, validation status | Numbers must be reproducible and tested; a language model should not do arithmetic for a health decision |
 | **Claude** | A plain-language explanation of verified results, citing evidence IDs | Explanation and synthesis are where an LLM adds value. Claude writes value *tokens* (`{{M:x.change}}`), and Python inserts the numbers |
-| **Code checks** | Accept, hold for review, or reject each explanation | Valid JSON with valid citations can still mislead, so 11 checks test numbers, citations, advice, causal claims, safety claims, and unfamiliar wording |
+| **Code checks** | Accept, hold for review, or reject each explanation (screening, not a safety judgment) | Valid JSON with valid citations can still mislead, so 11 checks test numbers, citations, advice, causal claims, safety claims, and unfamiliar wording |
 | **People** | Decisions, and reviewing anything the checks are unsure about | Automated checks can't establish causal correctness or clinical safety |
 
 The public dashboard shows generated text **only when every check passes**
 (ACCEPT). A response marked HUMAN_REVIEW is withheld. Visitors see the key
 result written by Python, the evidence, and a note that the explanation needs
 review. A rejected response shows only which checks failed.
+
+**ACCEPT is not a safety certificate.** It means none of the 11 automated
+checks found a problem. It does not establish that an explanation is correct,
+complete, or clinically safe. Blind testing (below) shows these checks miss
+unsafe wording they have not seen. Real Claude responses have not been
+evaluated against them.
 
 ![What-If Lab, AI interpretation panel in DEMO mode: a key result calculated by Python, a mock explanation labeled "DEMO · mock, not Claude", and evidence IDs for each finding](docs/images/ai_interpretation.png)
 
@@ -82,31 +89,44 @@ not Claude"). No Claude API call was made to produce it.*
 
 ```mermaid
 flowchart TD
-    PUB["PUBLIC: CMS and NYS DOH aggregate ED measures<br/>(5 Bronx hospitals, SHA-256 fingerprinted)"]
-    CFG["Fictional site profile + intervention scenarios<br/>(YAML, Pydantic-validated)"]
-    SYN["SYNTHETIC: fictional patients<br/>(seeded, time-varying arrivals)"]
-    SIM["SIMULATED: SimPy discrete-event model<br/>(triage, beds, physicians, diagnostics, boarding)"]
-    STAT["Paired multi-seed analysis<br/>(30 common-random-number weeks, 95% CI, sensitivity)"]
-    GATE{"Validation gate<br/>PASS / CAUTION / BLOCKED"}
-    PKT["Evidence packet<br/>(verified aggregates, stable fact IDs, cautions, limitations)"]
-    LLM["Claude (structured JSON, cites fact IDs,<br/>writes value tokens, never numbers)<br/>DEMO mode: labeled mock"]
-    VER{"Output verification<br/>11 checks → ACCEPT / HUMAN_REVIEW / REJECT"}
+    subgraph REAL["REAL WORLD · PUBLIC reference data (context only)"]
+        PUB["CMS + NYS DOH aggregate ED measures<br/>5 Bronx hospitals, SHA-256 fingerprinted"]
+    end
+
+    subgraph FICT["FICTIONAL ED · Riverside Commons (not a real hospital)"]
+        CFG["Site profile + intervention scenarios<br/>(assumptions, YAML, validated)"]
+        SYN["SYNTHETIC patients<br/>(seeded generator)"]
+        SIM["SIMULATED: SimPy discrete-event model"]
+        STAT["Paired multi-seed statistics<br/>30 weeks, 95% CI, sensitivity"]
+        GATE{"Validation gate<br/>PASS / CAUTION / BLOCKED"}
+        CFG --> SYN --> SIM --> STAT --> GATE
+    end
+
+    subgraph AI["EXPLANATION LAYER (only SIMULATED facts enter)"]
+        PKT["Evidence packet<br/>verified aggregates + fact IDs"]
+        LLM["Claude: cites fact IDs, writes value tokens<br/>(public demo: labeled mock, not Claude)"]
+        VER{"11 automated checks<br/>ACCEPT / HUMAN_REVIEW / REJECT"}
+        PKT --> LLM --> VER
+    end
+
     UI["Streamlit dashboard (localhost)"]
     HUM["Human reviewer + rubric"]
+    NOPE["Not shown"]
 
-    CFG --> SYN --> SIM --> STAT --> GATE
-    GATE -- "BLOCKED: never shown" --> X[" "]
-    GATE -- "PASS / CAUTION" --> PKT --> LLM --> VER
-    VER -- "ACCEPT: prose shown" --> UI
-    VER -- "HUMAN_REVIEW: prose withheld" --> HUM
+    PUB -. "separate pages and charts; never a model input" .-> UI
+    GATE -- "PASS / CAUTION results" --> UI
+    GATE -- "BLOCKED" --> NOPE
+    GATE -- "PASS / CAUTION" --> PKT
+    VER -- "ACCEPT: text shown" --> UI
+    VER -- "HUMAN_REVIEW: text withheld" --> HUM
     VER -- "REJECT: failed checks only" --> UI
-    GATE --> UI
-    PUB -- "context only, never mixed with simulated charts" --> UI
-    style X fill:none,stroke:none
 ```
 
-Every table row and chart carries a provenance label: **PUBLIC**,
-**SYNTHETIC**, or **SIMULATED**. Real and simulated data never share a chart.
+The public Bronx data and the fictional simulation are separate pipelines.
+Public measures are shown for context on their own pages. They are not used to
+fit or calibrate the model, and they never enter the evidence packet. Every
+table row and chart carries a provenance label: **PUBLIC**, **SYNTHETIC**, or
+**SIMULATED**. Real and simulated data never share a chart.
 Details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## AI evaluation: blind results, failures, and what changed
@@ -166,7 +186,7 @@ You need Python 3.12 or later. No API key, no internet access after install,
 and no billable calls: AI explanations default to the labeled mock (DEMO mode).
 
 ```bash
-git clone https://github.com/<your-username>/beyond-the-wait.git
+git clone https://github.com/almacarolina21/beyond-the-wait.git
 cd beyond-the-wait
 python3 -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
@@ -221,6 +241,11 @@ your own Anthropic API key. That is billed to your API account. See
   ([full list](docs/SIMULATION_MODEL.md#10-known-limitations)).
 - **Public data can't explain causes.** OP-18 and OP-22 describe *what*
   happened at a hospital, not *why*.
+- **Facility crosswalk not independently verified.** The match between the
+  five CMS hospitals and the NYS facility records rests on automated
+  address checks, recorded during AI-assisted development. No person has
+  verified it independently yet
+  ([details](docs/PUBLIC_DATA_METHODOLOGY.md)).
 - **Prompt-injection defenses are partial.** See the sanitizer results above.
 
 ## How this was built
@@ -228,8 +253,8 @@ your own Anthropic API key. That is billed to your API account. See
 I designed and directed this project, and developed it with AI assistance using
 **Claude Code**. I set the scope, the data rules, and the safety constraints, for
 example: no private data, no live API calls without approval, and blind
-evaluation rounds locked before scoring. I also reviewed each milestone. Claude
-Code wrote most of the code, tests, and documentation under that direction. The
+evaluation rounds locked before scoring. I set the requirements for each
+milestone and decided when it was complete. Claude Code wrote most of the code, tests, and documentation under that direction. The
 milestone-by-milestone history is in the git log and in
 [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
@@ -247,10 +272,20 @@ milestone-by-milestone history is in the git log and in
 | Dashboard | [docs/DASHBOARD.md](docs/DASHBOARD.md) |
 | AI interpretation, evaluation, review rubric, live evaluation plan | [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md), [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md), [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md), [docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md) |
 
-## Disclaimer and license
+## Disclaimer and licenses
 
-This is an independent portfolio project. It is not affiliated with any
-hospital, health system, employer, CMS, or NYS DOH. Simulated results are
-illustrative and don't describe the performance or causes of delay at any
-real institution. Released under the [MIT License](LICENSE). Public data
-attribution is in [data/public/SOURCES.md](data/public/SOURCES.md).
+This is an independent portfolio project. It is not affiliated with or
+endorsed by any hospital, health system, employer, CMS, or NYS DOH. Simulated
+results are illustrative and don't describe the performance or causes of delay
+at any real institution.
+
+- **Source code:** [MIT License](LICENSE). The MIT license covers this
+  project's code and documentation only. It does **not** cover the public data.
+- **Public data:** this data keeps its publishers' terms. The CMS data is
+  published by a U.S. federal agency. The NYS DOH data and the files derived
+  from it (the processed tables, the crosswalk, and the test-fixture excerpts)
+  are provided under the **Open Database License (ODbL) 1.0**, as listed in
+  the HealthData.gov catalog. Details and attribution are in
+  [data/public/SOURCES.md](data/public/SOURCES.md#reuse-terms-and-attribution).
+- **Fictional configuration and simulated results:** these are part of this
+  project and are covered by the MIT license.

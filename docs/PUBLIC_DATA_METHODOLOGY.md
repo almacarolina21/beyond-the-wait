@@ -148,15 +148,22 @@ hospitals as if the measures were complete, or let Claude claim otherwise.
 
 CMS identifies hospitals by **CCN**; NYS DOH identifies each physical site by
 **PFI**. Neither file contains the other's ID, so we matched them with
-independent evidence and a human review:
+two independent automated checks, recorded in a curated crosswalk:
 
 1. **CMS location filter:** CMS lists `County/Parish = BRONX`, `State = NY`,
    `Hospital Type = Acute Care Hospitals`, and `Emergency Services = Yes`.
    Five hospitals qualify.
 2. **Address matching against the NYS registry:** addresses are normalized
    (`EAST`→`E`, `AVENUE`→`AVE`, `THIRD`→`3RD`, …) and compared with ZIP codes.
-3. **Human review:** accepted matches are recorded in
+3. **Curated crosswalk:** accepted matches are recorded, with the evidence for
+   each, in
    [`data/public/reference/bronx_facility_crosswalk.csv`](../data/public/reference/bronx_facility_crosswalk.csv).
+   The matches were proposed by the address check and recorded during
+   AI-assisted development. **They have not yet been independently verified by
+   a person.** The `reviewed_on` column records the date the matches were
+   checked against both registries, not a sign-off. To verify a row by hand,
+   look up its CCN on CMS Care Compare and its PFI on the NYS Health Facility
+   General Information page, then compare the street address and ZIP.
    Every build re-checks the crosswalk against the current official records
    (names, ZIPs, street numbers, method) and stops if anything changed.
 
@@ -231,7 +238,7 @@ The original published text is always kept in `score_raw`.
   dictionary.
 - OP-22's future status depends on CMS rulemaking.
 - EDV category thresholds aren't documented here.
-- CMS → NYS matching relies on addresses plus human review. No public file
+- CMS → NYS matching relies on automated address checks and a curated crosswalk that has not yet been independently verified by a person. No public file
   provides an official CCN↔PFI key.
 - On 2026-11-15, the CMS catalog API refused Python's standard HTTP client
   (HTTP 403), so files were registered through the manual path.

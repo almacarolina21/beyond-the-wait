@@ -18,31 +18,48 @@ facility-level totals). No record-level or patient-level data is used.
 
 ## Reuse terms and attribution
 
-**What this repository redistributes.** Only small *derived* tables are
-committed: `processed/bronx_ed_measures.csv`, `processed/bronx_facilities.csv`,
-the build manifest, and the hand-reviewed crosswalk in `reference/`. They cover
-five Bronx hospitals and hold hospital-level aggregates only. The raw publisher
-files (`raw/`, about 42 MB) are **not** committed. `download` fetches them again
-from the official URLs.
+*Checked 2026-11-20. This is not legal advice. The project's MIT license
+covers its source code only, not these data.*
 
-**Terms, as checked on 2026-11-20. This is not legal advice.**
+**What this repository redistributes.**
+- Small *derived* tables: `processed/bronx_ed_measures.csv`,
+  `processed/bronx_facilities.csv` and `processed/build_manifest.json`.
+- The curated crosswalk in `reference/`.
+- Byte-for-byte excerpts of the raw files used as test fixtures, in
+  `tests/fixtures/public/raw/`. They contain under 150 rows per file.
 
-- **CMS (Provider Data Catalog).** These are published by a U.S. federal agency.
-  CMS's data.cms.gov API documentation says works of the U.S. Government are in
-  the public domain, and that reuse needs no permission, although credit to CMS
-  is appreciated. Check each dataset's page for a dataset-specific license.
-- **New York State Department of Health (Health Data NY).** These are published
-  under the Open NY Terms of Use
-  ([PDF](https://data.ny.gov/download/77gx-ii52/application/pdf)). Before
-  republishing, read the current terms, especially attribution, no implied
-  endorsement, and the "as is" warranty.
+All of these hold facility-level aggregates only. The full raw publisher files
+(`raw/`, about 42 MB) are **not** committed. `download` fetches them again from
+the official URLs.
 
-**Attribution.** Source data: Centers for Medicare & Medicaid Services, Provider
-Data Catalog (datasets `yv7e-xc69`, `y9us-9xdf`, `xubh-q36u`); New York State
-Department of Health, Health Data NY (datasets `vn5v-hh5r`, `5gzv-zv2z`). This
-project is not affiliated with or endorsed by CMS, NYS DOH, or any hospital.
-The processed tables are this project's transformations, and the publishers
-are not responsible for them.
+**What the publishers' own metadata says.**
+
+| Datasets | Publisher metadata (checked 2026-11-20) | Catalog listing | Terms applied in this repository |
+|---|---|---|---|
+| CMS `yv7e-xc69`, `y9us-9xdf`, `xubh-q36u` | The data.cms.gov metastore lists `accessLevel: public` and **no license field**. CMS's API guide says works of the U.S. Government are in the public domain and reuse needs no permission. | n/a | Treated as U.S. government works, with attribution to CMS |
+| NYS DOH `vn5v-hh5r`, `5gzv-zv2z` | The health.data.ny.gov dataset metadata and its `data.json` catalog list **no license field** (`attribution: New York State Department of Health`, `accessLevel: public`). The portal's general terms are the Open NY Terms of Use ([PDF](https://data.ny.gov/download/77gx-ii52/application/pdf)). | HealthData.gov harvests the NYS catalog (mirrors `j5hh-ai98` and `gdcn-zk7j`) and lists the license as **ODbL** (`http://opendefinition.org/licenses/odc-odbl/`) | **ODbL 1.0**, the stricter reading, plus the Open NY terms |
+
+The NYS publisher pages do not themselves state ODbL. The repository follows
+ODbL anyway as the conservative choice. Concretely:
+- **License.** The NYS-derived content is offered under the
+  [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+  This covers the NYS columns and rows in `processed/`, the crosswalk, and the
+  NYS test-fixture excerpts.
+- **Attribution.** Every copy keeps the attribution below.
+- **Share-alike.** Anyone who publicly uses an adapted version of these tables
+  must keep them under ODbL.
+- **No implied endorsement.** The project does not imply endorsement by
+  NYS DOH. The data is used "as is".
+
+**Attribution.**
+- Contains data from the Centers for Medicare & Medicaid Services, Provider
+  Data Catalog (datasets `yv7e-xc69`, `y9us-9xdf`, `xubh-q36u`).
+- Contains information from New York State Department of Health, Health Data
+  NY (datasets `vn5v-hh5r`, `5gzv-zv2z`), which is made available under the
+  Open Database License (ODbL) as listed in the HealthData.gov catalog.
+- This project is not affiliated with or endorsed by CMS, NYS DOH, or any
+  hospital. The processed tables and the crosswalk are this project's
+  transformations, and the publishers are not responsible for them.
 
 Measure definitions were checked against:
 

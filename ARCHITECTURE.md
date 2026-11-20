@@ -57,7 +57,7 @@
 | `public_sources.py` ✅ | Registry of the 5 verified official datasets; manifest models (URL, SHA-256, dates). |
 | `ed_measures.py` ✅ | Measure catalog: definition, population, unit, and what each measure does *not* measure. Door-to-provider and boarding time raise `MeasureNotAvailableError`. |
 | `cms_loader.py` / `nys_loader.py` ✅ | Validated loaders: raw text first, explicit unit conversion, official missing-data reasons, duplicate and reporting-period checks. |
-| `facility_matching.py` ✅ | CMS↔NYS matching by normalized address + ZIP, validated against a human-reviewed crosswalk. |
+| `facility_matching.py` ✅ | CMS↔NYS matching by normalized address + ZIP, checked against a committed crosswalk (matches recorded during AI-assisted development; not yet independently verified by a person). |
 | `public_pipeline.py` ✅ | `download` / `register` / `build` → `data/public/processed/` with reproducible, fingerprinted outputs. See [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md). |
 | `synthetic_generator.py` ✅ | Creates fictional patients from a site profile + seed: time-varying Poisson arrivals (hour by hour, each hour using its own date's weekday multiplier), ESI acuity, then lab, imaging, and hypothetical admission **conditional on acuity**. Separate random streams for arrivals and attributes. Produces **attributes only, no outcomes**. Every row is tagged `SYNTHETIC`. See [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md). |
 
@@ -276,7 +276,7 @@ beyond-the-wait/
 │   └── scenarios/             # Intervention scenarios (YAML)
 ├── data/
 │   ├── public/raw/            # Downloaded public files (git-ignored)
-│   ├── public/reference/      # Human-reviewed facility crosswalk
+│   ├── public/reference/      # Curated facility crosswalk (pending independent review)
 │   ├── public/processed/      # Bronx ED reference tables + build manifest
 │   ├── public/SOURCES.md      # Official sources and manual-download steps
 │   └── synthetic/             # Generated synthetic patients (git-ignored)

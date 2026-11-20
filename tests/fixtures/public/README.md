@@ -25,3 +25,9 @@ What's included:
 periods, etc.) are built inside the tests using obviously fictional
 facilities such as `FICTIONAL TEST HOSPITAL` (ID `999001`). We never attach
 made-up values to a real hospital, even in a test.
+
+**Licensing.** These excerpts keep their publishers' terms, not the project's
+MIT license. The NYS DOH excerpts are provided under the Open Database License
+(ODbL) 1.0. See
+[`data/public/SOURCES.md`](../../../data/public/SOURCES.md#reuse-terms-and-attribution)
+for the CMS and NYS terms and the required attribution.

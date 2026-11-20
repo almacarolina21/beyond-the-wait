@@ -82,8 +82,8 @@ move to Milestone 3, where the synthetic generator needs them.
 - [x] Loaders (`cms_loader.py`, `nys_loader.py`) preserving IDs, URLs, measure
   IDs, dates, units, raw scores, and official missing-data reasons. Missing or
   suppressed values are never converted to 0.
-- [x] Facility matching (`facility_matching.py`) plus a human-reviewed
-  crosswalk (`data/public/reference/bronx_facility_crosswalk.csv`): 5 CMS Bronx
+- [x] Facility matching (`facility_matching.py`) plus a curated
+  crosswalk (`data/public/reference/bronx_facility_crosswalk.csv`; not yet independently verified by a person): 5 CMS Bronx
   ED hospitals matched to NYS records. Exclusions and NYS-only sites documented.
 - [x] Reproducible pipeline (`public_pipeline.py`: `download` / `register` /
   `build`) with SHA-256 manifests and byte-identical rebuilds.

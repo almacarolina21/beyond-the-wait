@@ -6,7 +6,7 @@ The problem
     Neither public file contains the other's ID, so there is no official key
     to join on.
 
-Our approach (two independent checks + a human review)
+Our approach (two independent automated checks + a curated crosswalk)
     1. Location filter: a CMS hospital is a Bronx candidate only if CMS itself
        lists County = BRONX, State = NY, an acute-care hospital type, and
        emergency services = Yes.
@@ -15,8 +15,10 @@ Our approach (two independent checks + a human review)
        normalization; "partial_address" means same ZIP and street number with
        one street name a prefix of the other (e.g. "PELHAM PKWY" vs
        "PELHAM PKWY S"). Anything else is "no_match".
-    3. Human review: accepted matches live in a committed crosswalk file
-       (data/public/reference/bronx_facility_crosswalk.csv). The pipeline
+    3. Curated crosswalk: accepted matches live in a committed crosswalk file
+       (data/public/reference/bronx_facility_crosswalk.csv), recorded during
+       AI-assisted development and not yet independently verified by a
+       person. The pipeline
        re-checks that file against the current official records every build.
        If an agency renames or moves a facility, the build fails and asks for
        review instead of silently re-matching.
@@ -141,7 +143,7 @@ def candidate_matches(cms_bronx: pd.DataFrame, nys_hospitals: pd.DataFrame) -> p
 
 
 def load_crosswalk(path: str | Path) -> pd.DataFrame:
-    """Load the human-reviewed crosswalk, normalizing PFIs."""
+    """Load the curated crosswalk, normalizing PFIs."""
     df = read_text_csv(path, CROSSWALK_COLUMNS, "Bronx facility crosswalk")
     df["nys_pfi"] = df["nys_pfi"].map(normalize_pfi)
     return df
@@ -150,7 +152,7 @@ def load_crosswalk(path: str | Path) -> pd.DataFrame:
 def validate_crosswalk(
     crosswalk: pd.DataFrame, cms_bronx: pd.DataFrame, nys_registry: pd.DataFrame
 ) -> None:
-    """Check the reviewed crosswalk against current official records.
+    """Check the curated crosswalk against current official records.
 
     Raises PublicDataError listing every problem found, so a reviewer sees
     them all at once.
