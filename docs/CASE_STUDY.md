@@ -80,7 +80,8 @@ unfaithful explanation does more harm than no explanation.
 - **Robustness.** The analysis runs:
   - sensitivity tests on uncertain assumptions (physician concurrency and
     demand) with 20 seeds;
-  - congestion-shift detection, which checks whether waiting moved downstream;
+  - mixed-direction detection, which flags comparisons where one stage's wait
+    falls while another stage's wait rises;
   - archetype tests, which check whether relieving the largest delay is the
     same as relieving the binding one.
 - **Honest scope.** Every parameter is an illustrative assumption. The

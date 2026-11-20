@@ -56,11 +56,13 @@ validation gate (for example, a few simulated weeks were overloaded).
    stay for admitted patients: 98.4 min lower within the fictional model (95% CI 66.0 to 131 min lower).
 2. **Lab and imaging turnaround 25% faster.** Median length of stay for
    discharged patients: 13.9 min lower within the fictional model (95% CI 13.5 to 14.3 min lower).
-3. **One more night triage nurse: the wait moves to the next queue.** The
+3. **One more night triage nurse: triage waits fell while physician waits rose.** The
    90th-percentile wait for triage was 4.8 min lower within the fictional model (95% CI 3.8 to 5.9 min lower),
    but the 90th-percentile wait for a physician was 3.2 min higher within the fictional model (95% CI 2.4 to 4.0 min higher).
-   The analysis flags this kind of congestion shift automatically, and it is
-   why a single headline metric can mislead.
+   The analysis automatically flags comparisons like this, where one stage's
+   wait falls while another's rises. The two changes were measured together;
+   the model run doesn't establish that one caused the other. This is why a
+   single headline metric can mislead.
 
 ## Python calculates. Claude explains. Humans decide.
 
