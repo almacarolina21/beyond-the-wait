@@ -18,8 +18,10 @@ The public demo uses a labeled mock in place of Claude.**
 > aggregate Bronx hospital measures for context and synthetic patients for the
 > model. It is not calibrated to any real hospital, not clinically validated,
 > and not deployed anywhere. No real patient data or employer information was
-> used. Real Claude responses have not yet been evaluated: the AI explanations
-> in the demo come from a labeled mock.
+> used. The AI explanations in the public demo come from a labeled mock. A
+> first 10-response live Claude evaluation has been run offline (results
+> below). None of those responses passed the release checks, and none is
+> published.
 
 ## The problem
 
@@ -77,8 +79,8 @@ review. A rejected response shows only which checks failed.
 **ACCEPT is not a safety certificate.** It means none of the 11 automated
 checks found a problem. It does not establish that an explanation is correct,
 complete, or clinically safe. Blind testing (below) shows these checks miss
-unsafe wording they have not seen. Real Claude responses have not been
-evaluated against them.
+unsafe wording they have not seen. In the first live batch of 10 real Claude
+responses, none reached ACCEPT.
 
 ![What-If Lab, AI interpretation panel in DEMO mode: a key result calculated by Python, a mock explanation labeled "DEMO · mock, not Claude", and evidence IDs for each finding](docs/images/ai_interpretation.png)
 
@@ -163,18 +165,51 @@ After the fixes, the same cases score 0 false accepts. That is **not**
 independent evidence, because those cases were used to make the fixes.
 
 **Still unresolved:**
-- no evaluation of real Claude responses;
+- only 10 real Claude responses evaluated so far (below);
 - no semantic entailment check;
 - the cases and the rules share one author;
 - 13 unsafe cases are enough to find *types* of failure, not to measure rates.
 
-A supervised 10-call live evaluation is prepared and has been dry-run offline:
-- a hard cap of 10 calls;
-- no retries;
-- a blind human review before the automated verdict is shown;
-- a cost ceiling of $2.38 at list price.
+### First live Claude evaluation (batch `live-2026-11-20`)
 
-It has **not** been run. Details: [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md)
+After explicit approval, the supervised evaluation tool made **10 real calls**
+to Claude Opus 5.5 (`claude-opus-5-5`): 5 fictional evidence packets × 2
+generations, hard cap of 10, no retries. A reviewer scored each response blind,
+before the automated verdict was revealed.
+
+| | Result |
+|---|---|
+| Responses / API errors | 10/10 generated, 0 errors |
+| Tokens and estimated cost | 81,174 in, 19,886 out · **$0.72** at list price (ceiling $2.38) |
+| Reviewer verdicts | 6 REJECT, 4 HUMAN_REVIEW, 0 ACCEPT |
+| Automated verdicts | 8 REJECT, 2 HUMAN_REVIEW, 0 ACCEPT |
+| Reviewer/automated agreement | 4/10 |
+| Automated false accepts | **0** |
+| Shown publicly | 0. All 10 withheld |
+
+**What it showed:**
+- **The integration works.** Every call returned schema-valid structured
+  output that the pipeline could render and check.
+- **Grounding is the weak point, not numbers.** The reviewer gave full marks
+  for numerical fidelity on all 10, which is consistent with Python rendering
+  every number. They gave 0 for evidence grounding on 6 of 10, citing causal
+  overclaims, interpretations not supported by the cited facts, and mislabeled
+  results.
+- **The release gate is conservative.** It accepted nothing unsafe, but it
+  also rejected all 4 responses the reviewer would have sent to review. The
+  2 responses it sent to review were flagged mainly for unvetted wording, not
+  for the grounding problems the reviewer found. The most frequent failed
+  checks were uncertainty wording, recommendations/safety, and required
+  content (4 each).
+
+**What it doesn't show.** Ten responses from 5 packets can surface failure
+*types*, not reliable rates. Nothing here establishes general reliability or
+clinical safety. The scoring was done by a single reviewer with AI assistance;
+it is not independent expert validation. The batch was run through the
+evaluation tool, not through the dashboard, so the dashboard's live mode has
+not been tested with real responses. Raw responses stay local and git-ignored.
+
+Details: [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md)
 · [docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md) ·
 [rubric](docs/AI_REVIEW_RUBRIC.md).
 
@@ -233,8 +268,9 @@ your own Anthropic API key. That is billed to your API account. See
   The public Bronx data provides context and isn't used to fit the model.
 - **No clinical validation.** Triage priority is a simplified acuity rule, and
   nothing here has been reviewed by ED clinicians or operations staff.
-- **No live API evaluation.** Every evaluated explanation was hand-written. How
-  real Claude responses behave against the checks is unknown.
+- **Minimal live API evaluation.** Only 10 real Claude responses have been
+  evaluated, with one AI-assisted reviewer. None passed the release checks, so
+  the live explanation feature is not yet producing publishable text.
 - **Simplified model.** Boarding uses a bed-release abstraction. Lab and
   imaging have no capacity limits. The model has no left-without-being-seen
   behavior, ambulance diversion, surges, or seasonality

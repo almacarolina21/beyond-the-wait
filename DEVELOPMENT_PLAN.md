@@ -1,6 +1,6 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** v1.0 portfolio release candidate · **Last updated:** 2026-11-20 · **Current:** Milestone 10 complete (packaging); live evaluation prepared, not run, awaiting approval
+**Status:** v1.0 portfolio release candidate · **Last updated:** 2026-11-20 · **Current:** Milestone 10 complete (packaging); first live evaluation run 2026-11-20 (10 responses, 0 ACCEPT, all withheld)
 
 Items are checked off only when built and tested.
 
@@ -314,7 +314,7 @@ Done (2026-11-17) — see [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md):
 - [x] Supervised live-evaluation workflow prepared offline (`beyond_the_wait.live_eval`: fixed 10-call
   plan, approval code + TTY + typed confirmation, no retries, hard cap, blind reviewer CLI, MOCK dry
   run; docs/LIVE_EVALUATION.md).
-- [ ] Live evaluation of real Claude responses (needs explicit approval; not run).
+- [x] First live evaluation of real Claude responses (batch `live-2026-11-20`, approved; 10 responses, results summarized in README and CASE_STUDY).
 - [ ] Held-out cases written by independent reviewers.
 
 Original plan:

@@ -2,7 +2,8 @@
 
 *A grounded-AI decision-support prototype for emergency department access.
 The ED is fictional and the data is public and simulated. The prototype is not
-clinically validated, and real Claude responses have not yet been evaluated.*
+clinically validated. Only one small live Claude evaluation (10 responses) has
+been run, and none of those responses passed the release checks.*
 
 ## 1. Problem and motivation
 
@@ -166,16 +167,44 @@ A 7-dimension human review rubric covers:
 - **Documented gaps.** The sanitizer's limits are written down instead of
   being claimed as solved.
 
+**First live evaluation (batch `live-2026-11-20`):**
+
+After explicit approval, the supervised tool made 10 real calls to Claude
+Opus 5.5: 5 fictional evidence packets × 2 generations. The protocol was a
+hard cap of 10 calls, no retries, an append-only ledger, a $2.38 list-price
+ceiling, and a blind review saved before the automated verdict was revealed.
+
+| Measure | Result |
+|---|---|
+| Responses | 10/10, 0 API errors, all schema-valid |
+| Cost | 81,174 input and 19,886 output tokens, about $0.72 at list price |
+| Reviewer verdicts | 6 REJECT, 4 HUMAN_REVIEW |
+| Automated verdicts | 8 REJECT, 2 HUMAN_REVIEW, 0 ACCEPT |
+| Agreement | 4/10 |
+| Automated false accepts | 0 |
+| Published | none; all 10 withheld |
+
+Three findings came out of the batch:
+- **The architecture held where it was designed to.** Numerical fidelity was
+  rated full on all 10 responses, because Python renders every number.
+- **Grounding did not hold.** Evidence grounding was rated 0 on 6 of 10.
+  The model cited real fact IDs but drew causal or interpretive conclusions
+  those facts don't support, and sometimes mislabeled results. This is the gap
+  the missing entailment check (below) would need to close.
+- **The gate is conservative, partly for the wrong reasons.** It let nothing
+  unsafe through, but it rejected all 4 responses the reviewer would only have
+  sent to review. The 2 it sent to review were flagged mostly for unvetted
+  wording rather than for their grounding errors.
+
+Limits of this evidence: 10 samples can show failure types, not rates. They
+cannot establish reliability or clinical safety. The scoring was done by one
+reviewer with AI assistance, so it is not independent expert validation. The
+dashboard's live mode was not part of this test. Raw responses are kept local
+and are not published.
+
 **Still unresolved:**
-- No real Claude output has been evaluated. A supervised 10-call evaluation is
-  built and has been dry-run offline, but it awaits explicit approval. It
-  includes:
-  - a hard cap of 10 calls and no retries;
-  - an append-only ledger;
-  - a blind human review recorded before the automated verdict is revealed;
-  - a $2.38 list-price ceiling.
 - No semantic entailment check: a cited fact may not support a sentence's
-  meaning.
+  meaning. The live batch confirmed this is the main failure mode.
 - The cases and the rules have a single author. Independent red-teamers are
   needed.
 - With 13 unsafe cases in the last round, the evaluation can identify
@@ -231,8 +260,10 @@ caseload planning.
 
 ## 8. What I would do next
 
-1. Run the approved 10-call live evaluation, then turn every real failure into
-   a new locked held-out round.
+1. Turn the live batch's grounding failures into a new locked held-out round,
+   add a claim-to-evidence entailment check, and loosen the over-strict checks
+   that rejected review-worthy responses. Then run a new, separately approved
+   live batch to measure the change.
 2. Have independent reviewers write a held-out round.
 3. Add Unicode normalization and per-field allowlists to the packet sanitizer.
 4. Review the model's structure with ED operations staff before claiming that

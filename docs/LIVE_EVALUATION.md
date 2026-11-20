@@ -1,4 +1,6 @@
-# Supervised Live Claude Evaluation (prepared, not run)
+# Supervised Live Claude Evaluation
+
+*First batch `live-2026-11-20` was run on 2026-11-20 (10/10 responses, 0 ACCEPT, all withheld). Summary: [CASE_STUDY.md §6](CASE_STUDY.md#6-what-failed-what-changed-and-what-remains-unresolved). Raw results stay local and git-ignored.*
 
 > **Status: prepared and tested offline only.** No real Claude API call has
 > been made. The workflow below runs a live batch only after a person approves it

@@ -14,7 +14,7 @@ loud. Do not describe it as Claude's output.
 | 0:27–0:45 | **What-If Lab**, the interval chart (default outcome: arrival to provider, p90) | "Blue intervals exclude zero, gray ones don't. Everything is labeled SIMULATED and carries its validation status. A BLOCKED run is never shown." |
 | 0:45–1:05 | **What-If Lab**, click **Explain these results** | "The explanation layer gets a typed evidence packet, never patient records. The model writes placeholders, and Python inserts every number. This is the **mock**, not Claude. Eleven checks passed, so it's shown. Text that needs human review is withheld from this page entirely." |
 | 1:05–1:22 | **AI Explanation Evaluation**, blind results table | "I evaluated the checks on 180 hand-written explanations, with held-out rounds locked before scoring. Patching phrases failed: 61%, then 55%. Changing the default so that unfamiliar wording goes to a person reached 12 of 13. Those are the blind numbers, not the post-fix ones." |
-| 1:22–1:30 | Back to the **Overview** header | "Python calculates, Claude explains, humans decide. Next is a capped, 10-call live evaluation with blind human review, which hasn't been run yet." |
+| 1:22–1:30 | Back to the **Overview** header | "Python calculates, Claude explains, humans decide. A first 10-call live evaluation found grounding gaps; none of those responses was published." |
 
 **Before recording:**
 - Use a fresh browser window at about 1440 × 900, in light mode.
