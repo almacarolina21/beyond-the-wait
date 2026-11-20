@@ -1,0 +1,10 @@
+intervention,metric,settings,directions,verdict,provenance
+add_night_physician,arrival_to_provider_p90,4,{'improves': 4},stable_improves,SIMULATED
+add_night_physician,boarding_p90,4,"{'worsens': 2, 'inconclusive': 2}",unstable,SIMULATED
+add_night_physician,los_median_lower_bound_all,4,"{'improves': 2, 'inconclusive': 2}",unstable,SIMULATED
+faster_diagnostics,arrival_to_provider_p90,2,{'inconclusive': 2},no_support,SIMULATED
+faster_diagnostics,boarding_p90,2,{'improves': 2},stable_improves,SIMULATED
+faster_diagnostics,los_median_lower_bound_all,2,{'improves': 2},stable_improves,SIMULATED
+increase_bed_releases,arrival_to_provider_p90,4,{'inconclusive': 4},no_support,SIMULATED
+increase_bed_releases,boarding_p90,4,{'improves': 4},stable_improves,SIMULATED
+increase_bed_releases,los_median_lower_bound_all,4,{'improves': 4},stable_improves,SIMULATED

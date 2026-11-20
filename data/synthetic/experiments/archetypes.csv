@@ -1,0 +1,5 @@
+archetype,relief,outcome,condition_effect,condition_ci_low,condition_ci_high,condition_direction,relief_effect,relief_ci_low,relief_ci_high,relief_direction,largest_stage,provenance
+archetype_boarding_heavy,increase_bed_releases,los_median_admitted,261.4050768207357,184.30720027235205,338.5029533691194,worsens,-315.6958543423177,-408.8753924961087,-222.51631618852673,improves,stage_boarding_mean,SIMULATED
+archetype_physician_mismatch,rebalance_physician_day_to_evening,arrival_to_provider_p90,55.507413644227306,41.60445271162543,69.41037457682918,worsens,-55.507413644227306,-69.41037457682918,-41.60445271162543,improves,stage_boarding_mean,SIMULATED
+archetype_triage_mismatch,add_day_triage_nurse,arrival_to_provider_p90,160.65528737296304,148.3187777162519,172.9917970296742,worsens,-160.65528737296304,-172.9917970296742,-148.3187777162519,improves,stage_boarding_mean,SIMULATED
+archetype_diagnostic_delay,faster_diagnostics,los_median_discharged,27.164149401926625,26.528371111730223,27.799927692123028,worsens,-20.260834032137144,-20.70567409136044,-19.815993972913848,improves,stage_boarding_mean,SIMULATED

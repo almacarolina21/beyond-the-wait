@@ -11,7 +11,7 @@ interventions · **Model-internal evidence only**
 Code: `analysis/experiments.py`, `analysis/statistics.py`,
 `config/scenarios.py`, `simulation/randomness.py`.
 Run: `python -m beyond_the_wait.analysis.whatif_demo --seeds 30 --sensitivity-seeds 20 --workers 8`
-(about 6 minutes on 8 cores). CSVs for Milestone 7 go to `data/synthetic/experiments/` (git-ignored).
+(about 6 minutes on 8 cores). CSVs for Milestone 7 go to `data/synthetic/experiments/` (committed as the dashboard's demo bundle).
 
 ---
 

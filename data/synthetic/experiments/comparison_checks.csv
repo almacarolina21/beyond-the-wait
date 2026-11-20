@@ -1,0 +1,105 @@
+scope,baseline_id,scenario_id,check,status,detail,provenance
+main,baseline,add_evening_physician,seed_coverage,PASS,30 paired seeds,SIMULATED
+main,baseline,add_evening_physician,missing_data,PASS,No missing metric values.,SIMULATED
+main,baseline,add_evening_physician,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+main,baseline,add_evening_physician,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: los_p90_admitted, boarding_p90, stage_space_wait_mean, stage_results_mean, stage_boarding_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+main,baseline,add_evening_physician,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+main,baseline,add_evening_physician,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'add_evening_physician': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+main,baseline,add_evening_physician,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x29, extreme_waits x4, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+main,baseline,add_evening_physician,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+main,baseline,add_night_physician,seed_coverage,PASS,30 paired seeds,SIMULATED
+main,baseline,add_night_physician,missing_data,PASS,No missing metric values.,SIMULATED
+main,baseline,add_night_physician,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+main,baseline,add_night_physician,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: los_p90_discharged, los_median_admitted, boarding_median, boarding_share_over_4h, stage_space_wait_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+main,baseline,add_night_physician,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+main,baseline,add_night_physician,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'add_night_physician': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+main,baseline,add_night_physician,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x25, extreme_waits x4, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+main,baseline,add_night_physician,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+main,baseline,add_night_triage_nurse,seed_coverage,PASS,30 paired seeds,SIMULATED
+main,baseline,add_night_triage_nurse,missing_data,PASS,No missing metric values.,SIMULATED
+main,baseline,add_night_triage_nurse,excessive_variability,PASS,Intervals are reasonably narrow relative to baseline levels.,SIMULATED
+main,baseline,add_night_triage_nurse,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: boarding_median, boarding_p90, stage_space_wait_mean, stage_results_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+main,baseline,add_night_triage_nurse,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+main,baseline,add_night_triage_nurse,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'add_night_triage_nurse': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+main,baseline,add_night_triage_nurse,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x30, extreme_waits x4, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+main,baseline,add_night_triage_nurse,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+main,baseline,increase_bed_releases,seed_coverage,PASS,30 paired seeds,SIMULATED
+main,baseline,increase_bed_releases,missing_data,PASS,No missing metric values.,SIMULATED
+main,baseline,increase_bed_releases,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+main,baseline,increase_bed_releases,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: arrival_to_provider_median, arrival_to_provider_p90, provider_wait_p90, los_median_discharged, los_p90_discharged, physician_utilization, stage_space_wait_mean, stage_provider_wait_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+main,baseline,increase_bed_releases,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+main,baseline,increase_bed_releases,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'increase_bed_releases': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+main,baseline,increase_bed_releases,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x32, extreme_waits x2, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+main,baseline,increase_bed_releases,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+main,baseline,faster_diagnostics,seed_coverage,PASS,30 paired seeds,SIMULATED
+main,baseline,faster_diagnostics,missing_data,PASS,No missing metric values.,SIMULATED
+main,baseline,faster_diagnostics,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+main,baseline,faster_diagnostics,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: arrival_to_provider_median, arrival_to_provider_p90, provider_wait_p90, physician_utilization, stage_space_wait_mean, stage_provider_wait_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+main,baseline,faster_diagnostics,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+main,baseline,faster_diagnostics,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'faster_diagnostics': 2}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+main,baseline,faster_diagnostics,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x32, extreme_waits x3, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+main,baseline,faster_diagnostics,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,excessive_variability,CAUTION,"CI half-width exceeds 25% of the baseline level for: boarding_median, stage_space_wait_mean. Estimates are too imprecise to support conclusions.",SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: arrival_to_provider_median, arrival_to_provider_p90, provider_wait_p90, los_median_discharged, los_p90_discharged, physician_utilization, stage_space_wait_mean, stage_provider_wait_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'archetype_boarding_heavy': 5}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x33, extreme_waits x13, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_condition,baseline,archetype_boarding_heavy,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: arrival_to_provider_median, arrival_to_provider_p90, provider_wait_p90, los_median_discharged, los_p90_discharged, physician_utilization, stage_space_wait_mean, stage_provider_wait_mean, stage_results_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,overload_regime,CAUTION,"Overloaded replications: {'archetype_boarding_heavy': 5, 'increase_bed_releases': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x33, extreme_waits x12, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_relief,archetype_boarding_heavy,increase_bed_releases,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,excessive_variability,CAUTION,"CI half-width exceeds 25% of the baseline level for: arrival_to_provider_p90, provider_wait_p90, stage_space_wait_mean, stage_provider_wait_mean. Estimates are too imprecise to support conclusions.",SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,skewed_differences,CAUTION,Paired differences are strongly skewed (|skew| > 2) for: stage_results_mean; the normal approximation behind the t interval is less reliable.,SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'archetype_physician_mismatch': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x41, extreme_waits x4, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_condition,baseline,archetype_physician_mismatch,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,skewed_differences,CAUTION,Paired differences are strongly skewed (|skew| > 2) for: stage_results_mean; the normal approximation behind the t interval is less reliable.,SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,overload_regime,CAUTION,"Overloaded replications: {'archetype_physician_mismatch': 1, 'rebalance_physician_day_to_evening': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x41, extreme_waits x4, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_relief,archetype_physician_mismatch,rebalance_physician_day_to_evening,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,excessive_variability,CAUTION,"CI half-width exceeds 25% of the baseline level for: arrival_to_provider_median, triage_wait_p90, provider_wait_p90, stage_triage_wait_mean, stage_space_wait_mean, stage_provider_wait_mean. Estimates are too imprecise to support conclusions.",SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,skewed_differences,PASS,No strongly skewed paired differences.,SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'archetype_triage_mismatch': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x33, extreme_waits x6, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_condition,baseline,archetype_triage_mismatch,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,skewed_differences,PASS,No strongly skewed paired differences.,SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,overload_regime,CAUTION,"Overloaded replications: {'archetype_triage_mismatch': 1, 'add_day_triage_nurse': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x33, extreme_waits x6, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_relief,archetype_triage_mismatch,add_day_triage_nurse,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: arrival_to_provider_median, arrival_to_provider_p90, provider_wait_p90, physician_utilization, stage_space_wait_mean, stage_provider_wait_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,overload_regime,CAUTION,"Overloaded replications: {'baseline': 1, 'archetype_diagnostic_delay': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x31, extreme_waits x6, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_condition,baseline,archetype_diagnostic_delay,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,seed_coverage,PASS,30 paired seeds,SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,missing_data,PASS,No missing metric values.,SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,excessive_variability,CAUTION,CI half-width exceeds 25% of the baseline level for: stage_space_wait_mean. Estimates are too imprecise to support conclusions.,SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,skewed_differences,CAUTION,"Paired differences are strongly skewed (|skew| > 2) for: arrival_to_provider_median, arrival_to_provider_p90, provider_wait_p90, los_median_lower_bound_all, physician_utilization, stage_space_wait_mean, stage_provider_wait_mean; the normal approximation behind the t interval is less reliable.",SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,censoring,PASS,No unfinished measured visits in any replication.,SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,overload_regime,CAUTION,"Overloaded replications: {'archetype_diagnostic_delay': 1, 'faster_diagnostics': 1}. Effects here describe a STRESS-TEST regime (queues growing with run length), not ordinary operation.",SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,carried_cautions,CAUTION,"Replication-level CAUTION checks (count across both arms): capacity_and_stability x60, esi1_timeliness x31, extreme_waits x6, model_assumptions x60, no_bottleneck_claims x60, single_seed x60",SIMULATED
+archetype_relief,archetype_diagnostic_delay,faster_diagnostics,unsupported_conclusions,CAUTION,evidence is internal to the fictional model.,SIMULATED

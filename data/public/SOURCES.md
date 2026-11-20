@@ -16,6 +16,34 @@ facility-level totals). No record-level or patient-level data is used.
 | `nys_health_facility_general_information` | [Health Facility General Information](https://health.data.ny.gov/d/vn5v-hh5r) | NYS Department of Health | `vn5v-hh5r` | 2026-10-23 | Independent facility registry (PFI, address, main site) |
 | `nys_sparcs_ed_encounters_by_facility` | [ED Encounters by Facility: Beginning 2018 (SPARCS De-Identified)](https://health.data.ny.gov/d/5gzv-zv2z) | NYS Department of Health | `5gzv-zv2z` | 2026-10-22 | Facility-level ED encounter **counts** by quarter/year |
 
+## Reuse terms and attribution
+
+**What this repository redistributes.** Only small *derived* tables are
+committed: `processed/bronx_ed_measures.csv`, `processed/bronx_facilities.csv`,
+the build manifest, and the hand-reviewed crosswalk in `reference/`. They cover
+five Bronx hospitals and hold hospital-level aggregates only. The raw publisher
+files (`raw/`, about 42 MB) are **not** committed. `download` fetches them again
+from the official URLs.
+
+**Terms, as checked on 2026-11-20. This is not legal advice.**
+
+- **CMS (Provider Data Catalog).** These are published by a U.S. federal agency.
+  CMS's data.cms.gov API documentation says works of the U.S. Government are in
+  the public domain, and that reuse needs no permission, although credit to CMS
+  is appreciated. Check each dataset's page for a dataset-specific license.
+- **New York State Department of Health (Health Data NY).** These are published
+  under the Open NY Terms of Use
+  ([PDF](https://data.ny.gov/download/77gx-ii52/application/pdf)). Before
+  republishing, read the current terms, especially attribution, no implied
+  endorsement, and the "as is" warranty.
+
+**Attribution.** Source data: Centers for Medicare & Medicaid Services, Provider
+Data Catalog (datasets `yv7e-xc69`, `y9us-9xdf`, `xubh-q36u`); New York State
+Department of Health, Health Data NY (datasets `vn5v-hh5r`, `5gzv-zv2z`). This
+project is not affiliated with or endorsed by CMS, NYS DOH, or any hospital.
+The processed tables are this project's transformations, and the publishers
+are not responsible for them.
+
 Measure definitions were checked against:
 
 - CMS Hospital Downloadable Database **Data Dictionary**, October 2026

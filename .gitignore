@@ -50,6 +50,10 @@ data/public/raw/*
 !data/public/raw/.gitkeep
 data/synthetic/*
 !data/synthetic/.gitkeep
+# The verified SIMULATED results bundle (~140 KB) is committed so a fresh clone
+# can run the dashboard without the 6-minute rebuild. It is fictional model
+# output, fingerprint-checked by the dashboard on load.
+!data/synthetic/experiments/
 evals/results/*
 !evals/results/.gitkeep
 

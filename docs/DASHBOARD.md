@@ -51,7 +51,7 @@ now shared by the existing summary and the box plot.
 
 ### The results bundle
 
-`whatif_demo` writes `data/synthetic/experiments/` (git-ignored, reproducible):
+`whatif_demo` writes `data/synthetic/experiments/` (committed so a fresh clone runs the dashboard; reproducible):
 `comparisons.csv`, `comparison_checks.csv`, `archetypes.csv`,
 `sensitivity.csv`, `stability.csv`, and `manifest.json` (settings, seeds,
 per-comparison status, carried CAUTIONs, lever effects, and a SHA-256 for

@@ -1,8 +1,8 @@
 # Development Plan — Beyond the Wait: Bronx ED Access Lab
 
-**Status:** Draft v0.10 · **Last updated:** 2026-11-18 · **Current:** Milestone 9 complete offline; live evaluation prepared and dry-run, awaiting approval
+**Status:** v1.0 portfolio release candidate · **Last updated:** 2026-11-20 · **Current:** Milestone 10 complete (packaging); live evaluation prepared, not run, awaiting approval
 
-Milestone 10 is **planned**. Items are checked off only when built and tested.
+Items are checked off only when built and tested.
 
 Each milestone is small enough to finish, test, and commit on its own.
 **Rule:** a milestone is not done until its tests pass and you can explain
@@ -333,12 +333,20 @@ cases. It does not by itself establish causal correctness or clinical safety.
 
 **You'll learn:** LLM evaluation design — the core skill for Applied AI roles.
 
-## Milestone 10 — Polish & portfolio packaging
-- Decision records in `docs/decisions/`.
-- README screenshots / short demo video.
-- Case-study write-up: problem, approach, results, limitations, what you'd do next.
-- Optional: GitHub Actions to run tests on every push; deploy to Streamlit Community Cloud.
-- Interview prep: practice explaining each layer in 2 minutes.
+## Milestone 10 — Polish & portfolio packaging ✅ (2026-11-20)
+- [x] Release audit: tracked files and full git history scanned for credentials, personal
+      data, local paths, and employer material (none found); public data reuse terms and
+      attribution added to `data/public/SOURCES.md`.
+- [x] README rewritten for reviewers; screenshots of the actual app (DEMO mode) in `docs/images/`.
+- [x] Decisions and alternatives recorded in [docs/CASE_STUDY.md](docs/CASE_STUDY.md) §2
+      (replaces the planned `docs/decisions/` folder).
+- [x] Case study ([docs/CASE_STUDY.md](docs/CASE_STUDY.md)) and 90-second demo outline
+      ([docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)).
+- [x] Reproducible demo: the verified results bundle is committed (a rebuild matched it byte for
+      byte on 2026-11-20); `requirements-lock.txt`; tests pin the README findings to the bundle.
+- [x] GitHub Actions workflow (offline tests + Ruff; no secrets).
+- [x] **Tests:** 1196 passed, 100% line coverage, Ruff clean.
+- [ ] Not done: Streamlit Community Cloud deployment (deliberately not deployed), demo video.
 
 ---
 

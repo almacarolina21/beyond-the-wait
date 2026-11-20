@@ -264,7 +264,7 @@ is never mixed into simulated results.
 | Config format | YAML + Pydantic | Hard-coded constants | Reusable across sites; validated |
 | Layout | `src/` package | Flat scripts | Importable, testable, professional |
 
-Detailed decision records will live in `docs/decisions/` (one short file per decision).
+The main decisions and the alternatives considered are written up in [docs/CASE_STUDY.md](docs/CASE_STUDY.md) §2.
 
 ## 5. Folder Structure
 
@@ -287,7 +287,6 @@ beyond-the-wait/
 │   ├── VALIDATION_GATE.md     # PASS/CAUTION/BLOCKED gate, detailed metrics, limitations
 │   ├── WHAT_IF_ANALYSIS.md    # Paired multi-seed comparisons, levers, sensitivity, results
 │   ├── DASHBOARD.md           # Dashboard pages, data flow, safeguards, testing
-│   └── decisions/             # Architecture decision records
 ├── evals/
 │   ├── cases/                 # LLM evaluation cases
 │   └── results/               # Eval run outputs (git-ignored)

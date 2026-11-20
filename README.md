@@ -1,314 +1,256 @@
 # Beyond the Wait — Bronx ED Access Lab
 
-> A Claude-powered decision-support lab for investigating emergency department
-> patient-flow bottlenecks, testing operational interventions, and
-> understanding their effects on patients **and** healthcare workers.
+**An educational decision-support lab for exploring why emergency department
+patients wait. A tested simulation calculates the effects of hypothetical
+changes, and Claude's plain-language explanations are shown only after code
+checks them against the verified numbers.**
 
-**Python calculates. Claude explains. Humans decide.**
-
-![status](https://img.shields.io/badge/status-milestone%207%20of%2010-lightgrey)
+[![tests](https://img.shields.io/badge/tests-1196%20passed-brightgreen)](#reproduce-it)
+![coverage](https://img.shields.io/badge/line%20coverage-100%25-brightgreen)
 ![python](https://img.shields.io/badge/python-3.12-blue)
+![status](https://img.shields.io/badge/status-portfolio%20prototype%2C%20not%20clinically%20validated-lightgrey)
 
----
+![Overview page of the dashboard, showing three simulated findings labeled SIMULATED and CAUTION](docs/images/overview.png)
 
-## Why this project exists
+> **What this is and is not.** A portfolio prototype built around a **fictional**
+> emergency department, "Riverside Commons Community ED". It uses public,
+> aggregate Bronx hospital measures for context and synthetic patients for the
+> model. It is not calibrated to any real hospital, not clinically validated,
+> and not deployed anywhere. No real patient data or employer information was
+> used. Real Claude responses have not yet been evaluated: the AI explanations
+> in the demo come from a labeled mock.
 
-Two emergency departments can report the same long wait times for very
-different reasons: admitted patients **boarding** in ED beds, **staffing**
-that doesn't match arrival patterns, **diagnostic** delays, or
-**care-coordination** barriers. Choosing the wrong fix costs money and
-burns out staff.
+## The problem
 
-This lab lets healthcare administrators safely explore *"what if?"* questions
-with a transparent simulation, then get a plain-language explanation that is
-grounded strictly in the validated results.
+Long ED waits in the Bronx are visible in public data, but the data can't
+explain them. CMS reports, for example, the median time discharged patients
+spend in the ED, and New York State reports encounter counts. Neither
+publishes door-to-provider time or boarding time. The same headline wait can
+come from:
+- admitted patients **boarding** in ED beds;
+- **staffing** that doesn't match when patients arrive;
+- **diagnostic** turnaround;
+- problems with **discharge coordination**.
 
-## What it will do (planned)
+Picking the wrong fix wastes money and adds to staff burnout.
 
-> 🚧 These features are **planned and not yet implemented.** So far the
-> repository contains the planning documents and the configuration foundation
-> described under [Project status](#project-status).
+**Intended audience:** ED operations leaders, quality-improvement teams, and
+public-health analysts who want to reason about *"what if?"* before changing
+anything real. The tool is not for frontline clinical decisions or
+individual-patient guidance.
 
-- 📊 **Public context** — official, aggregate Bronx hospital ED metrics, labeled `PUBLIC` with sources.
-- 🧪 **Synthetic patients** — realistic-but-fake arrivals generated from documented assumptions, labeled `SYNTHETIC`.
-- ⚙️ **ED flow simulation** — a SimPy discrete-event model of triage, beds, providers, diagnostics, boarding, and discharge coordination, labeled `SIMULATED`.
-- 🔀 **Scenario comparison** — test interventions across many replications with 95% confidence intervals.
-- 🔍 **Bottleneck decomposition** — see where simulated time is actually spent.
-- 👩‍⚕️ **Patient *and* staff impact** — length of stay and boarding alongside utilization and workload peaks.
-- 🤖 **Grounded AI explanations** — Claude interprets validated results, cites evidence, states uncertainty and limitations, and never invents causes.
-- ✅ **Evaluations** — automated tests for analytical accuracy plus an eval suite for grounding, safety, and limitations.
+## Three findings from the fictional model
 
-## Responsible AI design
+All three come from the precomputed results bundle (30 paired simulated weeks
+per comparison, 95% confidence intervals for the mean paired difference). The
+dashboard shows them on its Overview page, and
+[a test](tests/unit/test_release_bundle.py) checks this text against the bundle.
+They describe how the **model** behaves under its stated assumptions, not how
+any real hospital would. Every comparison carries a CAUTION from the
+validation gate (for example, a few simulated weeks were overloaded).
 
-| Commitment | Planned approach |
-|---|---|
-| Real vs. synthetic data never confused | Provenance tag on every dataset, metric, and chart |
-| Accurate numbers | All math in tested Python; Claude never calculates |
-| No invented causes | Evidence-ID citations + structured output + automated guardrails + adversarial evals + human review |
-| Human oversight | Decision support only; no individual-patient guidance |
-| No private data | Only public aggregate data and synthetic data — no PHI, no employer data |
+1. **Six more inpatient beds released to the ED per day.** Median length of
+   stay for admitted patients: 98.4 min lower within the fictional model (95% CI 66.0 to 131 min lower).
+2. **Lab and imaging turnaround 25% faster.** Median length of stay for
+   discharged patients: 13.9 min lower within the fictional model (95% CI 13.5 to 14.3 min lower).
+3. **One more night triage nurse: the wait moves to the next queue.** The
+   90th-percentile wait for triage was 4.8 min lower within the fictional model (95% CI 3.8 to 5.9 min lower),
+   but the 90th-percentile wait for a physician was 3.2 min higher within the fictional model (95% CI 2.4 to 4.0 min higher).
+   The analysis flags this kind of congestion shift automatically, and it is
+   why a single headline metric can mislead.
 
-**An honest limit:** automated checks can confirm that Claude's numbers and
-evidence citations match the validated results. They cannot, on their own,
-prove that an interpretation is causally correct or clinically safe. That
-requires evaluation and review by people with the right expertise. See
-[PROJECT_SPEC.md §5.1](PROJECT_SPEC.md#51-what-automated-checks-can-and-cannot-do).
+## Python calculates. Claude explains. Humans decide.
 
-## Architecture at a glance
+| Layer | Responsible for | Why |
+|---|---|---|
+| **Python** | Every number: simulation, paired statistics, confidence intervals, validation status | Numbers must be reproducible and tested; a language model should not do arithmetic for a health decision |
+| **Claude** | A plain-language explanation of verified results, citing evidence IDs | Explanation and synthesis are where an LLM adds value. Claude writes value *tokens* (`{{M:x.change}}`), and Python inserts the numbers |
+| **Code checks** | Accept, hold for review, or reject each explanation | Valid JSON with valid citations can still mislead, so 11 checks test numbers, citations, advice, causal claims, safety claims, and unfamiliar wording |
+| **People** | Decisions, and reviewing anything the checks are unsure about | Automated checks can't establish causal correctness or clinical safety |
 
+The public dashboard shows generated text **only when every check passes**
+(ACCEPT). A response marked HUMAN_REVIEW is withheld. Visitors see the key
+result written by Python, the evidence, and a note that the explanation needs
+review. A rejected response shows only which checks failed.
+
+![What-If Lab, AI interpretation panel in DEMO mode: a key result calculated by Python, a mock explanation labeled "DEMO · mock, not Claude", and evidence IDs for each finding](docs/images/ai_interpretation.png)
+
+*The explanation shown is from the built-in **mock** (labeled "DEMO · mock,
+not Claude"). No Claude API call was made to produce it.*
+
+## Architecture
+
+```mermaid
+flowchart TD
+    PUB["PUBLIC: CMS and NYS DOH aggregate ED measures<br/>(5 Bronx hospitals, SHA-256 fingerprinted)"]
+    CFG["Fictional site profile + intervention scenarios<br/>(YAML, Pydantic-validated)"]
+    SYN["SYNTHETIC: fictional patients<br/>(seeded, time-varying arrivals)"]
+    SIM["SIMULATED: SimPy discrete-event model<br/>(triage, beds, physicians, diagnostics, boarding)"]
+    STAT["Paired multi-seed analysis<br/>(30 common-random-number weeks, 95% CI, sensitivity)"]
+    GATE{"Validation gate<br/>PASS / CAUTION / BLOCKED"}
+    PKT["Evidence packet<br/>(verified aggregates, stable fact IDs, cautions, limitations)"]
+    LLM["Claude (structured JSON, cites fact IDs,<br/>writes value tokens, never numbers)<br/>DEMO mode: labeled mock"]
+    VER{"Output verification<br/>11 checks → ACCEPT / HUMAN_REVIEW / REJECT"}
+    UI["Streamlit dashboard (localhost)"]
+    HUM["Human reviewer + rubric"]
+
+    CFG --> SYN --> SIM --> STAT --> GATE
+    GATE -- "BLOCKED: never shown" --> X[" "]
+    GATE -- "PASS / CAUTION" --> PKT --> LLM --> VER
+    VER -- "ACCEPT: prose shown" --> UI
+    VER -- "HUMAN_REVIEW: prose withheld" --> HUM
+    VER -- "REJECT: failed checks only" --> UI
+    GATE --> UI
+    PUB -- "context only, never mixed with simulated charts" --> UI
+    style X fill:none,stroke:none
 ```
-Site profile + Scenario (YAML, validated)
-        │
-        ▼
-Synthetic patients ──► SimPy simulation (N runs) ──► Metrics + CIs ──► Validation gate
-                                                                          │
-                                         Evidence packet (validated facts)◄┘
-                                                    │
-                                                    ▼
-                                    Claude (structured, cited explanation)
-                                                    │
-                                                    ▼
-                                    Guardrail checks ──► Streamlit dashboard
-```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
+Every table row and chart carries a provenance label: **PUBLIC**,
+**SYNTHETIC**, or **SIMULATED**. Real and simulated data never share a chart.
+Details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Tech stack
+## AI evaluation: blind results, failures, and what changed
 
-| Purpose | Tool |
-|---|---|
-| Simulation | SimPy |
-| Data & analysis | pandas |
-| Visualization | Plotly |
-| Dashboard | Streamlit |
-| AI interpretation | Anthropic Claude API (`anthropic` Python SDK) |
-| Config validation | Pydantic + YAML |
-| Testing | pytest |
+The checks were evaluated offline against 180 hand-written candidate
+explanations. Each held-out round was written, **hash-locked, and scored once
+before any rule was changed**. Those first runs are the honest estimates:
 
-## Project status
+| Blind round | Rules tested | Unsafe outputs caught | Unsafe outputs accepted | Useful outputs rejected |
+|---|---|---|---|---|
+| 1 | Word-pattern checks tuned on the dev set | 19/31 (61%) | 12 | 4/17 |
+| 2 | Round 1 fixes added | 11/20 (55%) | 9 | 0/10 |
+| 3 | + controlled-vocabulary gate | 12/13 (92%) | 1 | 3/8 |
 
-✅ **Milestones 1–8 complete: configuration foundation, public reference data, synthetic patient generator, baseline simulation engine, metrics and validation gate, multi-seed what-if analysis, an interactive dashboard, and grounded AI interpretation (DEMO mode; live API activation pending).**
+**What failed:**
+- The dev set reached 38/38 after tuning, and blind round 1 then caught only
+  19/31.
+- Patching the missed phrases made round 2 *worse*. Each new wording, such as
+  "Why wait?", "the lever to pull" or "per the developer message", was a new
+  miss for a denylist.
+- The sanitizer that removes injected instructions from packet text caught
+  only **3/13** blind injections. A later probe of 8 new styles, not used for
+  tuning, caught **0/8**. Examples are a zero-width character split, a Cyrillic
+  look-alike letter, base64 and passive voice.
 
-*Milestone 1: configuration*
-- **Provenance labels** (`PUBLIC` / `SYNTHETIC` / `SIMULATED`) with strict
-  validation, on config objects and on every table row.
-- **Validated configuration models** (Pydantic v2) for a fictional ED: staffing
-  by shift, treatment spaces, hourly arrivals, inpatient capacity, and
-  intervention scenarios. Safe YAML loading and `apply_scenario()`.
-- **One fictional example site**, "Riverside Commons Community ED". It's
-  labeled fictional and doesn't represent any real hospital.
+**What changed:**
+- **The default changed rather than the denylist.** A controlled-vocabulary
+  gate sends any explanation that uses words outside a vetted list to a human.
+  It no longer accepts unfamiliar wording.
+- **The key result is written by Python** and doesn't depend on the model.
+- **HUMAN_REVIEW text is withheld** from the public page.
 
-*Milestone 2: public reference data*
-- **Reproducible pipeline** from 5 official CMS and NYS DOH datasets to Bronx
-  ED reference tables in `data/public/processed/`, with SHA-256 fingerprints
-  and byte-identical rebuilds.
-- **Measures kept distinct:** OP-18 (median ED time for *discharged*
-  patients), OP-22 (left without being seen), ED volume, and NYS encounter
-  counts. Door-to-provider and boarding time are **not publicly available**,
-  and the code says so instead of substituting another measure.
-- **Five Bronx hospitals matched** across CMS and NYS records by address, with
-  a human-reviewed crosswalk: BronxCare, Montefiore, Lincoln, Jacobi, and
-  St. Barnabas (SBH).
-- **Missing and suppressed values preserved** with official explanations, never zeros.
-- See [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) for
-  what these measures mean, and why they **can't identify the cause of a
-  hospital's delays**.
+After the fixes, the same cases score 0 false accepts. That is **not**
+independent evidence, because those cases were used to make the fixes.
 
-*Milestone 3: synthetic patient generator*
-- **Fictional patients** for the fictional Riverside Commons ED: time-varying
-  Poisson arrivals (hourly and weekday patterns), ESI-like acuity, and lab,
-  imaging, and hypothetical-admission flags drawn **conditional on acuity**.
-- **Reproducible:** an explicit seed gives identical patients every time.
-- **Attributes only:** no waits or lengths of stay. Those come from the
-  simulation (Milestone 4).
-- Every row is labeled `SYNTHETIC`. Assumptions are documented as unverified
-  and illustrative in
-  [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md).
-  They are **not calibrated to any real hospital**.
+**Still unresolved:**
+- no evaluation of real Claude responses;
+- no semantic entailment check;
+- the cases and the rules share one author;
+- 13 unsafe cases are enough to find *types* of failure, not to measure rates.
 
-*Milestone 4: baseline simulation engine*
-- **SimPy discrete-event simulation** of the fictional ED: triage, treatment
-  spaces by type, physicians on shift schedules, lab/imaging, discharge, and
-  **inpatient boarding** through an explicitly simplified bed-release model.
-- **Non-preemptive acuity priority** (ESI 1 first), documented as an
-  educational model, not a validated triage system.
-- **Outcomes labeled `SIMULATED`:** waits, arrival-to-provider, length of stay
-  by disposition, boarding, utilization, queue lengths, throughput.
-- **Validity flags** for saturated or near-saturated configurations, hard
-  stops, unfinished visits, growing queues, and single-seed runs. See
-  [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md).
+A supervised 10-call live evaluation is prepared and has been dry-run offline:
+- a hard cap of 10 calls;
+- no retries;
+- a blind human review before the automated verdict is shown;
+- a cost ceiling of $2.38 at list price.
 
-*Milestone 5: metrics and validation gate*
-- **Detailed metrics:** waits and LOS by ESI level (p90/p95/max), extreme
-  waits including unfinished visits, censoring-aware LOS, boarding
-  distributions, utilization by shift, time at ≥ 90% utilization, patients per
-  staffed hour, and a *descriptive* stage decomposition. The LWBS rate is
-  marked **unavailable**, not invented.
-- **Validation gate:** every run gets a typed **PASS / CAUTION / BLOCKED**
-  report. Corrupted or inconsistent outputs are **BLOCKED** and can't be
-  released for interpretation. Overload stress tests are flagged **CAUTION**,
-  not hidden. Safety limitations travel with every report. See
-  [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md).
+It has **not** been run. Details: [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md)
+· [docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md) ·
+[rubric](docs/AI_REVIEW_RUBRIC.md).
 
-*Milestone 6: multi-seed what-if analysis*
-- **Real scenario levers:** physicians and triage nurses by shift, inpatient
-  bed releases per day, and diagnostic turnaround. Uncertain assumptions
-  (physician concurrency, demand) are allowed **only** in sensitivity and
-  stress tests. The ineffective `inpatient_bed_change` lever was removed.
-- **Paired comparisons:** baseline and intervention run on the same 30 seeds
-  with common random numbers, summarized as a paired-t 95% confidence interval
-  for the mean difference, kept separate from a prediction interval.
-- **Every replication passes through the validation gate.** A BLOCKED run
-  invalidates its comparison; CAUTION warnings are carried forward.
-- **Congestion shifts, archetypes, and sensitivity:** the analysis detects
-  interventions that relocate waiting, tests whether relieving a suspected
-  constraint actually helps (largest ≠ binding), and flags conclusions that
-  change with assumptions. See [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md).
-- **All findings are model-internal.** No intervention is claimed to be safe or
-  to apply to any real hospital.
+![AI Explanation Evaluation page: blind results table for three held-out rounds and the current run's confusion matrix](docs/images/ai_evaluation.png)
 
-*Milestone 7: interactive dashboard*
-- **Five pages:** Overview · Bronx Public Data · Fictional Patient Flow ·
-  What-If Lab · Sensitivity, Validation & Methods (Streamlit + Plotly).
-- Reuses the existing modules; **no calculations in the UI**. Precomputed
-  multi-seed results are **fingerprint-verified** on load. BLOCKED comparisons
-  are never shown as data, and CAUTION reasons are always visible.
-- Every chart is labeled **PUBLIC**, **SYNTHETIC**, or **SIMULATED**; real and
-  simulated data never share a chart. No API key, no internet, localhost only.
-  See [docs/DASHBOARD.md](docs/DASHBOARD.md).
+## Reproduce it
 
-*Milestone 8: grounded AI interpretation (mock-first)*
-- An **Explain these results** button on the What-If Lab sends a compact, typed
-  **evidence packet** (verified SIMULATED aggregates with stable fact IDs, never
-  patient records) to an interpreter and shows the reply **only if 10 local checks
-  pass**: cited IDs exist, numbers and units match, no real hospitals, no advice,
-  no misread confidence intervals. Python inserts every number.
-- Runs in **DEMO mode** (a labeled mock, no key, no API calls) unless live mode is
-  explicitly enabled. See [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md).
-
-**1192 unit tests**, 100% line coverage, all offline (no test can reach the API).
-
-**AI evaluation (Milestone 9, offline):** 180 hand-written candidate explanations scored by the same checks the app uses, with three hash-locked blind rounds. Blind detection of unsafe explanations was 19/31 and 11/20 for the word-pattern checks, then 12/13 after adding a controlled-vocabulary gate that sends unfamiliar wording to human review. See [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md) and the review rubric [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md). Real Claude responses have not been evaluated yet; a supervised 10-call live evaluation is prepared and dry-run offline, waiting for explicit approval ([docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md)).
-
-**Not built yet:** Milestone 10 (polish and packaging). See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
-
-## Getting started
-
-Requires Python 3.12+.
+You need Python 3.12 or later. No API key, no internet access after install,
+and no billable calls: AI explanations default to the labeled mock (DEMO mode).
 
 ```bash
-git clone <repo-url>   # repository URL will be added once published
+git clone https://github.com/<your-username>/beyond-the-wait.git
 cd beyond-the-wait
-python3 -m venv .venv                 # create an isolated environment
-source .venv/bin/activate             # activate it (Windows: .venv\Scripts\activate)
-pip install -e ".[dev]"               # install the project + dev tools
-pytest                                # run the test suite
+python3 -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"              # exact tested versions: requirements-lock.txt
+pytest -q                            # 1196 tests, all offline
+streamlit run app/streamlit_app.py   # open http://localhost:8501
 ```
 
-Try the configuration layer:
+The dashboard reads committed, fingerprint-verified data:
+- the **public** Bronx tables in `data/public/processed/`;
+- the precomputed **simulation** results in `data/synthetic/experiments/`, about
+  140 KB (30 seeds plus sensitivity runs).
 
-```bash
-python -c "
-from beyond_the_wait.config import load_site_profile, load_scenario, apply_scenario
-site = load_site_profile('config/sites/fictional_bronx_community_ed.yaml')
-print(site.site.display_name, '-', site.arrivals.expected_daily_arrivals, 'expected arrivals/day')
-new = apply_scenario(site, load_scenario('config/scenarios/add_evening_physician.yaml'))
-print('Evening physicians:', site.staffing.physicians_on_duty['evening'], '->', new.staffing.physicians_on_duty['evening'])
-"
-```
-
-Open the dashboard (build the multi-seed results once first, about 6 minutes on 8 cores):
-
-```bash
-python -m beyond_the_wait.analysis.whatif_demo --seeds 30 --sensitivity-seeds 20 --workers 8
-streamlit run app/streamlit_app.py      # then open http://localhost:8501
-```
-
-Run the multi-seed what-if analysis on its own (also writes the dashboard's results bundle):
+To regenerate the simulation results yourself, which takes about 6 minutes on 8
+cores, run:
 
 ```bash
 python -m beyond_the_wait.analysis.whatif_demo --seeds 30 --sensitivity-seeds 20 --workers 8
 ```
 
-Run the validated analysis (simulation + PASS/CAUTION/BLOCKED gate + detailed metrics):
+On 2026-11-20 a rebuild with these settings matched the committed files byte
+for byte (macOS, Python 3.12, the versions in `requirements-lock.txt`). Other
+platforms may differ in the last floating-point digits. `manifest.json` lists
+the seeds and a SHA-256 for each file.
+
+Other entry points:
 
 ```bash
-python -m beyond_the_wait.analysis.demo --seed 42 --gate-examples
+python -m beyond_the_wait.evaluation                     # offline AI evaluation report
+python -m beyond_the_wait.live_eval dry-run              # MOCK live-evaluation workflow, no network
+python -m beyond_the_wait.data.public_pipeline download  # re-fetch public data (internet)
+python -m beyond_the_wait.data.public_pipeline build     # rebuild public tables (offline)
 ```
 
-Run the baseline simulation (8 fictional days, first day excluded as warm-up):
+Live Claude explanations are off unless you set `BTW_AI_MODE=live` and provide
+your own Anthropic API key. That is billed to your API account. See
+[docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md).
 
-```bash
-python -m beyond_the_wait.simulation.demo --days 8 --warmup-days 1 --seed 42
-```
+## Known limitations
 
-Generate one day of fictional ED patients:
+- **No real-hospital calibration.** Arrival patterns, staffing, service times,
+  and boarding are documented assumptions for a fictional ED
+  ([docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md)).
+  The public Bronx data provides context and isn't used to fit the model.
+- **No clinical validation.** Triage priority is a simplified acuity rule, and
+  nothing here has been reviewed by ED clinicians or operations staff.
+- **No live API evaluation.** Every evaluated explanation was hand-written. How
+  real Claude responses behave against the checks is unknown.
+- **Simplified model.** Boarding uses a bed-release abstraction. Lab and
+  imaging have no capacity limits. The model has no left-without-being-seen
+  behavior, ambulance diversion, surges, or seasonality
+  ([full list](docs/SIMULATION_MODEL.md#10-known-limitations)).
+- **Public data can't explain causes.** OP-18 and OP-22 describe *what*
+  happened at a hospital, not *why*.
+- **Prompt-injection defenses are partial.** See the sanitizer results above.
 
-```bash
-python -m beyond_the_wait.data.synthetic_generator --seed 42 --date 2026-11-16
-# options: --days N  --sample K  --out data/synthetic/day.csv
-```
+## How this was built
 
-Rebuild the public reference tables (offline, from downloaded files):
-
-```bash
-python -m beyond_the_wait.data.public_pipeline download   # fetch official files (internet)
-python -m beyond_the_wait.data.public_pipeline build      # validate + build (offline)
-```
-
-If `download` is refused by a publisher's server, it prints manual-download
-steps; see [data/public/SOURCES.md](data/public/SOURCES.md).
-
-No Anthropic API key is needed: AI explanations run in DEMO (mock) mode by
-default. Live Claude explanations are opt-in and billed to an Anthropic API
-account (separate from any Claude Pro subscription); see
-[docs/AI_INTERPRETATION.md §8](docs/AI_INTERPRETATION.md#8-reproduction).
-
-## Repository layout
-
-```
-app/               Streamlit dashboard (entry: app/streamlit_app.py; pages: app/views/)
-config/            Site profiles and intervention scenarios (YAML)
-data/              Public (aggregate) and synthetic data — see data/README.md
-docs/decisions/    Architecture decision records
-evals/             LLM evaluation cases and results
-src/beyond_the_wait/
-  config/          Validated configuration models
-  data/            Provenance, public references, synthetic generator
-  simulation/      SimPy ED model
-  analysis/        Metrics, comparisons, decomposition, validation
-  interpretation/  Evidence packets, Claude client, guardrails
-  evaluation/      Eval harness and scorers
-tests/             Unit and integration tests
-```
-
-Every package under `src/beyond_the_wait/` is built. `evaluation/` and `evals/`
-hold the offline AI evaluation (Milestone 9).
+I designed and directed this project, and developed it with AI assistance using
+**Claude Code**. I set the scope, the data rules, and the safety constraints, for
+example: no private data, no live API calls without approval, and blind
+evaluation rounds locked before scoring. I also reviewed each milestone. Claude
+Code wrote most of the code, tests, and documentation under that direction. The
+milestone-by-milestone history is in the git log and in
+[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
 
 ## Documentation
 
-- [PROJECT_SPEC.md](PROJECT_SPEC.md) — problem, users, features, scope, success criteria
-- [ARCHITECTURE.md](ARCHITECTURE.md) — components and data flow
-- [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) — milestones
-- [data/README.md](data/README.md) — data provenance rules
-- [data/public/SOURCES.md](data/public/SOURCES.md) — official public sources and manual-download steps
-- [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md) — every synthetic assumption, and how synthetic data differs from public data
-- [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md) — simulation journey, queue policies, boarding abstraction, stopping rule, validity checks, limitations
-- [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md) — PASS/CAUTION/BLOCKED gate, what each check protects against and cannot prove, detailed metrics, findings
-- [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md) — scenario levers, paired multi-seed method, results with 95% intervals, archetypes, sensitivity
-- [docs/DASHBOARD.md](docs/DASHBOARD.md) — dashboard pages, data flow, safeguards, design, testing, visual checklist
-- [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md), [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md), [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md) — AI explanation guardrails, offline evaluation, human review rubric
-- [docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md) — prepared (not run) supervised 10-call live evaluation: safeguards, blind reviewer workflow, stored data, approval steps
-- [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) — what the public ED measures do and don't mean
+| Topic | Document |
+|---|---|
+| Case study: decisions, failures, adaptation to other public-health settings | [docs/CASE_STUDY.md](docs/CASE_STUDY.md) |
+| 90-second demo outline | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) |
+| Problem, users, scope | [PROJECT_SPEC.md](PROJECT_SPEC.md) |
+| Components and data flow | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Public data sources, reuse terms, and limits | [data/public/SOURCES.md](data/public/SOURCES.md), [docs/PUBLIC_DATA_METHODOLOGY.md](docs/PUBLIC_DATA_METHODOLOGY.md) |
+| Synthetic data and simulation | [docs/SYNTHETIC_DATA_ASSUMPTIONS.md](docs/SYNTHETIC_DATA_ASSUMPTIONS.md), [docs/SIMULATION_MODEL.md](docs/SIMULATION_MODEL.md) |
+| Validation gate and what-if statistics | [docs/VALIDATION_GATE.md](docs/VALIDATION_GATE.md), [docs/WHAT_IF_ANALYSIS.md](docs/WHAT_IF_ANALYSIS.md) |
+| Dashboard | [docs/DASHBOARD.md](docs/DASHBOARD.md) |
+| AI interpretation, evaluation, review rubric, live evaluation plan | [docs/AI_INTERPRETATION.md](docs/AI_INTERPRETATION.md), [docs/AI_EVALUATION.md](docs/AI_EVALUATION.md), [docs/AI_REVIEW_RUBRIC.md](docs/AI_REVIEW_RUBRIC.md), [docs/LIVE_EVALUATION.md](docs/LIVE_EVALUATION.md) |
 
-## Disclaimer
+## Disclaimer and license
 
-This is an independent, open-source portfolio project. It is **not** a
-clinical tool and is not affiliated with any hospital, health system, or
-employer. Simulated results are illustrative and do not describe the actual
-performance or causes of delay at any real institution. All outputs are
-intended for human review.
-
-## License
-
-Released under the [MIT License](LICENSE).
+This is an independent portfolio project. It is not affiliated with any
+hospital, health system, employer, CMS, or NYS DOH. Simulated results are
+illustrative and don't describe the performance or causes of delay at any
+real institution. Released under the [MIT License](LICENSE). Public data
+attribution is in [data/public/SOURCES.md](data/public/SOURCES.md).

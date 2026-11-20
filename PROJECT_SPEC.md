@@ -160,7 +160,7 @@ It does not certify clinical safety or causal accuracy in real use (see §5.1).
 
 ### 6.5 Portfolio readiness
 - [ ] README lets a reviewer install, test, and run the app in ≤ 10 minutes.
-- [ ] Author can explain every architectural decision (see `docs/decisions/`).
+- [ ] Author can explain every architectural decision (see `ARCHITECTURE.md` and `docs/CASE_STUDY.md` §2).
 
 ## 7. Assumptions & Constraints
 
